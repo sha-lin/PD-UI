@@ -1,2 +1,12 @@
 # Copilot instructions (internal development guidelines)
 .github/copilot-instructions.md
+
+# Ignore client2 Django backend (separate git repo)
+client2/
+
+# Ignore database files
+*.sqlite3
+db.sqlite3
+
+# Ignore Makefile (local development only)
+Makefile

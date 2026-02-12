@@ -54,9 +54,40 @@ const parseJsonResponse = async <T>(response: Response): Promise<T> => {
     return data as T;
 };
 
+const parseListResponse = async <T>(response: Response): Promise<T[]> => {
+    const data = await response.json();
+    if (Array.isArray(data)) {
+        return data as T[];
+    }
+    if (data && typeof data === "object" && Array.isArray((data as { results?: unknown }).results)) {
+        return (data as { results: T[] }).results;
+    }
+    return [];
+};
+
 const parseErrorText = async (response: Response): Promise<string> => {
     const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
     return errorText;
+};
+
+const getCsrfToken = (): string | null => {
+    const name = "csrftoken";
+    const cookies = document.cookie.split(";");
+    for (const cookie of cookies) {
+        const trimmed = cookie.trim();
+        if (trimmed.startsWith(`${name}=`)) {
+            return decodeURIComponent(trimmed.substring(name.length + 1));
+        }
+    }
+    return null;
+};
+
+const buildWriteHeaders = (): HeadersInit => {
+    const csrfToken = getCsrfToken();
+    return {
+        "Content-Type": "application/json",
+        ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+    };
 };
 
 export async function fetchProcesses(params: ProcessesQueryParams): Promise<ProcessesResponse> {
@@ -108,7 +139,7 @@ export async function fetchProcessTiers(processId: number): Promise<ProcessTier[
         throw new Error(`Failed to fetch process tiers: ${response.status} ${errorText}`);
     }
 
-    return parseJsonResponse<ProcessTier[]>(response);
+    return parseListResponse<ProcessTier>(response);
 }
 
 export async function fetchProcessVariables(processId: number): Promise<ProcessVariable[]> {
@@ -125,7 +156,7 @@ export async function fetchProcessVariables(processId: number): Promise<ProcessV
         throw new Error(`Failed to fetch process variables: ${response.status} ${errorText}`);
     }
 
-    return parseJsonResponse<ProcessVariable[]>(response);
+    return parseListResponse<ProcessVariable>(response);
 }
 
 export async function fetchProcessVendors(processId: number): Promise<ProcessVendor[]> {
@@ -142,7 +173,7 @@ export async function fetchProcessVendors(processId: number): Promise<ProcessVen
         throw new Error(`Failed to fetch process vendors: ${response.status} ${errorText}`);
     }
 
-    return parseJsonResponse<ProcessVendor[]>(response);
+    return parseListResponse<ProcessVendor>(response);
 }
 
 export async function fetchProcessDetailBundle(processId: number): Promise<ProcessDetailBundle> {
@@ -164,9 +195,7 @@ export async function fetchProcessDetailBundle(processId: number): Promise<Proce
 export async function createProcess(payload: CreateProcessPayload): Promise<Process> {
     const response = await fetch(`${API_BASE_URL}/api/v1/processes/`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -182,9 +211,7 @@ export async function createProcess(payload: CreateProcessPayload): Promise<Proc
 export async function updateProcess(processId: number, payload: UpdateProcessPayload): Promise<Process> {
     const response = await fetch(`${API_BASE_URL}/api/v1/processes/${processId}/`, {
         method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -200,9 +227,7 @@ export async function updateProcess(processId: number, payload: UpdateProcessPay
 export async function deleteProcess(processId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/processes/${processId}/`, {
         method: "DELETE",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -215,9 +240,7 @@ export async function deleteProcess(processId: number): Promise<void> {
 export async function createProcessTier(payload: CreateProcessTierPayload): Promise<ProcessTier> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-tiers/`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -233,9 +256,7 @@ export async function createProcessTier(payload: CreateProcessTierPayload): Prom
 export async function updateProcessTier(tierId: number, payload: UpdateProcessTierPayload): Promise<ProcessTier> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-tiers/${tierId}/`, {
         method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -251,9 +272,7 @@ export async function updateProcessTier(tierId: number, payload: UpdateProcessTi
 export async function deleteProcessTier(tierId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-tiers/${tierId}/`, {
         method: "DELETE",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -266,9 +285,7 @@ export async function deleteProcessTier(tierId: number): Promise<void> {
 export async function createProcessVariable(payload: CreateProcessVariablePayload): Promise<ProcessVariable> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-variables/`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -287,9 +304,7 @@ export async function updateProcessVariable(
 ): Promise<ProcessVariable> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-variables/${variableId}/`, {
         method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -305,9 +320,7 @@ export async function updateProcessVariable(
 export async function deleteProcessVariable(variableId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-variables/${variableId}/`, {
         method: "DELETE",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -320,9 +333,7 @@ export async function deleteProcessVariable(variableId: number): Promise<void> {
 export async function createProcessVendor(payload: CreateProcessVendorPayload): Promise<ProcessVendor> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-vendors/`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -341,9 +352,7 @@ export async function updateProcessVendor(
 ): Promise<ProcessVendor> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-vendors/${vendorId}/`, {
         method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -359,9 +368,7 @@ export async function updateProcessVendor(
 export async function deleteProcessVendor(vendorId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-vendors/${vendorId}/`, {
         method: "DELETE",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -393,9 +400,7 @@ export async function createProcessVariableRange(
 ): Promise<ProcessVariableRange> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-variable-ranges/`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -414,9 +419,7 @@ export async function updateProcessVariableRange(
 ): Promise<ProcessVariableRange> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-variable-ranges/${rangeId}/`, {
         method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -432,9 +435,7 @@ export async function updateProcessVariableRange(
 export async function deleteProcessVariableRange(rangeId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/process-variable-ranges/${rangeId}/`, {
         method: "DELETE",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: buildWriteHeaders(),
         credentials: "include",
     });
 

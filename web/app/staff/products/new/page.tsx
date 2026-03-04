@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import type { ReactElement } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/admin-layout";
+import { resolveProductsBasePath } from "@/lib/product-routes";
 import ProductForm from "@/features/products/components/ProductForm";
 import { createProduct, uploadProductGalleryImages, uploadProductPrimaryImage } from "@/services/products";
 import type { CreateProductPayload, ProductCustomizationLevel, ProductFormValues } from "@/types/products";
@@ -45,6 +46,8 @@ const requiresBasePrice = (level: ProductCustomizationLevel): boolean =>
 
 export default function NewProductPage(): ReactElement {
     const router = useRouter();
+    const pathname = usePathname();
+    const productsBasePath = resolveProductsBasePath(pathname);
     const [values, setValues] = useState<ProductFormValues>(buildInitialValues());
     const [primaryImage, setPrimaryImage] = useState<File | null>(null);
     const [galleryImages, setGalleryImages] = useState<File[]>([]);
@@ -121,7 +124,7 @@ export default function NewProductPage(): ReactElement {
 
             toast.success("Product created successfully.");
             setTimeout((): void => {
-                router.push("/staff/products");
+                router.push(productsBasePath);
             }, 400);
         } catch (error: unknown) {
             toast.error("Unable to save the product. Please try again.");
@@ -131,7 +134,7 @@ export default function NewProductPage(): ReactElement {
     };
 
     const handleCancel = (): void => {
-        router.push("/staff/products");
+        router.push(productsBasePath);
     };
 
     return (
@@ -143,7 +146,7 @@ export default function NewProductPage(): ReactElement {
                             Staff Portal
                         </a>
                         <span>/</span>
-                        <a href="/staff/products" className="hover:text-brand-blue">
+                        <a href={productsBasePath} className="hover:text-brand-blue">
                             Products
                         </a>
                         <span>/</span>

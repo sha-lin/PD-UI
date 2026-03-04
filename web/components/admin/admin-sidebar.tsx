@@ -32,16 +32,16 @@ interface MenuSection {
 const menuSections: MenuSection[] = [
     {
         items: [
-            { label: "Dashboard", href: "/staff/dashboard", icon: LayoutDashboard },
+            { label: "Dashboard", href: "/staff/production-team/dashboard", icon: LayoutDashboard },
         ],
     },
     {
         title: "PRODUCTION TEAM",
         items: [
-            { label: "Product Catalog", href: "/staff/products", icon: Package },
-            { label: "LPOs", href: "/staff/lpos", icon: ClipboardList },
-            { label: "My Quotes", href: "/staff/quotes", icon: FileText },
-            { label: "My Jobs", href: "/staff/jobs", icon: Briefcase },
+            { label: "Product Catalog", href: "/staff/production/products", icon: Package },
+            { label: "LPOs", href: "/staff/production/lpos", icon: ClipboardList },
+            { label: "My Quotes", href: "/staff/production/my-quotes", icon: FileText },
+            { label: "My Jobs", href: "/staff/production/my-jobs", icon: Briefcase },
             { label: "Costing", href: "/staff/production-team/processes", icon: BookOpen },
             { label: "Vendors", href: "/staff/production-team/vendors", icon: Building2 },
             { label: "Delivery", href: "/staff/production-team/deliveries", icon: Truck },

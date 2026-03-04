@@ -12,6 +12,11 @@ interface ProductionLink {
 
 const productionLinks: ProductionLink[] = [
     {
+        label: "Dashboard",
+        description: "Monitor production KPIs, alerts, and activity trends.",
+        href: "/staff/production-team/dashboard",
+    },
+    {
         label: "Clients",
         description: "Manage client intake and handoff information.",
         href: "/staff/clients",
@@ -19,17 +24,27 @@ const productionLinks: ProductionLink[] = [
     {
         label: "Quotes",
         description: "Prepare costing and quotations.",
-        href: "/staff/quotes",
+        href: "/staff/production/my-quotes",
+    },
+    {
+        label: "Product Catalog",
+        description: "Maintain product offerings, pricing, and catalog visibility.",
+        href: "/staff/production/products",
+    },
+    {
+        label: "LPOs",
+        description: "Track local purchase orders and update fulfillment status.",
+        href: "/staff/production/lpos",
     },
     {
         label: "Jobs",
         description: "Track production execution from start to completion.",
-        href: "/staff/jobs",
+        href: "/staff/production/my-jobs",
     },
     {
         label: "Processes",
         description: "Maintain production workflows and steps.",
-        href: "/staff/processes",
+        href: "/staff/production-team/processes",
     },
     {
         label: "Delivery Handover",

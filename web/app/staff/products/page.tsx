@@ -4,9 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/admin-layout";
+import { resolveProductsBasePath } from "@/lib/product-routes";
 import ProductsFilters from "@/features/products/components/ProductsFilters";
 import ProductsTable from "@/features/products/components/ProductsTable";
 import ProductsPagination from "@/features/products/components/ProductsPagination";
@@ -29,6 +30,8 @@ import type {
 
 export default function ProductsPage(): ReactElement {
     const router = useRouter();
+    const pathname = usePathname();
+    const productsBasePath = resolveProductsBasePath(pathname);
     const queryClient = useQueryClient();
     const [search, setSearch] = useState<string>("");
     const [debouncedSearch, setDebouncedSearch] = useState<string>("");
@@ -120,7 +123,7 @@ export default function ProductsPage(): ReactElement {
     };
 
     const handleEdit = (product: Product): void => {
-        router.push(`/staff/products/${product.id}/edit`);
+        router.push(`${productsBasePath}/${product.id}/edit`);
     };
 
     const handlePublish = (product: Product): void => {
@@ -162,7 +165,7 @@ export default function ProductsPage(): ReactElement {
                         </div>
                         <button
                             type="button"
-                            onClick={(): void => router.push("/staff/products/new")}
+                            onClick={(): void => router.push(`${productsBasePath}/new`)}
                             className="inline-flex items-center justify-center rounded-md bg-brand-blue px-4 py-2 text-sm font-semibold text-white"
                         >
                             New Product
@@ -246,7 +249,7 @@ export default function ProductsPage(): ReactElement {
                                     title="No products found"
                                     description="Try adjusting your filters or add a new product."
                                     actionLabel="Create product"
-                                    onAction={(): void => router.push("/staff/products/new")}
+                                    onAction={(): void => router.push(`${productsBasePath}/new`)}
                                 />
                             )}
                         </>

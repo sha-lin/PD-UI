@@ -1,12 +1,33 @@
+import { useEffect, useState } from "react";
+import { LoaderCircleIcon } from "lucide-react";
 import { LPO, LPOStatus } from "@/types/lpos";
 import LpoStatusBadge from "./LpoStatusBadge";
 
 interface LpoDetailsPanelProps {
     lpo: LPO | null;
+    isUpdating: boolean;
+    onStatusChange: (nextStatus: LPOStatus) => void;
     onClose: () => void;
 }
 
-export default function LpoDetailsPanel({ lpo, onClose }: LpoDetailsPanelProps) {
+const statusOptions: Array<{ value: LPOStatus; label: string }> = [
+    { value: "pending", label: "Pending" },
+    { value: "approved", label: "Approved" },
+    { value: "in_production", label: "In Production" },
+    { value: "completed", label: "Completed" },
+    { value: "cancelled", label: "Cancelled" },
+];
+
+export default function LpoDetailsPanel({ lpo, isUpdating, onStatusChange, onClose }: LpoDetailsPanelProps) {
+    const [selectedStatus, setSelectedStatus] = useState<LPOStatus>("pending");
+
+    useEffect((): void => {
+        if (!lpo) {
+            return;
+        }
+        setSelectedStatus(lpo.status);
+    }, [lpo]);
+
     if (!lpo) {
         return null;
     }
@@ -65,6 +86,31 @@ export default function LpoDetailsPanel({ lpo, onClose }: LpoDetailsPanelProps) 
                             <LpoStatusBadge status={lpo.status as LPOStatus} />
                         </div>
                     </div>
+                    <div className="rounded-md border border-gray-200 p-3 bg-gray-50">
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Update Status</label>
+                        <div className="mt-2 flex items-center gap-2">
+                            <select
+                                value={selectedStatus}
+                                onChange={(event) => setSelectedStatus(event.target.value as LPOStatus)}
+                                className="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+                            >
+                                {statusOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <button
+                                type="button"
+                                disabled={isUpdating || selectedStatus === lpo.status}
+                                onClick={(): void => onStatusChange(selectedStatus)}
+                                className="inline-flex items-center gap-1 rounded-md bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                            >
+                                {isUpdating ? <LoaderCircleIcon className="h-3 w-3 animate-spin" /> : null}
+                                Save
+                            </button>
+                        </div>
+                    </div>
                     <div>
                         <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Amount</div>
                         <div className="text-sm font-semibold text-gray-900 mt-1">
@@ -102,6 +148,15 @@ export default function LpoDetailsPanel({ lpo, onClose }: LpoDetailsPanelProps) 
                         <div className="text-sm font-semibold text-gray-900 mt-1">
                             {formatDate(lpo.created_at)}
                         </div>
+                    </div>
+                    <div>
+                        <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">QuickBooks Sync</div>
+                        <div className="text-sm font-semibold text-gray-900 mt-1">
+                            {lpo.synced_to_quickbooks ? `Synced${lpo.quickbooks_invoice_number ? ` · #${lpo.quickbooks_invoice_number}` : ""}` : "Not synced"}
+                        </div>
+                        {lpo.synced_to_quickbooks ? (
+                            <p className="text-xs text-gray-500 mt-1">{formatDate(lpo.synced_at ?? null)}</p>
+                        ) : null}
                     </div>
                     <div>
                         <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Notes</div>

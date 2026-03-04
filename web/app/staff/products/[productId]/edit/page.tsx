@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import { AlertCircleIcon } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/admin-layout";
+import { resolveProductsBasePath } from "@/lib/product-routes";
 import ProductForm from "@/features/products/components/ProductForm";
 import {
     fetchProduct,
@@ -57,6 +58,8 @@ const requiresBasePrice = (level: ProductCustomizationLevel): boolean =>
 
 export default function EditProductPage(): ReactElement {
     const router = useRouter();
+    const pathname = usePathname();
+    const productsBasePath = resolveProductsBasePath(pathname);
     const params = useParams();
     const productIdParam =
         typeof params.productId === "string"
@@ -163,7 +166,7 @@ export default function EditProductPage(): ReactElement {
             }
 
             toast.success("Product updated successfully.");
-            router.push("/staff/products");
+            router.push(productsBasePath);
         } catch (error: unknown) {
             toast.error("Unable to save the product. Please try again.");
         } finally {
@@ -172,7 +175,7 @@ export default function EditProductPage(): ReactElement {
     };
 
     const handleCancel = (): void => {
-        router.push("/staff/products");
+        router.push(productsBasePath);
     };
 
     return (
@@ -184,7 +187,7 @@ export default function EditProductPage(): ReactElement {
                             Staff Portal
                         </a>
                         <span>/</span>
-                        <a href="/staff/products" className="hover:text-brand-blue">
+                        <a href={productsBasePath} className="hover:text-brand-blue">
                             Products
                         </a>
                         <span>/</span>

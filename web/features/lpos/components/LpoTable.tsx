@@ -28,6 +28,7 @@ export default function LpoTable({ lpos, onView }: LpoTableProps) {
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Quote</th>
                         <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">QuickBooks</th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Created</th>
                         <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
                     </tr>
@@ -49,6 +50,17 @@ export default function LpoTable({ lpos, onView }: LpoTableProps) {
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-700">
                                 <LpoStatusBadge status={lpo.status} />
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-700">
+                                {lpo.synced_to_quickbooks ? (
+                                    <span className="inline-flex rounded-full bg-brand-green/10 px-2 py-0.5 text-xs font-semibold text-brand-green">
+                                        Synced
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
+                                        Not Synced
+                                    </span>
+                                )}
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-700">
                                 {formatDate(lpo.created_at)}

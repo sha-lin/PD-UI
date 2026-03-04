@@ -1,5 +1,29 @@
 export type QuoteStatus = "Draft" | "Sent to PT" | "Costed" | "Sent to Customer" | "Approved" | "Lost";
 
+export type QuoteProductionStatus =
+    | "pending"
+    | "in_progress"
+    | "costed"
+    | "sent_to_client"
+    | "on_hold"
+    | "in_production"
+    | "completed";
+
+export interface QuoteLineItem {
+    id: number;
+    quote: number;
+    product: number | null;
+    product_name: string;
+    quantity: number;
+    unit_price: number | string | null;
+    production_cost?: number | string | null;
+}
+
+export interface QuoteCostPayload {
+    production_cost: number;
+    notes?: string;
+}
+
 export interface Quote {
     id: number;
     quote_id: string;
@@ -11,7 +35,10 @@ export interface Quote {
     quote_date: string;
     valid_until: string;
     created_at: string;
-    production_status: string;
+    production_status: QuoteProductionStatus | string;
+    production_cost?: number | null;
+    production_notes?: string;
+    costed_by?: number | null;
     payment_terms: string;
     checkout_status: string;
     reference_number?: string;
@@ -20,6 +47,7 @@ export interface Quote {
     client_name?: string;
     lead_name?: string;
     created_by_name?: string;
+    line_items?: QuoteLineItem[];
 }
 
 export interface QuoteHistoryItem {
@@ -57,4 +85,5 @@ export interface QuotesQueryParams {
     pageSize: number;
     search: string;
     status: "all" | QuoteStatus;
+    productionStatus?: "all" | QuoteProductionStatus;
 }

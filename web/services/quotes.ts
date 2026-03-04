@@ -1,6 +1,7 @@
 import type {
     Quote,
     QuoteActionResponse,
+    QuoteCostPayload,
     QuoteHistoryResponse,
     QuotesQueryParams,
     QuotesResponse,
@@ -19,6 +20,10 @@ const buildQueryString = (params: QuotesQueryParams): string => {
 
     if (params.status !== "all") {
         searchParams.set("status", params.status);
+    }
+
+    if (params.productionStatus && params.productionStatus !== "all") {
+        searchParams.set("production_status", params.productionStatus);
     }
 
     searchParams.set("ordering", "-created_at");
@@ -48,6 +53,7 @@ const buildWriteHeaders = (): HeadersInit => {
 
 type ApiQuote = Omit<Quote, "total_amount"> & {
     total_amount: number | string | null;
+    production_cost?: number | string | null;
 };
 
 interface ApiQuotesResponse extends Omit<QuotesResponse, "results"> {
@@ -71,6 +77,7 @@ const normalizeQuote = (quote: ApiQuote): Quote => {
     return {
         ...quote,
         total_amount: parseMoney(quote.total_amount),
+        production_cost: parseMoney(quote.production_cost ?? null),
     };
 };
 
@@ -173,4 +180,20 @@ export async function approveQuote(quoteId: number): Promise<QuoteActionResponse
 
 export async function cloneQuote(quoteId: number): Promise<QuoteActionResponse> {
     return postQuoteAction(quoteId, "clone");
+}
+
+export async function costQuote(quoteId: number, payload: QuoteCostPayload): Promise<QuoteActionResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/quotes/${quoteId}/cost/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
+        throw new Error(`Failed quote action (cost): ${response.status} ${errorText}`);
+    }
+
+    return response.json();
 }

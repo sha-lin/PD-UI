@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon } from "lucide-react";
+import { toast } from "sonner";
 import AdminLayout from "@/components/admin/admin-layout";
-import { fetchLpos } from "@/services/lpos";
+import { fetchLpos, updateLpo } from "@/services/lpos";
 import { LPO, LPOSummary, LPOStatus } from "@/types/lpos";
 import LpoSummaryStrip from "@/features/lpos/components/LpoSummaryStrip";
 import LpoFilters from "@/features/lpos/components/LpoFilters";
@@ -15,6 +16,7 @@ import LpoEmptyState from "@/features/lpos/components/LpoEmptyState";
 import LpoDetailsPanel from "@/features/lpos/components/LpoDetailsPanel";
 
 export default function LPOsPage() {
+    const queryClient = useQueryClient();
     const [search, setSearch] = useState<string>("");
     const [debouncedSearch, setDebouncedSearch] = useState<string>("");
     const [status, setStatus] = useState<LPOStatus | "all">("all");
@@ -27,7 +29,7 @@ export default function LPOsPage() {
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(search);
-        }, 3000);
+        }, 400);
 
         return () => clearTimeout(timer);
     }, [search]);
@@ -48,6 +50,19 @@ export default function LPOsPage() {
     const { data, isLoading, error } = useQuery({
         queryKey: ["lpos", queryParams],
         queryFn: () => fetchLpos(queryParams),
+    });
+
+    const statusUpdateMutation = useMutation({
+        mutationFn: ({ lpoId, nextStatus }: { lpoId: number; nextStatus: LPOStatus }): Promise<LPO> =>
+            updateLpo(lpoId, { status: nextStatus }),
+        onSuccess: (updatedLpo: LPO): void => {
+            toast.success(`LPO ${updatedLpo.lpo_number} updated to ${updatedLpo.status.replace("_", " ")}.`);
+            queryClient.invalidateQueries({ queryKey: ["lpos"] });
+            setSelectedLpo(updatedLpo);
+        },
+        onError: (): void => {
+            toast.error("Unable to update LPO status.");
+        },
     });
 
     const summaryFallback: LPOSummary = {
@@ -178,7 +193,17 @@ export default function LPOsPage() {
                     )}
                 </div>
             </main>
-            <LpoDetailsPanel lpo={selectedLpo} onClose={() => setSelectedLpo(null)} />
+            <LpoDetailsPanel
+                lpo={selectedLpo}
+                isUpdating={statusUpdateMutation.isPending}
+                onStatusChange={(nextStatus: LPOStatus): void => {
+                    if (!selectedLpo || selectedLpo.status === nextStatus) {
+                        return;
+                    }
+                    statusUpdateMutation.mutate({ lpoId: selectedLpo.id, nextStatus });
+                }}
+                onClose={() => setSelectedLpo(null)}
+            />
         </AdminLayout>
     );
 }

@@ -99,3 +99,19 @@ export async function getCurrentUser(): Promise<User> {
 
     return data.user;
 }
+
+export async function changePassword(data: ChangePasswordData): Promise<{ detail: string }> {
+    const csrfToken = await getCsrfToken();
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/change-password/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+    });
+
+    return handleResponse(response);
+}

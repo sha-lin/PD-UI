@@ -6,8 +6,7 @@ import { usePathname } from "next/navigation";
 import { LucideIcon } from "lucide-react";
 import {
     LayoutDashboard,
-    Users,
-    Target,
+    BookOpen,
     FileText,
     Package,
     Briefcase,
@@ -16,11 +15,8 @@ import {
     CheckCircle,
     Truck,
     ClipboardList,
-    CreditCard,
     BarChart3,
-    User,
-    Bell,
-    ScrollText,
+    Bell
 } from "lucide-react";
 
 interface MenuItem {
@@ -41,39 +37,19 @@ const menuSections: MenuSection[] = [
         ],
     },
     {
-        title: "BUSINESS",
+        title: "PRODUCTION TEAM",
         items: [
-            { label: "Clients", href: "/staff/clients", icon: Users },
-            { label: "Leads", href: "/staff/leads", icon: Target },
-            { label: "Quotes", href: "/staff/quotes", icon: FileText },
-            { label: "Products", href: "/staff/products", icon: Package },
-        ],
-    },
-    {
-        title: "OPERATIONS",
-        items: [
-            { label: "Jobs", href: "/staff/jobs", icon: Briefcase },
-            { label: "Vendors", href: "/staff/vendors", icon: Building2 },
-            { label: "Processes", href: "/staff/processes", icon: Settings },
-            { label: "Quality Control", href: "/staff/quality-control", icon: CheckCircle },
-            { label: "Deliveries", href: "/staff/deliveries", icon: Truck },
-        ],
-    },
-    {
-        title: "FINANCIAL",
-        items: [
+            { label: "Product Catalog", href: "/staff/products", icon: Package },
             { label: "LPOs", href: "/staff/lpos", icon: ClipboardList },
-            { label: "Payments", href: "/staff/payments", icon: CreditCard },
-            { label: "Analytics", href: "/staff/analytics", icon: BarChart3 },
-        ],
-    },
-    {
-        title: "SYSTEM",
-        items: [
-            { label: "Users", href: "/staff/users", icon: User },
-            { label: "System Alerts", href: "/staff/alerts", icon: Bell },
-            { label: "Audit Logs", href: "/staff/audit-logs", icon: ScrollText },
-            { label: "Settings", href: "/staff/settings", icon: Settings },
+            { label: "My Quotes", href: "/staff/quotes", icon: FileText },
+            { label: "My Jobs", href: "/staff/jobs", icon: Briefcase },
+            { label: "Costing", href: "/staff/quotes", icon: BookOpen },
+            { label: "Vendors", href: "/staff/production-team/vendors", icon: Building2 },
+            { label: "Quality Control", href: "/staff/quality-control", icon: CheckCircle },
+            { label: "Delivery", href: "/staff/production-team/deliveries", icon: Truck },
+            { label: "Analytics", href: "/staff/production-team/analytics", icon: BarChart3 },
+            { label: "Settings", href: "/staff/production-team/settings", icon: Settings },
+            { label: "Notifications", href: "/staff/production-team/notifications", icon: Bell },
         ],
     },
 ];

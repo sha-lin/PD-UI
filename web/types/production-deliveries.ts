@@ -1,0 +1,53 @@
+import type { Delivery, StagingLocation } from "@/types/deliveries";
+
+export interface PackagingVerification {
+    boxes_sealed: boolean;
+    job_labels: boolean;
+    quantity_marked: boolean;
+    total_quantity: boolean;
+    fragile_stickers: boolean;
+}
+
+export interface ProductionHandoffQueueItem {
+    job_id: number;
+    job_number: string | null;
+    job_name: string;
+    client_name: string | null;
+    product: string;
+    quantity: number;
+    job_status: string;
+    expected_completion: string | null;
+    quote_id: string | null;
+    person_in_charge_id: number | null;
+    qc_status: string | null;
+    qc_checked_at: string | null;
+    is_ready_for_handoff: boolean;
+    existing_delivery_id: number | null;
+    existing_staging_location: StagingLocation | null;
+    existing_mark_urgent: boolean;
+}
+
+export interface ProductionHandoffQueueResponse {
+    count: number;
+    ready_count: number;
+    blocked_count: number;
+    results: ProductionHandoffQueueItem[];
+}
+
+export interface CompleteProductionHandoffPayload {
+    job_id: number;
+    staging_location: StagingLocation;
+    packaging_verified: PackagingVerification;
+    package_photos: string[];
+    notes_to_am: string;
+    locked_evp?: string;
+    actual_cost?: string;
+    mark_urgent: boolean;
+    notify_am: boolean;
+    notify_via_email: boolean;
+}
+
+export interface CompleteProductionHandoffResponse {
+    detail: string;
+    delivery: Delivery;
+}

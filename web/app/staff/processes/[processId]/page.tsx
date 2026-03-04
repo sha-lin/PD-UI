@@ -4,16 +4,19 @@ import { useMemo } from "react";
 import type { ReactElement } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon, ArrowLeftIcon, PencilIcon, SettingsIcon, Trash2Icon } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import AdminLayout from "@/components/admin/admin-layout";
 import { deleteProcess, fetchProcessDetailBundle } from "@/services/processes";
 import { Process, ProcessDetailBundle, ProcessTier, ProcessVariable, ProcessVendor } from "@/types/processes";
 import ProcessStatusBadge from "@/features/processes/components/ProcessStatusBadge";
+import { resolveProcessesBasePath } from "@/lib/process-routes";
 
 export default function ProcessDetailPage(): ReactElement {
     const router = useRouter();
+    const pathname = usePathname();
     const params = useParams();
     const queryClient = useQueryClient();
+    const processesBasePath = resolveProcessesBasePath(pathname);
     const processIdParam =
         typeof params.processId === "string"
             ? params.processId
@@ -21,7 +24,7 @@ export default function ProcessDetailPage(): ReactElement {
                 ? params.processId[0]
                 : "";
     const processId = useMemo((): number => Number(processIdParam), [processIdParam]);
-    const hasValidId = Number.isFinite(processId);
+    const hasValidId = Number.isInteger(processId) && processId > 0;
 
     const { data, isLoading, error } = useQuery({
         queryKey: ["process-detail", processId],
@@ -33,7 +36,7 @@ export default function ProcessDetailPage(): ReactElement {
         mutationFn: (id: number): Promise<void> => deleteProcess(id),
         onSuccess: (): void => {
             queryClient.invalidateQueries({ queryKey: ["processes"] });
-            router.push("/staff/processes");
+            router.push(processesBasePath);
         },
     });
 
@@ -62,7 +65,7 @@ export default function ProcessDetailPage(): ReactElement {
                             Staff Portal
                         </a>
                         <span>/</span>
-                        <a href="/staff/processes" className="hover:text-brand-blue">
+                        <a href={processesBasePath} className="hover:text-brand-blue">
                             Processes
                         </a>
                         <span>/</span>
@@ -78,7 +81,7 @@ export default function ProcessDetailPage(): ReactElement {
                         <div className="flex flex-wrap gap-2">
                             <button
                                 type="button"
-                                onClick={(): void => router.push("/staff/processes")}
+                                onClick={(): void => router.push(processesBasePath)}
                                 className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:text-gray-900"
                             >
                                 <ArrowLeftIcon className="h-4 w-4" />
@@ -88,7 +91,7 @@ export default function ProcessDetailPage(): ReactElement {
                                 <>
                                     <button
                                         type="button"
-                                        onClick={(): void => router.push(`/staff/processes/${data.process.id}/edit`)}
+                                        onClick={(): void => router.push(`${processesBasePath}/${data.process.id}/edit`)}
                                         className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:text-gray-900"
                                     >
                                         <PencilIcon className="h-4 w-4" />
@@ -97,7 +100,7 @@ export default function ProcessDetailPage(): ReactElement {
                                     {data.process.pricing_type === "formula" && (
                                         <button
                                             type="button"
-                                            onClick={(): void => router.push(`/staff/processes/${data.process.id}/variable-ranges`)}
+                                            onClick={(): void => router.push(`${processesBasePath}/${data.process.id}/variable-ranges`)}
                                             className="inline-flex items-center gap-2 rounded-md border border-brand-green/30 px-4 py-2 text-sm font-semibold text-brand-green hover:text-brand-green/80"
                                         >
                                             <SettingsIcon className="h-4 w-4" />

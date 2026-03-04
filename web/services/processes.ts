@@ -392,7 +392,7 @@ export async function fetchProcessVariableRanges(variableId: number): Promise<Pr
         throw new Error(`Failed to fetch variable ranges: ${response.status} ${errorText}`);
     }
 
-    return parseJsonResponse<ProcessVariableRange[]>(response);
+    return parseListResponse<ProcessVariableRange>(response);
 }
 
 export async function createProcessVariableRange(

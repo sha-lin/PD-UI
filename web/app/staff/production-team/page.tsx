@@ -32,13 +32,8 @@ const productionLinks: ProductionLink[] = [
         href: "/staff/processes",
     },
     {
-        label: "Quality Control",
-        description: "Review checks and production quality status.",
-        href: "/staff/quality-control",
-    },
-    {
-        label: "Deliveries",
-        description: "Monitor dispatch and delivery progress.",
+        label: "Delivery Handover",
+        description: "Run QC checks and complete handoff to Account Management for dispatch.",
         href: "/staff/production-team/deliveries",
     },
     {

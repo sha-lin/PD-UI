@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { ReactElement } from "react";
 import { AlertCircleIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AdminLayout from "@/components/admin/admin-layout";
 import ProcessForm from "@/features/processes/components/ProcessForm";
 import {
@@ -22,6 +22,7 @@ import {
     ProcessVariableFormValues,
     ProcessVendorFormValues,
 } from "@/types/processes";
+import { resolveProcessesBasePath } from "@/lib/process-routes";
 
 const buildInitialValues = (): ProcessFormValues => {
     return {
@@ -53,6 +54,8 @@ const buildInitialValues = (): ProcessFormValues => {
 
 export default function NewProcessPage(): ReactElement {
     const router = useRouter();
+    const pathname = usePathname();
+    const processesBasePath = resolveProcessesBasePath(pathname);
     const [values, setValues] = useState<ProcessFormValues>(buildInitialValues());
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -167,7 +170,7 @@ export default function NewProcessPage(): ReactElement {
                 );
             }
 
-            router.push(`/staff/processes/${createdProcess.id}`);
+            router.push(`${processesBasePath}/${createdProcess.id}`);
         } catch (error: unknown) {
             setErrorMessage("Unable to save the process. Please try again.");
         } finally {
@@ -176,7 +179,7 @@ export default function NewProcessPage(): ReactElement {
     };
 
     const handleCancel = (): void => {
-        router.push("/staff/processes");
+        router.push(processesBasePath);
     };
 
     return (
@@ -188,7 +191,7 @@ export default function NewProcessPage(): ReactElement {
                             Staff Portal
                         </a>
                         <span>/</span>
-                        <a href="/staff/processes" className="hover:text-brand-blue">
+                        <a href={processesBasePath} className="hover:text-brand-blue">
                             Processes
                         </a>
                         <span>/</span>

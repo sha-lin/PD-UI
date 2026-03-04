@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { ChangeEvent, ReactElement } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon, ArrowLeftIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import AdminLayout from "@/components/admin/admin-layout";
 import {
     createProcessVariableRange,
@@ -14,6 +14,7 @@ import {
     fetchProcessVariables,
 } from "@/services/processes";
 import { Process, ProcessVariable, ProcessVariableRange } from "@/types/processes";
+import { resolveProcessesBasePath } from "@/lib/process-routes";
 
 interface VariableWithRanges {
     variable: ProcessVariable;
@@ -45,8 +46,10 @@ const buildDefaultDraft = (): RangeDraft => {
 
 export default function ProcessVariableRangesPage(): ReactElement {
     const router = useRouter();
+    const pathname = usePathname();
     const params = useParams();
     const queryClient = useQueryClient();
+    const processesBasePath = resolveProcessesBasePath(pathname);
     const processIdParam =
         typeof params.processId === "string"
             ? params.processId
@@ -54,8 +57,9 @@ export default function ProcessVariableRangesPage(): ReactElement {
                 ? params.processId[0]
                 : "";
     const processId = useMemo((): number => Number(processIdParam), [processIdParam]);
-    const hasValidId = Number.isFinite(processId);
+    const hasValidId = Number.isInteger(processId) && processId > 0;
     const [drafts, setDrafts] = useState<Record<number, RangeDraft>>({});
+    const [actionError, setActionError] = useState<string | null>(null);
 
     const fetchBundle = async (): Promise<VariableRangesBundle> => {
         const [process, variables] = await Promise.all([
@@ -95,16 +99,46 @@ export default function ProcessVariableRangesPage(): ReactElement {
             });
         },
         onSuccess: (): void => {
+            setActionError(null);
             queryClient.invalidateQueries({ queryKey: ["process-variable-ranges", processId] });
+        },
+        onError: (): void => {
+            setActionError("Unable to add range. Please review values and try again.");
         },
     });
 
     const deleteMutation = useMutation({
         mutationFn: (rangeId: number): Promise<void> => deleteProcessVariableRange(rangeId),
         onSuccess: (): void => {
+            setActionError(null);
             queryClient.invalidateQueries({ queryKey: ["process-variable-ranges", processId] });
         },
+        onError: (): void => {
+            setActionError("Unable to delete range. Please try again.");
+        },
     });
+
+    const validateRangeDraft = (draft: RangeDraft): string | null => {
+        const minValue = Number(draft.min_value);
+        const maxValue = Number(draft.max_value);
+        const priceValue = Number(draft.price);
+        const rateValue = Number(draft.rate);
+        const orderValue = Number(draft.order);
+
+        if ([minValue, maxValue, priceValue, rateValue, orderValue].some((value: number): boolean => Number.isNaN(value))) {
+            return "Range fields must be numeric values.";
+        }
+
+        if (maxValue < minValue) {
+            return "Max value must be greater than or equal to min value.";
+        }
+
+        if (orderValue < 1) {
+            return "Order must be 1 or greater.";
+        }
+
+        return null;
+    };
 
     const handleDraftChange = (variableId: number, field: keyof RangeDraft, value: string): void => {
         const currentDraft = drafts[variableId] ?? buildDefaultDraft();
@@ -119,6 +153,13 @@ export default function ProcessVariableRangesPage(): ReactElement {
 
     const handleAddRange = (variableId: number): void => {
         const draft = drafts[variableId] ?? buildDefaultDraft();
+        const validationError = validateRangeDraft(draft);
+        if (validationError) {
+            setActionError(validationError);
+            return;
+        }
+
+        setActionError(null);
         createMutation.mutate({ variableId, draft });
         setDrafts({
             ...drafts,
@@ -143,7 +184,7 @@ export default function ProcessVariableRangesPage(): ReactElement {
                             Staff Portal
                         </a>
                         <span>/</span>
-                        <a href="/staff/processes" className="hover:text-brand-blue">
+                        <a href={processesBasePath} className="hover:text-brand-blue">
                             Processes
                         </a>
                         <span>/</span>
@@ -158,7 +199,7 @@ export default function ProcessVariableRangesPage(): ReactElement {
                         </div>
                         <button
                             type="button"
-                            onClick={(): void => router.push(`/staff/processes/${processId}`)}
+                            onClick={(): void => router.push(`${processesBasePath}/${processId}`)}
                             className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:text-gray-900"
                         >
                             <ArrowLeftIcon className="h-4 w-4" />
@@ -200,6 +241,15 @@ export default function ProcessVariableRangesPage(): ReactElement {
                                         Unable to fetch variable ranges. Please try again later.
                                     </p>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {actionError && (
+                        <div className="bg-brand-red/10 border border-brand-red/20 rounded-lg p-4">
+                            <div className="flex items-center gap-3">
+                                <AlertCircleIcon className="h-5 w-5 text-brand-red" />
+                                <p className="text-sm text-brand-red">{actionError}</p>
                             </div>
                         </div>
                     )}
@@ -247,6 +297,7 @@ export default function ProcessVariableRangesPage(): ReactElement {
                                                                 <button
                                                                     type="button"
                                                                     onClick={(): void => handleDeleteRange(range.id)}
+                                                                    disabled={deleteMutation.isPending}
                                                                     className="inline-flex items-center gap-1 text-sm font-semibold text-brand-red hover:text-brand-red/80"
                                                                 >
                                                                     <Trash2Icon className="h-4 w-4" />
@@ -318,6 +369,7 @@ export default function ProcessVariableRangesPage(): ReactElement {
                                             <button
                                                 type="button"
                                                 onClick={(): void => handleAddRange(item.variable.id)}
+                                                disabled={createMutation.isPending}
                                                 className="inline-flex items-center gap-2 rounded-md bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue/90"
                                             >
                                                 <PlusIcon className="h-4 w-4" />

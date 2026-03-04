@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon, PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AdminLayout from "@/components/admin/admin-layout";
 import {
     deleteProcess,
@@ -24,6 +24,7 @@ import ProcessesTable from "@/features/processes/components/ProcessesTable";
 import ProcessesPagination from "@/features/processes/components/ProcessesPagination";
 import ProcessesSkeleton from "@/features/processes/components/ProcessesSkeleton";
 import ProcessesEmptyState from "@/features/processes/components/ProcessesEmptyState";
+import { resolveProcessesBasePath } from "@/lib/process-routes";
 
 interface ProcessesSummary {
     totalVisible: number;
@@ -34,7 +35,9 @@ interface ProcessesSummary {
 
 export default function ProcessesPage(): ReactElement {
     const router = useRouter();
+    const pathname = usePathname();
     const queryClient = useQueryClient();
+    const processesBasePath = resolveProcessesBasePath(pathname);
     const [search, setSearch] = useState<string>("");
     const [debouncedSearch, setDebouncedSearch] = useState<string>("");
     const [status, setStatus] = useState<ProcessStatus | "all">("all");
@@ -48,7 +51,7 @@ export default function ProcessesPage(): ReactElement {
             setDebouncedSearch(search);
         };
 
-        const timer = setTimeout(handleDebounce, 3000);
+        const timer = setTimeout(handleDebounce, 400);
 
         return (): void => clearTimeout(timer);
     }, [search]);
@@ -141,15 +144,15 @@ export default function ProcessesPage(): ReactElement {
     };
 
     const handleView = (process: Process): void => {
-        router.push(`/staff/processes/${process.id}`);
+        router.push(`${processesBasePath}/${process.id}`);
     };
 
     const handleEdit = (process: Process): void => {
-        router.push(`/staff/processes/${process.id}/edit`);
+        router.push(`${processesBasePath}/${process.id}/edit`);
     };
 
     const handleManageRanges = (process: Process): void => {
-        router.push(`/staff/processes/${process.id}/variable-ranges`);
+        router.push(`${processesBasePath}/${process.id}/variable-ranges`);
     };
 
     const handleDelete = (process: Process): void => {
@@ -179,7 +182,7 @@ export default function ProcessesPage(): ReactElement {
                             </p>
                         </div>
                         <a
-                            href="/staff/processes/new"
+                            href={`${processesBasePath}/new`}
                             className="inline-flex items-center gap-2 rounded-md bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue/90"
                         >
                             <PlusIcon className="h-4 w-4" />

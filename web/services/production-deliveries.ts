@@ -2,6 +2,8 @@ import type {
     CompleteProductionHandoffPayload,
     CompleteProductionHandoffResponse,
     ProductionHandoffQueueResponse,
+    SubmitProductionQCForJobPayload,
+    SubmitProductionQCForJobResponse,
 } from "@/types/production-deliveries";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -85,6 +87,24 @@ export async function completeProductionHandoff(
     if (!response.ok) {
         const errorText = await readErrorText(response);
         throw new Error(`Failed to complete handoff: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
+}
+
+export async function submitProductionQCForJob(
+    payload: SubmitProductionQCForJobPayload
+): Promise<SubmitProductionQCForJobResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/qc-inspections/submit-for-job/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorText = await readErrorText(response);
+        throw new Error(`Failed to submit QC: ${response.status} ${errorText}`);
     }
 
     return response.json();

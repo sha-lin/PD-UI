@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import { AlertCircleIcon } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/admin-layout";
 import ProcessForm from "@/features/processes/components/ProcessForm";
@@ -38,6 +38,7 @@ import {
     UpdateProcessVariablePayload,
     UpdateProcessVendorPayload,
 } from "@/types/processes";
+import { resolveProcessesBasePath } from "@/lib/process-routes";
 
 const buildFormValuesFromData = (
     process: Process,
@@ -98,7 +99,9 @@ const buildFormValuesFromData = (
 
 export default function EditProcessPage(): ReactElement {
     const router = useRouter();
+    const pathname = usePathname();
     const params = useParams();
+    const processesBasePath = resolveProcessesBasePath(pathname);
     const processIdParam =
         typeof params.processId === "string"
             ? params.processId
@@ -106,7 +109,7 @@ export default function EditProcessPage(): ReactElement {
                 ? params.processId[0]
                 : "";
     const processId = useMemo((): number => Number(processIdParam), [processIdParam]);
-    const hasValidId = Number.isFinite(processId);
+    const hasValidId = Number.isInteger(processId) && processId > 0;
 
     const { data, isLoading, error } = useQuery({
         queryKey: ["process-detail", processId],
@@ -289,7 +292,7 @@ export default function EditProcessPage(): ReactElement {
                 await Promise.all(data.vendors.map((vendor: ProcessVendor): Promise<void> => deleteProcessVendor(vendor.id)));
             }
 
-            router.push(`/staff/processes/${data.process.id}`);
+            router.push(`${processesBasePath}/${data.process.id}`);
         } catch (error: unknown) {
             setErrorMessage("Unable to update the process. Please try again.");
         } finally {
@@ -299,10 +302,10 @@ export default function EditProcessPage(): ReactElement {
 
     const handleCancel = (): void => {
         if (data?.process) {
-            router.push(`/staff/processes/${data.process.id}`);
+            router.push(`${processesBasePath}/${data.process.id}`);
             return;
         }
-        router.push("/staff/processes");
+        router.push(processesBasePath);
     };
 
     return (
@@ -314,7 +317,7 @@ export default function EditProcessPage(): ReactElement {
                             Staff Portal
                         </a>
                         <span>/</span>
-                        <a href="/staff/processes" className="hover:text-brand-blue">
+                        <a href={processesBasePath} className="hover:text-brand-blue">
                             Processes
                         </a>
                         <span>/</span>

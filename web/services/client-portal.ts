@@ -3,6 +3,7 @@ import type {
     ClientPortalProfile,
     UpdateClientPortalProfilePayload,
 } from "@/types/client-portal";
+import { getCsrfToken } from "@/lib/api/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -21,9 +22,10 @@ export async function fetchClientPortalProfile(): Promise<ClientPortalProfile> {
 export async function updateClientPortalProfile(
     payload: UpdateClientPortalProfilePayload
 ): Promise<ClientPortalProfile> {
+    const csrfToken = await getCsrfToken();
     const response = await fetch(`${API_BASE_URL}/api/v1/portal/me/`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -37,9 +39,10 @@ export async function updateClientPortalProfile(
 export async function changeClientPortalPassword(
     payload: ChangePasswordPayload
 ): Promise<void> {
+    const csrfToken = await getCsrfToken();
     const response = await fetch(`${API_BASE_URL}/api/auth/change-password/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
         credentials: "include",
         body: JSON.stringify(payload),
     });

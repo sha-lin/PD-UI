@@ -2,13 +2,22 @@
 
 import { useRouter } from 'next/navigation';
 import LoginForm from '@/components/auth/login-form';
-import type { User } from '@/types/auth';
+import type { User, PortalRole } from '@/types/auth';
+
+const ROLE_DASHBOARD: Record<PortalRole, string> = {
+    client: '/portal',
+    admin: '/admin/dashboard',
+    account_manager: '/account-manager',
+    production_team: '/production/dashboard',
+    vendor: '/vendors',
+};
 
 export default function LoginPage() {
     const router = useRouter();
 
     const handleLoginSuccess = (user: User) => {
-        router.push('/dashboard');
+        const destination = user.portal_role ? ROLE_DASHBOARD[user.portal_role] : '/';
+        router.push(destination);
     };
 
     const handleLoginError = (error: Error) => {

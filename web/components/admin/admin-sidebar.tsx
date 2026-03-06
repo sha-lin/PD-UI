@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { LucideIcon } from "lucide-react";
 import {
     LayoutDashboard,
-    BookOpen,
+    Users,
     FileText,
     Package,
     Briefcase,
@@ -15,7 +15,10 @@ import {
     Truck,
     ClipboardList,
     BarChart3,
-    Bell
+    CreditCard,
+    UserCircle,
+    ShieldCheck,
+    AlertTriangle,
 } from "lucide-react";
 
 interface MenuItem {
@@ -32,22 +35,36 @@ interface MenuSection {
 const menuSections: MenuSection[] = [
     {
         items: [
-            { label: "Dashboard", href: "/staff/production-team/dashboard", icon: LayoutDashboard },
+            { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
         ],
     },
     {
-        title: "PRODUCTION TEAM",
+        title: "CLIENTS & SALES",
         items: [
-            { label: "Product Catalog", href: "/staff/production/products", icon: Package },
-            { label: "LPOs", href: "/staff/production/lpos", icon: ClipboardList },
-            { label: "My Quotes", href: "/staff/production/my-quotes", icon: FileText },
-            { label: "My Jobs", href: "/staff/production/my-jobs", icon: Briefcase },
-            { label: "Costing", href: "/staff/production-team/processes", icon: BookOpen },
-            { label: "Vendors", href: "/staff/production-team/vendors", icon: Building2 },
-            { label: "Delivery", href: "/staff/production-team/deliveries", icon: Truck },
-            { label: "Analytics", href: "/staff/production-team/analytics", icon: BarChart3 },
-            { label: "Settings", href: "/staff/production-team/settings", icon: Settings },
-            { label: "Notifications", href: "/staff/production-team/notifications", icon: Bell },
+            { label: "Clients", href: "/admin/clients", icon: UserCircle },
+            { label: "Leads", href: "/admin/leads", icon: Users },
+            { label: "Quotes", href: "/admin/quotes", icon: FileText },
+            { label: "Jobs", href: "/admin/jobs", icon: Briefcase },
+            { label: "Payments", href: "/admin/payments", icon: CreditCard },
+        ],
+    },
+    {
+        title: "OPERATIONS",
+        items: [
+            { label: "Products", href: "/admin/products", icon: Package },
+            { label: "LPOs", href: "/admin/lpos", icon: ClipboardList },
+            { label: "Vendors", href: "/admin/vendors", icon: Building2 },
+            { label: "Deliveries", href: "/admin/deliveries", icon: Truck },
+            { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+        ],
+    },
+    {
+        title: "ADMINISTRATION",
+        items: [
+            { label: "Users", href: "/admin/users", icon: Users },
+            { label: "Audit Logs", href: "/admin/audit-logs", icon: ShieldCheck },
+            { label: "Alerts", href: "/admin/alerts", icon: AlertTriangle },
+            { label: "Settings", href: "/admin/settings", icon: Settings },
         ],
     },
 ];
@@ -55,9 +72,8 @@ const menuSections: MenuSection[] = [
 export default function AdminSidebar() {
     const pathname = usePathname();
 
-    const isActiveLink = (href: string): boolean => {
-        return pathname === href;
-    };
+    const isActiveLink = (href: string): boolean =>
+        pathname === href || (href !== "/admin/dashboard" && pathname.startsWith(href));
 
     return (
         <aside className="w-64 bg-brand-blue text-white h-screen fixed left-0 top-0 overflow-y-auto">

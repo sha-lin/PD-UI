@@ -1,6 +1,23 @@
-import type { ProductionUsersResponse } from "@/types/users";
+import type { ProductionUser, ProductionUsersResponse } from "@/types/users";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
+export async function getCurrentUser(): Promise<ProductionUser> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/users/me/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
+        throw new Error(`Failed to fetch current user: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
+}
 
 export async function fetchProductionUsers(): Promise<ProductionUsersResponse> {
     const response = await fetch(`${API_BASE_URL}/api/production-users/`, {

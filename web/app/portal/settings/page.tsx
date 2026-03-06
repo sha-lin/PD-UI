@@ -163,8 +163,88 @@ export default function SettingsPage(): ReactElement {
                 )}
 
                 {isLoading ? (
-                    <div className="flex items-center justify-center py-20">
-                        <Loader2 className="w-8 h-8 animate-spin text-brand-blue" />
+                    <div className="space-y-6">
+                        {/* Profile & Company skeleton */}
+                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 space-y-8">
+                            {/* Profile skeleton */}
+                            <div className="space-y-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-5 h-5 rounded bg-gray-200 animate-pulse" />
+                                    <div className="space-y-1.5">
+                                        <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
+                                        <div className="h-3 w-56 rounded bg-gray-200 animate-pulse" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    {[...Array(4)].map((_, i) => (
+                                        <div key={i} className="space-y-1.5">
+                                            <div className="h-3.5 w-24 rounded bg-gray-200 animate-pulse" />
+                                            <div className="h-3 w-48 rounded bg-gray-200 animate-pulse" />
+                                            <div className="h-10 rounded-md bg-gray-200 animate-pulse" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            {/* Company skeleton */}
+                            <div className="space-y-5 pt-6 border-t border-gray-200">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-5 h-5 rounded bg-gray-200 animate-pulse" />
+                                    <div className="space-y-1.5">
+                                        <div className="h-4 w-24 rounded bg-gray-200 animate-pulse" />
+                                        <div className="h-3 w-64 rounded bg-gray-200 animate-pulse" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="md:col-span-2 space-y-1.5">
+                                        <div className="h-3.5 w-28 rounded bg-gray-200 animate-pulse" />
+                                        <div className="h-3 w-60 rounded bg-gray-200 animate-pulse" />
+                                        <div className="h-10 rounded-md bg-gray-200 animate-pulse" />
+                                    </div>
+                                    {[...Array(4)].map((_, i) => (
+                                        <div key={i} className="space-y-1.5">
+                                            <div className="h-3.5 w-20 rounded bg-gray-200 animate-pulse" />
+                                            <div className="h-3 w-44 rounded bg-gray-200 animate-pulse" />
+                                            <div className="h-10 rounded-md bg-gray-200 animate-pulse" />
+                                        </div>
+                                    ))}
+                                    <div className="md:col-span-2 space-y-1.5">
+                                        <div className="h-3.5 w-28 rounded bg-gray-200 animate-pulse" />
+                                        <div className="h-3 w-56 rounded bg-gray-200 animate-pulse" />
+                                        <div className="h-16 rounded-md bg-gray-200 animate-pulse" />
+                                    </div>
+                                    <div className="md:col-span-2 space-y-1.5">
+                                        <div className="h-3.5 w-36 rounded bg-gray-200 animate-pulse" />
+                                        <div className="h-3 w-52 rounded bg-gray-200 animate-pulse" />
+                                        <div className="h-16 rounded-md bg-gray-200 animate-pulse" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="pt-4 border-t border-gray-200 flex justify-end">
+                                <div className="h-10 w-44 rounded-md bg-gray-200 animate-pulse" />
+                            </div>
+                        </div>
+                        {/* Security skeleton */}
+                        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 space-y-5">
+                            <div className="flex items-center gap-3">
+                                <div className="w-5 h-5 rounded bg-gray-200 animate-pulse" />
+                                <div className="space-y-1.5">
+                                    <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
+                                    <div className="h-3 w-60 rounded bg-gray-200 animate-pulse" />
+                                </div>
+                            </div>
+                            <div className="max-w-md space-y-5">
+                                {[...Array(3)].map((_, i) => (
+                                    <div key={i} className="space-y-1.5">
+                                        <div className="h-3.5 w-32 rounded bg-gray-200 animate-pulse" />
+                                        <div className="h-3 w-48 rounded bg-gray-200 animate-pulse" />
+                                        <div className="h-10 rounded-md bg-gray-200 animate-pulse" />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="pt-4 border-t border-gray-200 flex justify-end">
+                                <div className="h-10 w-36 rounded-md bg-gray-200 animate-pulse" />
+                            </div>
+                        </div>
                     </div>
                 ) : (
                     <div className="space-y-6">

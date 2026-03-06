@@ -26,7 +26,6 @@ import {
     FileText,
     Plus,
     Search,
-    Filter,
     Clock,
     CheckCircle2,
     XCircle,
@@ -37,6 +36,8 @@ import {
     Send,
     Trash2,
     Eye,
+    Paperclip,
+    X,
 } from "lucide-react";
 
 type FilterStatus = "all" | InvoiceStatus;
@@ -46,6 +47,7 @@ export default function VendorInvoicesPage(): ReactElement {
     const [searchQuery, setSearchQuery] = useState("");
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingInvoice, setEditingInvoice] = useState<VendorInvoice | null>(null);
+    const [viewingInvoice, setViewingInvoice] = useState<VendorInvoice | null>(null);
 
     const queryClient = useQueryClient();
 
@@ -159,28 +161,20 @@ export default function VendorInvoicesPage(): ReactElement {
                         <StatsCard
                             label="Draft"
                             value={stats.draft_count}
-                            icon={Edit}
-                            color="gray"
                         />
                         <StatsCard
                             label="Pending Payment"
                             value={formatCurrency(stats.total_pending_amount)}
                             subtitle={`${stats.submitted_count + stats.approved_count} invoices`}
-                            icon={Clock}
-                            color="yellow"
                         />
                         <StatsCard
                             label="Paid This Month"
                             value={formatCurrency(stats.current_month_amount)}
-                            icon={DollarSign}
-                            color="green"
                         />
                         <StatsCard
                             label="Total Paid"
                             value={formatCurrency(stats.total_paid_amount)}
                             subtitle={`${stats.paid_count} invoices`}
-                            icon={CheckCircle2}
-                            color="blue"
                         />
                     </div>
                 )}
@@ -292,6 +286,17 @@ export default function VendorInvoicesPage(): ReactElement {
                                                     Your Ref: {invoice.vendor_invoice_ref}
                                                 </p>
                                             )}
+                                            {invoice.invoice_file && (
+                                                <a
+                                                    href={invoice.invoice_file}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1.5 text-sm text-brand-blue hover:underline mt-1"
+                                                >
+                                                    <Paperclip className="w-3.5 h-3.5" />
+                                                    Attached Invoice
+                                                </a>
+                                            )}
                                         </div>
                                         <div className="text-right">
                                             <div className="text-2xl font-bold text-gray-900">
@@ -396,7 +401,10 @@ export default function VendorInvoicesPage(): ReactElement {
                                                 </>
                                             )}
                                             {invoice.status !== "draft" && (
-                                                <button className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                                <button
+                                                    onClick={() => setViewingInvoice(invoice)}
+                                                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                                >
                                                     <Eye className="w-4 h-4" />
                                                     View Details
                                                 </button>
@@ -409,7 +417,166 @@ export default function VendorInvoicesPage(): ReactElement {
                     </div>
                 )}
             </main>
+
+            {viewingInvoice && (
+                <InvoiceDetailModal
+                    invoice={viewingInvoice}
+                    onClose={() => setViewingInvoice(null)}
+                    getStatusBadge={getStatusBadge}
+                    formatCurrency={formatCurrency}
+                    formatDate={formatDate}
+                />
+            )}
         </VendorLayout>
+    );
+}
+
+interface InvoiceDetailModalProps {
+    invoice: VendorInvoice;
+    onClose: () => void;
+    getStatusBadge: (status: InvoiceStatus) => { color: string; icon: React.ElementType; label: string };
+    formatCurrency: (amount: number) => string;
+    formatDate: (dateString: string) => string;
+}
+
+function InvoiceDetailModal({ invoice, onClose, getStatusBadge, formatCurrency, formatDate }: InvoiceDetailModalProps): ReactElement {
+    const statusBadge = getStatusBadge(invoice.status);
+    const StatusIcon = statusBadge.icon;
+
+    return (
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+                    <div className="flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-brand-blue" />
+                        <h2 className="text-lg font-bold text-gray-900">{invoice.invoice_number}</h2>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${statusBadge.color}`}>
+                            <StatusIcon className="w-3 h-3" />
+                            {statusBadge.label}
+                        </span>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                    {/* Rejection Banner */}
+                    {invoice.status === "rejected" && invoice.rejection_reason && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+                            <div>
+                                <p className="text-sm font-semibold text-red-900">Invoice Rejected</p>
+                                <p className="text-sm text-red-700 mt-1">{invoice.rejection_reason}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Purchase Order</p>
+                            <p className="text-sm font-semibold text-gray-900">{invoice.po_number}</p>
+                            <p className="text-xs text-gray-500">{invoice.purchase_order.product_type}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">System Reference</p>
+                            <p className="text-sm font-mono text-gray-700">{invoice.vendor_invoice_ref || "—"}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Invoice Date</p>
+                            <p className="text-sm text-gray-900">{formatDate(invoice.invoice_date)}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Due Date</p>
+                            <p className="text-sm text-gray-900">{formatDate(invoice.due_date)}</p>
+                        </div>
+                        {invoice.submitted_at && (
+                            <div>
+                                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Submitted</p>
+                                <p className="text-sm text-gray-900">{formatDate(invoice.submitted_at)}</p>
+                            </div>
+                        )}
+                        {invoice.approved_at && (
+                            <div>
+                                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Approved</p>
+                                <p className="text-sm text-gray-900">{formatDate(invoice.approved_at)}</p>
+                            </div>
+                        )}
+                        {invoice.paid_at && (
+                            <div>
+                                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Paid</p>
+                                <p className="text-sm text-gray-900">{formatDate(invoice.paid_at)}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Line Items */}
+                    <div>
+                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Line Items</p>
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-gray-200">
+                                    <th className="text-left py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</th>
+                                    <th className="text-center py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide w-16">Qty</th>
+                                    <th className="text-right py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide w-28">Unit Price</th>
+                                    <th className="text-right py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide w-28">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {invoice.line_items.map((item, idx) => (
+                                    <tr key={idx} className="border-b border-gray-100">
+                                        <td className="py-2.5 text-gray-800">{item.description}</td>
+                                        <td className="py-2.5 text-center text-gray-700">{item.quantity}</td>
+                                        <td className="py-2.5 text-right text-gray-700">{formatCurrency(item.unit_price)}</td>
+                                        <td className="py-2.5 text-right font-medium text-gray-900">{formatCurrency(item.amount)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Totals */}
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Subtotal</span>
+                            <span className="text-gray-900">{formatCurrency(invoice.subtotal)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Tax ({invoice.tax_rate}%)</span>
+                            <span className="text-gray-900">{formatCurrency(invoice.tax_amount)}</span>
+                        </div>
+                        <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-200">
+                            <span className="text-gray-900">Total</span>
+                            <span className="text-brand-blue">{formatCurrency(invoice.total_amount)}</span>
+                        </div>
+                    </div>
+
+                    {/* Attachment */}
+                    {invoice.invoice_file && (
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Attachment</p>
+                            <a
+                                href={invoice.invoice_file}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 border border-brand-blue text-brand-blue text-sm rounded-lg hover:bg-blue-50 transition-colors"
+                            >
+                                <Paperclip className="w-4 h-4" />
+                                View Attached Invoice
+                            </a>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -417,28 +584,14 @@ interface StatsCardProps {
     label: string;
     value: string | number;
     subtitle?: string;
-    icon: React.ElementType;
-    color: "gray" | "yellow" | "green" | "blue";
 }
 
-function StatsCard({ label, value, subtitle, icon: Icon, color }: StatsCardProps): ReactElement {
-    const colorClasses = {
-        gray: "bg-gray-100 text-gray-600",
-        yellow: "bg-yellow-100 text-yellow-600",
-        green: "bg-green-100 text-green-600",
-        blue: "bg-blue-100 text-blue-600",
-    };
-
+function StatsCard({ label, value, subtitle }: StatsCardProps): ReactElement {
     return (
-        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-start justify-between mb-3">
-                <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-                    <Icon className="w-6 h-6" />
-                </div>
-            </div>
-            <p className="text-sm font-medium text-gray-600 mb-1">{label}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
-            {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+            <p className="text-xl font-bold text-gray-900">{value}</p>
+            {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
         </div>
     );
 }
@@ -452,7 +605,6 @@ interface InvoiceFormProps {
 
 function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProps): ReactElement {
     const [selectedPO, setSelectedPO] = useState<number>(invoice?.purchase_order.id || 0);
-    const [vendorRef, setVendorRef] = useState(invoice?.vendor_invoice_ref || "");
     const [invoiceDate, setInvoiceDate] = useState(
         invoice?.invoice_date || new Date().toISOString().split("T")[0]
     );
@@ -463,6 +615,7 @@ function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProp
         invoice?.line_items || [{ description: "", quantity: 1, unit_price: 0, amount: 0 }]
     );
     const [taxRate, setTaxRate] = useState(invoice?.tax_rate || 16);
+    const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
 
     const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
     const taxAmount = (subtotal * taxRate) / 100;
@@ -491,12 +644,12 @@ function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProp
         e.preventDefault();
         onSubmit({
             purchase_order_id: selectedPO,
-            vendor_invoice_ref: vendorRef,
             invoice_date: invoiceDate,
             due_date: dueDate,
             line_items: lineItems,
             subtotal,
             tax_rate: taxRate,
+            invoice_file: invoiceFile ?? undefined,
         });
     };
 
@@ -508,9 +661,10 @@ function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProp
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                         Purchase Order *
                     </label>
+                    <p className="text-xs text-gray-400 mb-2">Select the PO this invoice is raised against</p>
                     <select
                         required
                         value={selectedPO}
@@ -528,22 +682,10 @@ function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProp
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Your Invoice Reference
-                    </label>
-                    <input
-                        type="text"
-                        value={vendorRef}
-                        onChange={(e) => setVendorRef(e.target.value)}
-                        placeholder="e.g., VND-INV-2026-001"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                         Invoice Date *
                     </label>
+                    <p className="text-xs text-gray-400 mb-2">The date this invoice was issued</p>
                     <input
                         required
                         type="date"
@@ -554,9 +696,10 @@ function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProp
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                         Due Date *
                     </label>
+                    <p className="text-xs text-gray-400 mb-2">Payment expected by this date</p>
                     <input
                         required
                         type="date"
@@ -570,7 +713,10 @@ function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProp
             {/* Line Items */}
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
-                    <label className="block text-sm font-medium text-gray-700">Line Items *</label>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Line Items *</label>
+                        <p className="text-xs text-gray-400 mt-0.5">List each service or product separately</p>
+                    </div>
                     <button
                         type="button"
                         onClick={addLineItem}
@@ -580,45 +726,54 @@ function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProp
                     </button>
                 </div>
 
-                <div className="space-y-3">
+                {/* Column headers — shown once above the rows */}
+                <div className="grid grid-cols-12 gap-3 mb-1 px-0.5">
+                    <span className="col-span-5 text-xs font-medium text-gray-500 uppercase tracking-wide">Description</span>
+                    <span className="col-span-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Qty</span>
+                    <span className="col-span-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Unit Price (KES)</span>
+                    <span className="col-span-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Amount</span>
+                </div>
+
+                <div className="space-y-2">
                     {lineItems.map((item, index) => (
-                        <div key={index} className="grid grid-cols-12 gap-3 items-start">
+                        <div key={index} className="grid grid-cols-12 gap-3 items-center">
                             <input
                                 required
                                 type="text"
-                                placeholder="Description"
+                                placeholder="e.g. Offset printing A3"
                                 value={item.description}
                                 onChange={(e) => handleLineItemChange(index, "description", e.target.value)}
-                                className="col-span-5 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                                className="col-span-5 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-blue focus:border-transparent"
                             />
                             <input
                                 required
                                 type="number"
                                 min="1"
-                                placeholder="Qty"
+                                placeholder="0"
                                 value={item.quantity}
                                 onChange={(e) => handleLineItemChange(index, "quantity", Number(e.target.value))}
-                                className="col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                                className="col-span-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-center focus:ring-2 focus:ring-brand-blue focus:border-transparent"
                             />
                             <input
                                 required
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                placeholder="Rate"
+                                placeholder="0.00"
                                 value={item.unit_price}
                                 onChange={(e) => handleLineItemChange(index, "unit_price", Number(e.target.value))}
-                                className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                                className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg text-sm text-right focus:ring-2 focus:ring-brand-blue focus:border-transparent"
                             />
-                            <div className="col-span-2 flex items-center justify-between">
-                                <span className="text-sm font-medium text-gray-900">
-                                    {item.amount.toFixed(2)}
+                            <div className="col-span-2 flex items-center justify-between pl-1">
+                                <span className="text-sm font-semibold text-gray-900">
+                                    {item.amount.toLocaleString("en-KE", { minimumFractionDigits: 2 })}
                                 </span>
                                 {lineItems.length > 1 && (
                                     <button
                                         type="button"
                                         onClick={() => removeLineItem(index)}
-                                        className="text-red-600 hover:text-red-700"
+                                        className="text-red-400 hover:text-red-600 ml-1"
+                                        title="Remove line"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -649,6 +804,39 @@ function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProp
                 </div>
             </div>
 
+            {/* File Attachment */}
+            {!invoice && (
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Attach Invoice Document
+                        <span className="ml-1 text-gray-400 font-normal">(PDF, PNG, JPG — optional)</span>
+                    </label>
+                    <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-brand-blue hover:bg-blue-50 transition-colors">
+                            <Paperclip className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm text-gray-600">
+                                {invoiceFile ? invoiceFile.name : "Choose file"}
+                            </span>
+                            <input
+                                type="file"
+                                accept=".pdf,.png,.jpg,.jpeg"
+                                className="hidden"
+                                onChange={(e) => setInvoiceFile(e.target.files?.[0] ?? null)}
+                            />
+                        </label>
+                        {invoiceFile && (
+                            <button
+                                type="button"
+                                onClick={() => setInvoiceFile(null)}
+                                className="text-sm text-red-600 hover:text-red-700"
+                            >
+                                Remove
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-3">
                 <button
@@ -671,13 +859,10 @@ function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProp
 
 function StatsCardSkeleton(): ReactElement {
     return (
-        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm animate-pulse">
-            <div className="flex items-start justify-between mb-3">
-                <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
-            </div>
-            <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-            <div className="h-8 bg-gray-200 rounded w-32"></div>
-            <div className="h-3 bg-gray-200 rounded w-20 mt-2"></div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm animate-pulse">
+            <div className="h-3 bg-gray-200 rounded w-20 mb-2"></div>
+            <div className="h-6 bg-gray-200 rounded w-28"></div>
+            <div className="h-3 bg-gray-200 rounded w-16 mt-1.5"></div>
         </div>
     );
 }

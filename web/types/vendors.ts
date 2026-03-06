@@ -210,12 +210,12 @@ export interface VendorInvoice {
 
 export interface CreateInvoicePayload {
     purchase_order_id: number;
-    vendor_invoice_ref?: string;
     invoice_date: string;
     due_date: string;
     line_items: InvoiceLineItem[];
     subtotal: number;
     tax_rate: number;
+    invoice_file?: File;
 }
 
 export interface UpdateInvoicePayload {

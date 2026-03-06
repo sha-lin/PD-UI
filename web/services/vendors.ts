@@ -300,11 +300,21 @@ export async function fetchVendorInvoiceStats(): Promise<InvoiceStats> {
 }
 
 export async function createVendorInvoice(payload: CreateInvoicePayload): Promise<VendorInvoice> {
+    const csrfToken = getCsrfToken();
+    const formData = new FormData();
+    formData.append("purchase_order_id", String(payload.purchase_order_id));
+    formData.append("invoice_date", payload.invoice_date);
+    formData.append("due_date", payload.due_date);
+    formData.append("line_items", JSON.stringify(payload.line_items));
+    formData.append("subtotal", String(payload.subtotal));
+    formData.append("tax_rate", String(payload.tax_rate));
+    if (payload.invoice_file) formData.append("invoice_file", payload.invoice_file);
+
     const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-invoices/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: csrfToken ? { "X-CSRFToken": csrfToken } : {},
         credentials: "include",
-        body: JSON.stringify(payload),
+        body: formData,
     });
 
     if (!response.ok) {

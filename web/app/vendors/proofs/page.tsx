@@ -241,6 +241,7 @@ export default function VendorProofsPage(): ReactElement {
                                             src={proof.proof_image}
                                             alt={`Proof for ${proof.purchase_order.po_number}`}
                                             fill
+                                            unoptimized
                                             className="object-cover"
                                         />
                                         <div className="absolute top-3 right-3">

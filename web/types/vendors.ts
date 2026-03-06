@@ -18,7 +18,6 @@ export interface Vendor {
     rating: string | null;
     quality_rating: string | null;
     reliability_rating: string | null;
-    vps_score: string | null;
     vps_score_value: string | number;
     performance_score: string | number | null;
     recommended: boolean;
@@ -63,7 +62,6 @@ export interface CreateVendorPayload {
     rating: string | null;
     quality_rating: string | null;
     reliability_rating: string | null;
-    vps_score: string | null;
     vps_score_value: string;
     performance_score: string | number | null;
     recommended: boolean;
@@ -92,7 +90,6 @@ export interface VendorFormValues {
     rating: string;
     quality_rating: string;
     reliability_rating: string;
-    vps_score: string;
     vps_score_value: string;
     performance_score: string;
     recommended: boolean;

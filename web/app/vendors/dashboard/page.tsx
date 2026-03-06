@@ -15,12 +15,21 @@ import {
     fetchVendorProofs,
     fetchVendorIssues,
 } from "@/services/vendors";
-import { FileText, Image as ImageIcon, AlertCircle, ArrowRight } from "lucide-react";
+import { FileText, Image as ImageIcon, AlertCircle, ArrowRight, Building2 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import Link from "next/link";
+import { checkSession } from "@/lib/api/auth";
 
 export default function VendorDashboardPage(): ReactElement {
     const [activeTab, setActiveTab] = useState<"pos" | "invoices" | "proofs">("pos");
+
+    const { data: sessionData } = useQuery({
+        queryKey: ["session-user"],
+        queryFn: checkSession,
+        staleTime: 10 * 60 * 1000,
+    });
+
+    const sessionUser = sessionData?.user;
 
     const { data: vendor, isLoading: isLoadingVendor } = useQuery({
         queryKey: ["current-vendor"],
@@ -96,38 +105,50 @@ export default function VendorDashboardPage(): ReactElement {
 
     return (
         <VendorLayout>
-            <main className="p-8 space-y-6">
+            <main className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
                 {/* Welcome Header */}
                 {isLoadingVendor ? (
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm animate-pulse">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-2">
-                                <div className="h-8 bg-gray-200 rounded w-64"></div>
-                                <div className="h-4 bg-gray-200 rounded w-48"></div>
+                    <div className="bg-gradient-to-r from-brand-blue to-blue-800 rounded-xl p-4 sm:p-6 shadow-md animate-pulse">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="hidden sm:block w-14 h-14 bg-white/20 rounded-xl flex-shrink-0"></div>
+                                <div className="space-y-2 min-w-0">
+                                    <div className="h-6 bg-white/20 rounded w-40 sm:w-56"></div>
+                                    <div className="h-4 bg-white/20 rounded w-28 sm:w-40"></div>
+                                </div>
                             </div>
-                            <div className="w-24 h-24 bg-gray-200 rounded-full"></div>
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-full flex-shrink-0"></div>
                         </div>
                     </div>
                 ) : vendor && (
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold text-brand-black mb-2">
-                                    Welcome back, {vendor.name}
-                                </h1>
-                                <p className="text-gray-600">
-                                    {vendor.contact_person && `${vendor.contact_person} • `}
-                                    {vendor.email}
-                                </p>
+                    <div className="bg-gradient-to-r from-brand-blue to-blue-800 rounded-xl p-4 sm:p-6 shadow-md">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="hidden sm:flex flex-shrink-0 w-14 h-14 bg-white/15 rounded-xl items-center justify-center">
+                                    <Building2 className="w-7 h-7 text-white" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-white/70 text-xs sm:text-sm font-medium mb-0.5">Welcome back,</p>
+                                    <h1 className="text-lg sm:text-2xl font-bold text-white leading-tight truncate">
+                                        {vendor.name}
+                                    </h1>
+                                    <p className="text-white/70 text-xs sm:text-sm mt-1 truncate">
+                                        {sessionUser
+                                            ? `${sessionUser.first_name} ${sessionUser.last_name}`.trim() || sessionUser.username
+                                            : vendor.contact_person}
+                                        {" • "}
+                                        {sessionUser?.email ?? vendor.email}
+                                    </p>
+                                </div>
                             </div>
                             {performance && (
-                                <div className="text-center">
+                                <div className="text-center flex-shrink-0">
                                     <div
-                                        className={`inline-flex items-center justify-center w-24 h-24 rounded-full ${getVPSColor(performance.vps_grade)} font-bold text-3xl`}
+                                        className={`inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white font-bold text-2xl sm:text-3xl ${getVPSColor(performance.vps_grade)}`}
                                     >
                                         {performance.vps_grade}
                                     </div>
-                                    <p className="text-sm text-gray-600 mt-2">VPS Grade</p>
+                                    <p className="text-white/70 text-xs mt-1 sm:mt-2 font-medium">VPS Grade</p>
                                 </div>
                             )}
                         </div>

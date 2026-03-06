@@ -106,3 +106,10 @@ export interface ClientFormPayload {
     lead_source?: string;
     status?: ClientStatus;
 }
+
+export interface ClientStatsResponse {
+    total_clients: number;
+    active_clients: number;
+    b2b_clients: number;
+    total_revenue: number;
+}

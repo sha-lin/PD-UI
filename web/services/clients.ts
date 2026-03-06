@@ -5,6 +5,7 @@ import type {
     ClientFormPayload,
     ClientsQueryParams,
     ClientsResponse,
+    ClientStatsResponse,
     ComplianceDocument,
 } from "@/types/clients";
 
@@ -235,4 +236,35 @@ export async function fetchClientComplianceDocuments(clientId: number): Promise<
 
     const payload = (await response.json()) as unknown;
     return parseCollectionResponse<ComplianceDocument>(payload);
+}
+
+export async function fetchClientStats(): Promise<ClientStatsResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/clients/?page_size=1000`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        const errorText = await extractErrorDetail(response);
+        throw new Error(`Failed to fetch client stats: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    const clients = data.results || [];
+
+    const totalClients = clients.length;
+    const activeClients = clients.filter((c: Client) => c.status === "Active").length;
+    const b2bClients = clients.filter((c: Client) => c.client_type === "B2B").length;
+
+    const totalRevenue = 0;
+
+    return {
+        total_clients: totalClients,
+        active_clients: activeClients,
+        b2b_clients: b2bClients,
+        total_revenue: totalRevenue,
+    };
 }

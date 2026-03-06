@@ -135,3 +135,35 @@ export async function convertLead(leadId: number, payload: LeadConvertPayload): 
 
     return response.json();
 }
+
+export async function createLead(payload: Partial<Lead>): Promise<Lead> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/leads/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorText = await extractErrorDetail(response);
+        throw new Error(`Failed to create lead: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
+}
+
+export async function updateLead(leadId: number, payload: Partial<Lead>): Promise<Lead> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/leads/${leadId}/`, {
+        method: "PATCH",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorText = await extractErrorDetail(response);
+        throw new Error(`Failed to update lead: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
+}

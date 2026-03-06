@@ -3,6 +3,7 @@ import type {
     DashboardAlertsResponse,
     DashboardAnalytics,
     DashboardOverview,
+    AccountManagerDashboard,
 } from "@/types/dashboard";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -83,6 +84,23 @@ export async function fetchDashboardActivity(): Promise<DashboardActivityRespons
     if (!response.ok) {
         const errorText = await extractErrorDetail(response);
         throw new Error(`Failed to fetch dashboard activity: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
+}
+
+export async function fetchAccountManagerDashboard(): Promise<AccountManagerDashboard> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/dashboard/account-manager/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        const errorText = await extractErrorDetail(response);
+        throw new Error(`Failed to fetch account manager dashboard: ${response.status} ${errorText}`);
     }
 
     return response.json();

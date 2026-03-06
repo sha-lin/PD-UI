@@ -9,6 +9,7 @@ interface LeadDetailDrawerProps {
     isQualifying: boolean;
     isConverting: boolean;
     onClose: () => void;
+    onEdit: (lead: Lead) => void;
     onQualify: (lead: Lead) => void;
     onConvert: (lead: Lead, payload: LeadConvertPayload) => void;
 }
@@ -20,6 +21,7 @@ export default function LeadDetailDrawer({
     isQualifying,
     isConverting,
     onClose,
+    onEdit,
     onQualify,
     onConvert,
 }: LeadDetailDrawerProps): ReactElement | null {
@@ -213,6 +215,13 @@ export default function LeadDetailDrawer({
                             <section className="rounded-lg border border-gray-200 p-4">
                                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Workflow</h3>
                                 <div className="flex items-center gap-3 mt-3">
+                                    <button
+                                        type="button"
+                                        onClick={(): void => onEdit(lead)}
+                                        className="rounded-md bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue/90"
+                                    >
+                                        Edit Lead
+                                    </button>
                                     {lead.status === "New" && (
                                         <button
                                             type="button"

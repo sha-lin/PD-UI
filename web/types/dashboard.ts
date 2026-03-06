@@ -98,6 +98,85 @@ export interface DashboardActivityResponse {
     results: DashboardActivity[];
 }
 
+export interface AccountManagerKPIs {
+    my_revenue_this_month: number;
+    my_win_rate: number;
+    active_jobs_count: number;
+    new_clients_this_month: number;
+}
+
+export interface LeadFunnel {
+    new: number;
+    contacted: number;
+    qualified: number;
+    converted: number;
+}
+
+export interface QuoteStatusDistribution {
+    draft: number;
+    quoted: number;
+    approved: number;
+    lost: number;
+}
+
+export interface RevenueTrendPoint {
+    month: string;
+    revenue: number;
+}
+
+export interface ClientGrowthPoint {
+    month: string;
+    b2b: number;
+    b2c: number;
+}
+
+export interface TopProduct {
+    name: string;
+    revenue: number;
+    count: number;
+}
+
+export interface JobsStatusDistribution {
+    pending: number;
+    in_progress: number;
+    on_hold: number;
+    completed: number;
+}
+
+export interface RecentQuote {
+    id: number;
+    quote_id: string;
+    client_name: string | null;
+    lead_name: string | null;
+    product_name: string;
+    quantity: number;
+    total_amount: number;
+    status: string;
+    created_at: string;
+}
+
+export interface UpcomingAction {
+    type: "quote" | "job" | "lead";
+    id: number;
+    title: string;
+    description: string;
+    client_name: string;
+    due_date: string;
+    priority: "low" | "medium" | "high";
+}
+
+export interface AccountManagerDashboard {
+    kpis: AccountManagerKPIs;
+    lead_funnel: LeadFunnel;
+    quote_status: QuoteStatusDistribution;
+    revenue_trend: RevenueTrendPoint[];
+    client_growth: ClientGrowthPoint[];
+    top_products: TopProduct[];
+    jobs_status: JobsStatusDistribution;
+    recent_quotes: RecentQuote[];
+    upcoming_actions: UpcomingAction[];
+}
+
 export interface RevenueChartPoint {
     label: string;
     revenue: number;

@@ -268,3 +268,72 @@ export interface ProofStats {
     approved: number;
     rejected: number;
 }
+
+export type POStatus =
+    | "NEW"
+    | "ACCEPTED"
+    | "IN_PRODUCTION"
+    | "AWAITING_APPROVAL"
+    | "BLOCKED"
+    | "AT_RISK"
+    | "COMPLETED"
+    | "CANCELLED";
+
+export type POMilestone =
+    | "awaiting_acceptance"
+    | "in_production"
+    | "quality_check"
+    | "completed";
+
+export interface PurchaseOrder {
+    id: number;
+    po_number: string;
+    job: number;
+    job_number: string;
+    vendor: number;
+    vendor_name: string;
+    product_type: string;
+    product_description: string;
+    quantity: number;
+    unit_cost: number;
+    total_cost: number;
+    status: POStatus;
+    status_display: string;
+    milestone: POMilestone;
+    milestone_display: string;
+    created_at: string;
+    updated_at: string;
+    required_by: string;
+    due_date: string;
+    vendor_accepted: boolean;
+    vendor_accepted_at?: string;
+    vendor_notes: string;
+    last_activity_at: string;
+    completed_at?: string;
+    completed_on_time: boolean;
+    has_issues: boolean;
+    is_blocked: boolean;
+    blocked_reason: string;
+    blocked_at?: string;
+    assets_acknowledged: boolean;
+    assets_acknowledged_at?: string;
+    shipping_method: string;
+    tracking_number: string;
+    ready_for_pickup: boolean;
+    invoice_sent: boolean;
+    invoice_paid: boolean;
+    days_until_due: number;
+}
+
+export interface UpdateMilestonePayload {
+    milestone: POMilestone;
+    notes?: string;
+}
+
+export interface POStats {
+    total_pos: number;
+    active_pos: number;
+    completed_pos: number;
+    at_risk_pos: number;
+    total_value: number;
+}

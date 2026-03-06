@@ -17,6 +17,9 @@ import {
     VendorProof,
     CreateProofPayload,
     ProofStats,
+    PurchaseOrder,
+    UpdateMilestonePayload,
+    POStats,
 } from "@/types/vendors";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -411,5 +414,78 @@ export async function deleteVendorProof(proofId: number): Promise<void> {
 
     if (!response.ok) {
         throw new Error("Unable to delete proof. Please try again later.");
+    }
+}
+
+export async function fetchVendorPurchaseOrders(): Promise<PurchaseOrder[]> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-pos/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to load purchase orders. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function fetchVendorPOStats(): Promise<POStats> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-pos/stats/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to load PO statistics. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function acceptPurchaseOrder(poId: number): Promise<PurchaseOrder> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-pos/${poId}/accept/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to accept purchase order. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function updatePOMilestone(poId: number, payload: UpdateMilestonePayload): Promise<PurchaseOrder> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-pos/${poId}/update_milestone/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to update milestone. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function acknowledgePOAssets(poId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-pos/${poId}/acknowledge_assets/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to acknowledge assets. Please try again later.");
     }
 }

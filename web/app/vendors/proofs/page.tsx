@@ -132,25 +132,21 @@ export default function VendorProofsPage(): ReactElement {
                         <StatsCard
                             label="Total Submitted"
                             value={stats.total_submitted}
-                            icon={FileImage}
                             color="blue"
                         />
                         <StatsCard
                             label="Pending Review"
                             value={stats.pending_review}
-                            icon={Clock}
                             color="yellow"
                         />
                         <StatsCard
                             label="Approved"
                             value={stats.approved}
-                            icon={CheckCircle2}
                             color="green"
                         />
                         <StatsCard
                             label="Rejected"
                             value={stats.rejected}
-                            icon={XCircle}
                             color="red"
                         />
                     </div>
@@ -338,25 +334,12 @@ export default function VendorProofsPage(): ReactElement {
 interface StatsCardProps {
     label: string;
     value: number;
-    icon: React.ElementType;
     color: "blue" | "yellow" | "green" | "red";
 }
 
-function StatsCard({ label, value, icon: Icon, color }: StatsCardProps): ReactElement {
-    const colorClasses = {
-        blue: "bg-blue-100 text-blue-600",
-        yellow: "bg-yellow-100 text-yellow-600",
-        green: "bg-green-100 text-green-600",
-        red: "bg-red-100 text-red-600",
-    };
-
+function StatsCard({ label, value, color }: StatsCardProps): ReactElement {
     return (
         <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-start justify-between mb-3">
-                <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-                    <Icon className="w-6 h-6" />
-                </div>
-            </div>
             <p className="text-sm font-medium text-gray-600 mb-1">{label}</p>
             <p className="text-3xl font-bold text-gray-900">{value}</p>
         </div>

@@ -232,11 +232,6 @@ export default function PortalDashboardPage(): ReactElement {
                                 </h1>
                                 <p className="text-sm text-gray-500 mt-0.5">
                                     {profile?.company ?? ""}
-                                    {profile?.role && (
-                                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-blue/10 text-brand-blue capitalize">
-                                            {profile.role}
-                                        </span>
-                                    )}
                                 </p>
                             </>
                         )}
@@ -475,8 +470,8 @@ export default function PortalDashboardPage(): ReactElement {
                                             <td className="px-4 py-3">
                                                 <span
                                                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${inv.status === "overdue"
-                                                            ? "bg-red-100 text-red-700"
-                                                            : "bg-blue-100 text-blue-700"
+                                                        ? "bg-red-100 text-red-700"
+                                                        : "bg-blue-100 text-blue-700"
                                                         }`}
                                                 >
                                                     {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}

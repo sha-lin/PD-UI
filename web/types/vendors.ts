@@ -176,3 +176,95 @@ export interface CreateSubstitutionPayload {
     original_cost: number;
     substitute_cost: number;
 }
+
+export interface InvoiceLineItem {
+    description: string;
+    quantity: number;
+    unit_price: number;
+    amount: number;
+}
+
+export type InvoiceStatus = "draft" | "submitted" | "approved" | "paid" | "rejected";
+
+export interface VendorInvoice {
+    id: number;
+    invoice_number: string;
+    vendor_invoice_ref: string;
+    purchase_order: PurchaseOrderBasic;
+    job_number: string;
+    invoice_date: string;
+    due_date: string;
+    line_items: InvoiceLineItem[];
+    subtotal: number;
+    tax_rate: number;
+    tax_amount: number;
+    total_amount: number;
+    status: InvoiceStatus;
+    invoice_file?: string;
+    rejection_reason?: string;
+    submitted_at?: string;
+    approved_at?: string;
+    paid_at?: string;
+    created_at: string;
+    updated_at: string;
+    vendor_name: string;
+    po_number: string;
+}
+
+export interface CreateInvoicePayload {
+    purchase_order_id: number;
+    vendor_invoice_ref?: string;
+    invoice_date: string;
+    due_date: string;
+    line_items: InvoiceLineItem[];
+    subtotal: number;
+    tax_rate: number;
+}
+
+export interface UpdateInvoicePayload {
+    vendor_invoice_ref?: string;
+    invoice_date?: string;
+    due_date?: string;
+    line_items?: InvoiceLineItem[];
+    subtotal?: number;
+    tax_rate?: number;
+}
+
+export interface InvoiceStats {
+    draft_count: number;
+    submitted_count: number;
+    approved_count: number;
+    paid_count: number;
+    rejected_count: number;
+    total_pending_amount: number;
+    total_paid_amount: number;
+    current_month_amount: number;
+}
+
+export type ProofStatus = "pending" | "approved" | "rejected";
+
+export interface VendorProof {
+    id: number;
+    purchase_order: PurchaseOrderBasic;
+    proof_image: string;
+    description: string;
+    submitted_at: string;
+    status: ProofStatus;
+    status_display: string;
+    reviewed_by?: number;
+    reviewed_at?: string;
+    rejection_reason?: string;
+}
+
+export interface CreateProofPayload {
+    purchase_order_id: number;
+    proof_image: File;
+    description?: string;
+}
+
+export interface ProofStats {
+    total_submitted: number;
+    pending_review: number;
+    approved: number;
+    rejected: number;
+}

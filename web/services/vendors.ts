@@ -10,6 +10,13 @@ import {
     MaterialSubstitution,
     CreateSubstitutionPayload,
     PurchaseOrderBasic,
+    VendorInvoice,
+    CreateInvoicePayload,
+    UpdateInvoicePayload,
+    InvoiceStats,
+    VendorProof,
+    CreateProofPayload,
+    ProofStats,
 } from "@/types/vendors";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -252,4 +259,157 @@ export async function createMaterialSubstitution(payload: CreateSubstitutionPayl
     }
 
     return response.json();
+}
+
+export async function fetchVendorInvoices(): Promise<VendorInvoice[]> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-invoices/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to load invoices. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function fetchVendorInvoiceStats(): Promise<InvoiceStats> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-invoices/stats/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to load invoice statistics. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function createVendorInvoice(payload: CreateInvoicePayload): Promise<VendorInvoice> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-invoices/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to create invoice. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function updateVendorInvoice(invoiceId: number, payload: UpdateInvoicePayload): Promise<VendorInvoice> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-invoices/${invoiceId}/`, {
+        method: "PATCH",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to update invoice. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function submitVendorInvoice(invoiceId: number): Promise<VendorInvoice> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-invoices/${invoiceId}/submit/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to submit invoice. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function deleteVendorInvoice(invoiceId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-invoices/${invoiceId}/`, {
+        method: "DELETE",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to delete invoice. Please try again later.");
+    }
+}
+
+export async function fetchVendorProofs(): Promise<VendorProof[]> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-proofs/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to load proofs. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function fetchVendorProofStats(): Promise<ProofStats> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-proofs/stats/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to load proof statistics. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function createVendorProof(payload: CreateProofPayload): Promise<VendorProof> {
+    const formData = new FormData();
+    formData.append("purchase_order_id", payload.purchase_order_id.toString());
+    formData.append("proof_image", payload.proof_image);
+    if (payload.description) {
+        formData.append("description", payload.description);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-proofs/`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to submit proof. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function deleteVendorProof(proofId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-proofs/${proofId}/`, {
+        method: "DELETE",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to delete proof. Please try again later.");
+    }
 }

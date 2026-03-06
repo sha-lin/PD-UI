@@ -153,6 +153,23 @@ export async function inviteVendor(vendorId: number): Promise<void> {
     }
 }
 
+export async function updateVendorSelf(payload: UpdateVendorPayload): Promise<Vendor> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-self-info/update_me/`, {
+        method: "PATCH",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
+        throw new Error(`Failed to update vendor settings: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    return data.results[0];
+}
+
 export async function fetchCurrentVendor(): Promise<Vendor> {
     const response = await fetch(`${API_BASE_URL}/api/v1/vendor-self-info/me/`, {
         headers: {

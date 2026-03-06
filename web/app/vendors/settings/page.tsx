@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ReactElement, FormEvent, ChangeEvent } from "react";
 import VendorLayout from "@/components/vendor/vendor-layout";
-import { fetchCurrentVendor, updateVendor } from "@/services/vendors";
+import { fetchCurrentVendor, updateVendorSelf } from "@/services/vendors";
 import type { Vendor, UpdateVendorPayload } from "@/types/vendors";
-import { Building2, User, Mail, Phone, MapPin, FileText, Clock, Zap, CheckCircle, AlertCircle } from "lucide-react";
+import { Building2, User, Mail, Phone, MapPin, FileText, Clock, Zap } from "lucide-react";
+import { toast } from "sonner";
 
 interface FieldProps {
     label: string;
@@ -29,8 +30,6 @@ function inputClass(disabled = false): string {
 
 export default function VendorSettingsPage(): ReactElement {
     const queryClient = useQueryClient();
-    const [saved, setSaved] = useState(false);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     const { data: vendor, isLoading } = useQuery({
         queryKey: ["current-vendor"],
@@ -43,16 +42,14 @@ export default function VendorSettingsPage(): ReactElement {
     const resolvedForm = form ?? (vendor ? buildForm(vendor) : null);
 
     const mutation = useMutation({
-        mutationFn: (payload: UpdateVendorPayload) => updateVendor(vendor!.id, payload),
+        mutationFn: (payload: UpdateVendorPayload) => updateVendorSelf(payload),
         onSuccess: (updated: Vendor) => {
             queryClient.setQueryData(["current-vendor"], updated);
             setForm(null);
-            setSaved(true);
-            setErrorMsg(null);
-            setTimeout(() => setSaved(false), 3000);
+            toast.success("Changes saved successfully.");
         },
         onError: () => {
-            setErrorMsg("Unable to save changes. Please try again.");
+            toast.error("Unable to save changes. Please try again.");
         },
     });
 
@@ -122,19 +119,6 @@ export default function VendorSettingsPage(): ReactElement {
             </header>
 
             <main className="p-4 sm:p-8 max-w-3xl space-y-6">
-                {saved && (
-                    <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-800 text-sm">
-                        <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                        Changes saved successfully.
-                    </div>
-                )}
-                {errorMsg && (
-                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-800 text-sm">
-                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                        {errorMsg}
-                    </div>
-                )}
-
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Company Info — read-only */}
                     <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">

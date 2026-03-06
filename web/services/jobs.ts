@@ -132,3 +132,52 @@ export async function updateJobVendorStage(
 
     return response.json();
 }
+
+export interface AssignJobPayload {
+    user_id: number;
+    assignment_notes?: string;
+    remind_days_before?: number;
+}
+
+export async function assignJobToProductionTeam(jobId: number, payload: AssignJobPayload): Promise<{ success: boolean; message: string }> {
+    const formData = new URLSearchParams();
+    formData.append("user_id", payload.user_id.toString());
+    if (payload.assignment_notes) {
+        formData.append("assignment_notes", payload.assignment_notes);
+    }
+    if (payload.remind_days_before !== undefined) {
+        formData.append("remind_days_before", payload.remind_days_before.toString());
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/job/${jobId}/assign/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            ...(getCsrfToken() ? { "X-CSRFToken": getCsrfToken() as string } : {}),
+        },
+        credentials: "include",
+        body: formData.toString(),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
+        throw new Error(`Failed to assign job: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
+}
+
+export async function sendJobReminder(jobId: number): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${API_BASE_URL}/api/job/${jobId}/remind/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
+        throw new Error(`Failed to send reminder: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
+}

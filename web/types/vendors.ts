@@ -101,3 +101,27 @@ export interface VendorFormValues {
     max_concurrent_jobs: number;
     internal_notes: string;
 }
+
+export interface VendorPerformanceInsight {
+    type: "positive" | "warning" | "negative";
+    icon: string;
+    title: string;
+    description: string;
+}
+
+export interface VendorPerformanceScorecard {
+    overall_score: number;
+    vps_grade: string;
+    tax_status: string;
+    certifications: string[];
+    on_time_rate: number;
+    quality_score: number;
+    avg_turnaround: number;
+    defect_rate: number;
+    cost_per_job: number;
+    acceptance_rate: number;
+    response_time: number;
+    ghosting_incidents: number;
+    decline_rate: number;
+    insights: VendorPerformanceInsight[];
+}

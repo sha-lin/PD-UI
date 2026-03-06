@@ -1,4 +1,11 @@
-import { CreateVendorPayload, UpdateVendorPayload, Vendor, VendorsQueryParams, VendorsResponse } from "@/types/vendors";
+import {
+    CreateVendorPayload,
+    UpdateVendorPayload,
+    Vendor,
+    VendorsQueryParams,
+    VendorsResponse,
+    VendorPerformanceScorecard,
+} from "@/types/vendors";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
@@ -129,4 +136,37 @@ export async function inviteVendor(vendorId: number): Promise<void> {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
         throw new Error(`Failed to invite vendor: ${response.status} ${errorText}`);
     }
+}
+
+export async function fetchCurrentVendor(): Promise<Vendor> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-self-info/me/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to load vendor profile. Please contact support.");
+    }
+
+    const data = await response.json();
+    return data.results[0];
+}
+
+export async function fetchVendorPerformanceScorecard(vendorId: number): Promise<VendorPerformanceScorecard> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-performance/scorecard/?vendor_id=${vendorId}`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to load performance data. Please try again later.");
+    }
+
+    return response.json();
 }

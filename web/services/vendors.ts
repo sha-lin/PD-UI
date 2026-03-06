@@ -215,7 +215,8 @@ export async function fetchVendorIssues(): Promise<VendorIssue[]> {
         throw new Error("Unable to load issues. Please try again later.");
     }
 
-    return response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : (data.results ?? []);
 }
 
 export async function createVendorIssue(payload: CreateIssuePayload): Promise<VendorIssue> {
@@ -246,7 +247,8 @@ export async function fetchMaterialSubstitutions(): Promise<MaterialSubstitution
         throw new Error("Unable to load substitutions. Please try again later.");
     }
 
-    return response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : (data.results ?? []);
 }
 
 export async function createMaterialSubstitution(payload: CreateSubstitutionPayload): Promise<MaterialSubstitution> {
@@ -277,7 +279,8 @@ export async function fetchVendorInvoices(): Promise<VendorInvoice[]> {
         throw new Error("Unable to load invoices. Please try again later.");
     }
 
-    return response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : (data.results ?? []);
 }
 
 export async function fetchVendorInvoiceStats(): Promise<InvoiceStats> {
@@ -365,7 +368,8 @@ export async function fetchVendorProofs(): Promise<VendorProof[]> {
         throw new Error("Unable to load proofs. Please try again later.");
     }
 
-    return response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : (data.results ?? []);
 }
 
 export async function fetchVendorProofStats(): Promise<ProofStats> {
@@ -392,9 +396,13 @@ export async function createVendorProof(payload: CreateProofPayload): Promise<Ve
         formData.append("description", payload.description);
     }
 
+    const csrfToken = getCsrfToken();
     const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-proofs/`, {
         method: "POST",
         credentials: "include",
+        headers: {
+            ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+        },
         body: formData,
     });
 
@@ -430,7 +438,8 @@ export async function fetchVendorPurchaseOrders(): Promise<PurchaseOrder[]> {
         throw new Error("Unable to load purchase orders. Please try again later.");
     }
 
-    return response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : (data.results ?? []);
 }
 
 export async function fetchVendorPOStats(): Promise<POStats> {

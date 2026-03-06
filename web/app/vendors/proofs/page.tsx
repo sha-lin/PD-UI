@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ReactElement } from "react";
+import { toast } from "sonner";
 import VendorLayout from "@/components/vendor/vendor-layout";
 import {
     fetchVendorProofs,
@@ -69,7 +70,9 @@ export default function VendorProofsPage(): ReactElement {
             queryClient.invalidateQueries({ queryKey: ["vendor-proofs"] });
             queryClient.invalidateQueries({ queryKey: ["vendor-proof-stats"] });
             setShowUploadForm(false);
+            toast.success("Proof uploaded successfully");
         },
+        onError: () => toast.error("Failed to upload proof. Please try again."),
     });
 
     const deleteMutation = useMutation({
@@ -77,7 +80,9 @@ export default function VendorProofsPage(): ReactElement {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["vendor-proofs"] });
             queryClient.invalidateQueries({ queryKey: ["vendor-proof-stats"] });
+            toast.success("Proof deleted");
         },
+        onError: () => toast.error("Failed to delete proof. Please try again."),
     });
 
     const filteredProofs = proofs.filter((proof) => {
@@ -310,9 +315,13 @@ export default function VendorProofsPage(): ReactElement {
                                             {proof.status === "pending" && (
                                                 <button
                                                     onClick={() => {
-                                                        if (confirm("Delete this proof?")) {
-                                                            deleteMutation.mutate(proof.id);
-                                                        }
+                                                        const id = proof.id;
+                                                        toast("Delete this proof?", {
+                                                            action: {
+                                                                label: "Delete",
+                                                                onClick: () => deleteMutation.mutate(id),
+                                                            },
+                                                        });
                                                     }}
                                                     className="flex items-center justify-center gap-1 px-3 py-2 text-sm text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
                                                 >

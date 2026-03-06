@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ReactElement } from "react";
+import { toast } from "sonner";
 import VendorLayout from "@/components/vendor/vendor-layout";
 import {
     fetchVendorPurchaseOrders,
@@ -60,7 +61,9 @@ export default function VendorPurchaseOrdersPage(): ReactElement {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["vendor-purchase-orders"] });
             queryClient.invalidateQueries({ queryKey: ["vendor-po-stats"] });
+            toast.success("Purchase order accepted");
         },
+        onError: () => toast.error("Failed to accept purchase order. Please try again."),
     });
 
     const updateMilestoneMutation = useMutation({
@@ -68,18 +71,22 @@ export default function VendorPurchaseOrdersPage(): ReactElement {
             updatePOMilestone(poId, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["vendor-purchase-orders"] });
+            toast.success("Milestone updated");
         },
+        onError: () => toast.error("Failed to update milestone. Please try again."),
     });
 
     const acknowledgeMutation = useMutation({
         mutationFn: acknowledgePOAssets,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["vendor-purchase-orders"] });
+            toast.success("Assets acknowledged");
         },
+        onError: () => toast.error("Failed to acknowledge assets. Please try again."),
     });
 
     const filteredPOs = purchaseOrders.filter((po) => {
-        const matchesStatus = filterStatus === "all" || po.status === filterStatus;
+        const matchesStatus = filterStatus === "all" || po.status.toLowerCase() === filterStatus.toLowerCase();
         const matchesSearch =
             po.po_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
             po.product_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -87,18 +94,18 @@ export default function VendorPurchaseOrdersPage(): ReactElement {
         return matchesStatus && matchesSearch;
     });
 
-    const getStatusBadge = (status: POStatus) => {
-        const config: Record<POStatus, { color: string; icon: React.ElementType; label: string }> = {
-            NEW: { color: "bg-blue-100 text-blue-800 border-blue-200", icon: FileText, label: "New" },
-            ACCEPTED: { color: "bg-green-100 text-green-800 border-green-200", icon: CheckCircle2, label: "Accepted" },
-            IN_PRODUCTION: { color: "bg-purple-100 text-purple-800 border-purple-200", icon: TrendingUp, label: "In Production" },
-            AWAITING_APPROVAL: { color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: Clock, label: "Awaiting Approval" },
-            BLOCKED: { color: "bg-red-100 text-red-800 border-red-200", icon: XCircle, label: "Blocked" },
-            AT_RISK: { color: "bg-orange-100 text-orange-800 border-orange-200", icon: AlertTriangle, label: "At Risk" },
-            COMPLETED: { color: "bg-gray-100 text-gray-800 border-gray-200", icon: CheckCircle2, label: "Completed" },
-            CANCELLED: { color: "bg-gray-100 text-gray-800 border-gray-200", icon: XCircle, label: "Cancelled" },
+    const getStatusBadge = (status: string) => {
+        const config: Record<string, { color: string; icon: React.ElementType; label: string }> = {
+            new: { color: "bg-blue-100 text-blue-800 border-blue-200", icon: FileText, label: "New" },
+            accepted: { color: "bg-green-100 text-green-800 border-green-200", icon: CheckCircle2, label: "Accepted" },
+            in_production: { color: "bg-purple-100 text-purple-800 border-purple-200", icon: TrendingUp, label: "In Production" },
+            awaiting_approval: { color: "bg-yellow-100 text-yellow-800 border-yellow-200", icon: Clock, label: "Awaiting Approval" },
+            blocked: { color: "bg-red-100 text-red-800 border-red-200", icon: XCircle, label: "Blocked" },
+            at_risk: { color: "bg-orange-100 text-orange-800 border-orange-200", icon: AlertTriangle, label: "At Risk" },
+            completed: { color: "bg-gray-100 text-gray-800 border-gray-200", icon: CheckCircle2, label: "Completed" },
+            cancelled: { color: "bg-gray-100 text-gray-800 border-gray-200", icon: XCircle, label: "Cancelled" },
         };
-        return config[status];
+        return config[status.toLowerCase()] ?? { color: "bg-gray-100 text-gray-700 border-gray-200", icon: FileText, label: status };
     };
 
     const getMilestoneBadge = (milestone: POMilestone) => {
@@ -128,7 +135,8 @@ export default function VendorPurchaseOrdersPage(): ReactElement {
     };
 
     const isOverdue = (po: PurchaseOrder) => {
-        if (po.status === "COMPLETED" || po.status === "CANCELLED") return false;
+        const s = po.status.toLowerCase();
+        if (s === "completed" || s === "cancelled") return false;
         return new Date(po.required_by) < new Date();
     };
 
@@ -272,7 +280,7 @@ export default function VendorPurchaseOrdersPage(): ReactElement {
                                                 <Calendar className="w-3 h-3" />
                                                 Due: {formatDate(po.required_by)}
                                             </div>
-                                            {po.days_until_due > 0 && po.status !== "COMPLETED" && (
+                                            {po.days_until_due > 0 && po.status.toLowerCase() !== "completed" && (
                                                 <p className="text-xs text-gray-500">
                                                     {po.days_until_due} days remaining
                                                 </p>
@@ -320,12 +328,17 @@ export default function VendorPurchaseOrdersPage(): ReactElement {
                                         </div>
 
                                         <div className="flex gap-2">
-                                            {po.status === "NEW" && !po.vendor_accepted && (
+                                            {po.status.toLowerCase() === "new" && !po.vendor_accepted && (
                                                 <button
                                                     onClick={() => {
-                                                        if (confirm(`Accept PO ${po.po_number}?`)) {
-                                                            acceptMutation.mutate(po.id);
-                                                        }
+                                                        const poId = po.id;
+                                                        const poNum = po.po_number;
+                                                        toast(`Accept PO ${poNum}?`, {
+                                                            action: {
+                                                                label: "Accept",
+                                                                onClick: () => acceptMutation.mutate(poId),
+                                                            },
+                                                        });
                                                     }}
                                                     disabled={acceptMutation.isPending}
                                                     className="flex items-center gap-1 px-3 py-1.5 text-sm text-white bg-brand-blue rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
@@ -334,14 +347,17 @@ export default function VendorPurchaseOrdersPage(): ReactElement {
                                                     Accept PO
                                                 </button>
                                             )}
-                                            {po.status === "IN_PRODUCTION" && (
+                                            {po.status.toLowerCase() === "in_production" && (
                                                 <select
                                                     onChange={(e) => {
                                                         const milestone = e.target.value as POMilestone;
-                                                        if (milestone && confirm(`Update milestone to ${milestone}?`)) {
-                                                            updateMilestoneMutation.mutate({
-                                                                poId: po.id,
-                                                                payload: { milestone },
+                                                        const poId = po.id;
+                                                        if (milestone) {
+                                                            toast(`Update milestone to "${milestone.replace(/_/g, " ")}"?`, {
+                                                                action: {
+                                                                    label: "Update",
+                                                                    onClick: () => updateMilestoneMutation.mutate({ poId, payload: { milestone } }),
+                                                                },
                                                             });
                                                         }
                                                         e.target.value = "";
@@ -357,9 +373,13 @@ export default function VendorPurchaseOrdersPage(): ReactElement {
                                             {!po.assets_acknowledged && (
                                                 <button
                                                     onClick={() => {
-                                                        if (confirm("Confirm assets received?")) {
-                                                            acknowledgeMutation.mutate(po.id);
-                                                        }
+                                                        const poId = po.id;
+                                                        toast("Confirm assets received?", {
+                                                            action: {
+                                                                label: "Confirm",
+                                                                onClick: () => acknowledgeMutation.mutate(poId),
+                                                            },
+                                                        });
                                                     }}
                                                     disabled={acknowledgeMutation.isPending}
                                                     className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ReactElement } from "react";
+import { toast } from "sonner";
 import VendorLayout from "@/components/vendor/vendor-layout";
 import {
     fetchVendorInvoices,
@@ -83,7 +84,9 @@ export default function VendorInvoicesPage(): ReactElement {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["vendor-invoices"] });
             queryClient.invalidateQueries({ queryKey: ["vendor-invoice-stats"] });
+            toast.success("Invoice submitted for approval");
         },
+        onError: () => toast.error("Failed to submit invoice. Please try again."),
     });
 
     const deleteMutation = useMutation({
@@ -91,7 +94,9 @@ export default function VendorInvoicesPage(): ReactElement {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["vendor-invoices"] });
             queryClient.invalidateQueries({ queryKey: ["vendor-invoice-stats"] });
+            toast.success("Invoice deleted");
         },
+        onError: () => toast.error("Failed to delete invoice. Please try again."),
     });
 
     const filteredInvoices = invoices.filter((invoice) => {
@@ -360,9 +365,13 @@ export default function VendorInvoicesPage(): ReactElement {
                                                     </button>
                                                     <button
                                                         onClick={() => {
-                                                            if (confirm("Submit this invoice for approval?")) {
-                                                                submitMutation.mutate(invoice.id);
-                                                            }
+                                                            const id = invoice.id;
+                                                            toast("Submit this invoice for approval?", {
+                                                                action: {
+                                                                    label: "Submit",
+                                                                    onClick: () => submitMutation.mutate(id),
+                                                                },
+                                                            });
                                                         }}
                                                         className="flex items-center gap-1 px-3 py-1.5 text-sm text-white bg-brand-blue rounded-lg hover:opacity-90 transition-opacity"
                                                     >
@@ -371,9 +380,13 @@ export default function VendorInvoicesPage(): ReactElement {
                                                     </button>
                                                     <button
                                                         onClick={() => {
-                                                            if (confirm("Delete this draft invoice?")) {
-                                                                deleteMutation.mutate(invoice.id);
-                                                            }
+                                                            const id = invoice.id;
+                                                            toast("Delete this draft invoice?", {
+                                                                action: {
+                                                                    label: "Delete",
+                                                                    onClick: () => deleteMutation.mutate(id),
+                                                                },
+                                                            });
                                                         }}
                                                         className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
                                                     >

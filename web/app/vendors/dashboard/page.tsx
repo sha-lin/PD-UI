@@ -15,19 +15,8 @@ import {
     fetchVendorProofs,
     fetchVendorIssues,
 } from "@/services/vendors";
-import {
-    Package,
-    FileText,
-    Image as ImageIcon,
-    AlertCircle,
-    TrendingUp,
-    Award,
-    Clock,
-    CheckCircle2,
-    DollarSign,
-    Plus,
-    ArrowRight,
-} from "lucide-react";
+import { FileText, Image as ImageIcon, AlertCircle, ArrowRight } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import Link from "next/link";
 
 export default function VendorDashboardPage(): ReactElement {
@@ -151,61 +140,78 @@ export default function VendorDashboardPage(): ReactElement {
                         label="Active Purchase Orders"
                         value={poStats?.active_pos || 0}
                         subtitle={poStats ? formatCurrency(poStats.total_value) : ""}
-                        icon={Package}
-                        color="blue"
                         href="/vendors/purchase-orders"
                     />
                     <QuickStatCard
                         label="Pending Payment"
                         value={invoiceStats ? formatCurrency(invoiceStats.total_pending_amount) : "0"}
                         subtitle={`${invoiceStats?.submitted_count || 0} invoices`}
-                        icon={DollarSign}
-                        color="yellow"
                         href="/vendors/invoices"
                     />
                     <QuickStatCard
                         label="Pending Proofs"
                         value={proofStats?.pending_review || 0}
                         subtitle={`${proofStats?.total_submitted || 0} total`}
-                        icon={ImageIcon}
-                        color="purple"
                         href="/vendors/proofs"
                     />
                     <QuickStatCard
                         label="Open Issues"
                         value={Array.isArray(issues) ? issues.filter(i => i.status === "open").length : 0}
                         subtitle={`${Array.isArray(issues) ? issues.length : 0} total`}
-                        icon={AlertCircle}
-                        color="orange"
                         href="/vendors/issues"
                     />
                 </div>
 
                 {/* Performance Overview */}
-                {performance && (
+                {performance && poStats && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <Award className="w-5 h-5 text-brand-blue" />
-                                Performance Metrics
-                            </h2>
-                            <div className="space-y-4">
-                                <MetricBar
-                                    label="On-Time Delivery"
-                                    value={performance.on_time_rate}
-                                    color="green"
-                                />
-                                <MetricBar
-                                    label="Quality Score"
-                                    value={performance.quality_score}
-                                    color="blue"
-                                />
-                                <MetricBar
-                                    label="Overall Score"
-                                    value={performance.overall_score}
-                                    color="purple"
-                                />
-                            </div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">Performance Metrics</h2>
+                            <ResponsiveContainer width="100%" height={280}>
+                                <BarChart
+                                    data={[
+                                        { name: "On-Time Delivery", value: performance.on_time_rate, color: "#009444" },
+                                        { name: "Quality Score", value: performance.quality_score, color: "#093756" },
+                                        { name: "Overall Score", value: performance.overall_score, color: "#662D91" },
+                                    ]}
+                                    margin={{ top: 20, right: 30, left: 0, bottom: 60 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                    <XAxis
+                                        dataKey="name"
+                                        tick={{ fill: "#6b7280", fontSize: 12 }}
+                                        axisLine={{ stroke: "#d1d5db" }}
+                                        angle={-45}
+                                        textAnchor="end"
+                                        height={80}
+                                    />
+                                    <YAxis
+                                        tick={{ fill: "#6b7280", fontSize: 12 }}
+                                        axisLine={{ stroke: "#d1d5db" }}
+                                        domain={[0, 100]}
+                                        label={{ value: "Score (%)", angle: -90, position: "insideLeft", style: { fontSize: 12, fill: "#6b7280" } }}
+                                    />
+                                    <Tooltip
+                                        formatter={(value) => [`${value}%`, "Score"]}
+                                        contentStyle={{
+                                            backgroundColor: "white",
+                                            border: "1px solid #e5e7eb",
+                                            borderRadius: "0.5rem",
+                                            fontSize: "0.875rem",
+                                        }}
+                                        cursor={{ fill: "#f3f4f6" }}
+                                    />
+                                    <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                                        {[
+                                            { name: "On-Time Delivery", value: performance.on_time_rate, color: "#009444" },
+                                            { name: "Quality Score", value: performance.quality_score, color: "#093756" },
+                                            { name: "Overall Score", value: performance.overall_score, color: "#662D91" },
+                                        ].map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
                             <Link
                                 href="/vendors/performance"
                                 className="mt-4 inline-flex items-center gap-2 text-sm text-brand-blue hover:opacity-80"
@@ -216,28 +222,90 @@ export default function VendorDashboardPage(): ReactElement {
                         </div>
 
                         <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <TrendingUp className="w-5 h-5 text-brand-blue" />
-                                Key Statistics
-                            </h2>
-                            <div className="space-y-3">
-                                <StatRow
-                                    label="Completed Jobs"
-                                    value={poStats?.completed_pos || 0}
-                                />
-                                <StatRow
-                                    label="Total Value"
-                                    value={poStats ? formatCurrency(poStats.total_value) : "KES 0"}
-                                />
-                                <StatRow
-                                    label="Defect Rate"
-                                    value={`${performance.defect_rate}%`}
-                                />
-                                <StatRow
-                                    label="Avg Turnaround"
-                                    value={`${performance.avg_turnaround} days`}
-                                />
-                            </div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">Key Statistics</h2>
+                            {poStats.total_pos === 0 ? (
+                                <div className="flex items-center justify-center h-80">
+                                    <p className="text-gray-500 text-sm">No purchase orders yet</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <ResponsiveContainer width="100%" height={280}>
+                                        <PieChart>
+                                            <Pie
+                                                data={[
+                                                    {
+                                                        name: "Active",
+                                                        value: poStats.active_pos,
+                                                        color: "#093756",
+                                                    },
+                                                    {
+                                                        name: "Completed",
+                                                        value: poStats.completed_pos,
+                                                        color: "#009444",
+                                                    },
+                                                    {
+                                                        name: "At Risk",
+                                                        value: poStats.at_risk_pos,
+                                                        color: "#ED1C24",
+                                                    },
+                                                ].filter((item) => item.value > 0)}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={100}
+                                                paddingAngle={2}
+                                                dataKey="value"
+                                                label={({ name, percent }) =>
+                                                    `${name}: ${((percent || 0) * 100).toFixed(0)}%`
+                                                }
+                                                labelLine={{ stroke: "#94a3b8", strokeWidth: 1 }}
+                                            >
+                                                {[
+                                                    {
+                                                        name: "Active",
+                                                        value: poStats.active_pos,
+                                                        color: "#093756",
+                                                    },
+                                                    {
+                                                        name: "Completed",
+                                                        value: poStats.completed_pos,
+                                                        color: "#009444",
+                                                    },
+                                                    {
+                                                        name: "At Risk",
+                                                        value: poStats.at_risk_pos,
+                                                        color: "#ED1C24",
+                                                    },
+                                                ]
+                                                    .filter((item) => item.value > 0)
+                                                    .map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                            </Pie>
+                                            <Tooltip
+                                                formatter={(value) => [`${value} POs`, "Count"]}
+                                                contentStyle={{
+                                                    backgroundColor: "white",
+                                                    border: "1px solid #e5e7eb",
+                                                    borderRadius: "0.5rem",
+                                                    fontSize: "0.875rem",
+                                                }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+                                        <StatRow
+                                            label="Total Value"
+                                            value={formatCurrency(poStats.total_value)}
+                                        />
+                                        <StatRow label="Defect Rate" value={`${performance.defect_rate}%`} />
+                                        <StatRow
+                                            label="Avg Turnaround"
+                                            value={`${performance.avg_turnaround} days`}
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
@@ -249,8 +317,8 @@ export default function VendorDashboardPage(): ReactElement {
                             <button
                                 onClick={() => setActiveTab("pos")}
                                 className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${activeTab === "pos"
-                                        ? "border-brand-blue text-brand-blue"
-                                        : "border-transparent text-gray-600 hover:text-gray-900"
+                                    ? "border-brand-blue text-brand-blue"
+                                    : "border-transparent text-gray-600 hover:text-gray-900"
                                     }`}
                             >
                                 Recent Purchase Orders
@@ -258,8 +326,8 @@ export default function VendorDashboardPage(): ReactElement {
                             <button
                                 onClick={() => setActiveTab("invoices")}
                                 className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${activeTab === "invoices"
-                                        ? "border-brand-blue text-brand-blue"
-                                        : "border-transparent text-gray-600 hover:text-gray-900"
+                                    ? "border-brand-blue text-brand-blue"
+                                    : "border-transparent text-gray-600 hover:text-gray-900"
                                     }`}
                             >
                                 Recent Invoices
@@ -267,8 +335,8 @@ export default function VendorDashboardPage(): ReactElement {
                             <button
                                 onClick={() => setActiveTab("proofs")}
                                 className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${activeTab === "proofs"
-                                        ? "border-brand-blue text-brand-blue"
-                                        : "border-transparent text-gray-600 hover:text-gray-900"
+                                    ? "border-brand-blue text-brand-blue"
+                                    : "border-transparent text-gray-600 hover:text-gray-900"
                                     }`}
                             >
                                 Recent Proofs
@@ -324,58 +392,18 @@ interface QuickStatCardProps {
     label: string;
     value: string | number;
     subtitle?: string;
-    icon: React.ElementType;
-    color: "blue" | "yellow" | "purple" | "orange";
     href: string;
 }
 
-function QuickStatCard({ label, value, subtitle, icon: Icon, color, href }: QuickStatCardProps): ReactElement {
-    const colorClasses = {
-        blue: "bg-blue-50 text-blue-600",
-        yellow: "bg-yellow-50 text-yellow-600",
-        purple: "bg-purple-50 text-purple-600",
-        orange: "bg-orange-50 text-orange-600",
-    };
-
+function QuickStatCard({ label, value, subtitle, href }: QuickStatCardProps): ReactElement {
     return (
         <Link href={href} className="block">
             <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-3">
-                    <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-                        <Icon className="w-6 h-6" />
-                    </div>
-                </div>
                 <p className="text-sm font-medium text-gray-600 mb-1">{label}</p>
                 <p className="text-2xl font-bold text-gray-900">{value}</p>
                 {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
             </div>
         </Link>
-    );
-}
-
-interface MetricBarProps {
-    label: string;
-    value: number;
-    color: "green" | "blue" | "purple";
-}
-
-function MetricBar({ label, value, color }: MetricBarProps): ReactElement {
-    const colorClasses = {
-        green: "bg-green-500",
-        blue: "bg-blue-500",
-        purple: "bg-purple-500",
-    };
-
-    return (
-        <div>
-            <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-700 font-medium">{label}</span>
-                <span className="text-gray-900 font-semibold">{value}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className={`${colorClasses[color]} h-2 rounded-full`} style={{ width: `${value}%` }}></div>
-            </div>
-        </div>
     );
 }
 

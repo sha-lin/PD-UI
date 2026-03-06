@@ -16,7 +16,6 @@ import {
 } from "@/services/vendors";
 import type {
     VendorInvoice,
-    InvoiceStats,
     CreateInvoicePayload,
     InvoiceStatus,
     InvoiceLineItem,
@@ -363,7 +362,7 @@ export default function VendorInvoicesPage(): ReactElement {
                                                             setEditingInvoice(invoice);
                                                             setShowCreateForm(true);
                                                         }}
-                                                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-blue-50 hover:text-brand-blue transition-colors"
                                                     >
                                                         <Edit className="w-4 h-4" />
                                                         Edit
@@ -403,7 +402,7 @@ export default function VendorInvoicesPage(): ReactElement {
                                             {invoice.status !== "draft" && (
                                                 <button
                                                     onClick={() => setViewingInvoice(invoice)}
-                                                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-blue-50 hover:text-brand-blue transition-colors"
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                     View Details
@@ -461,7 +460,7 @@ function InvoiceDetailModal({ invoice, onClose, getStatusBadge, formatCurrency, 
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-brand-blue hover:bg-blue-50 rounded-lg transition-colors"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -720,7 +719,7 @@ function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProp
                     <button
                         type="button"
                         onClick={addLineItem}
-                        className="text-sm text-brand-blue hover:text-blue-700 font-medium"
+                        className="text-sm text-brand-blue hover:text-brand-blue/70 font-medium"
                     >
                         + Add Line Item
                     </button>
@@ -848,7 +847,7 @@ function InvoiceForm({ invoice, activePOs, onSubmit, onCancel }: InvoiceFormProp
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-blue-50 hover:text-brand-blue transition-colors"
                 >
                     Cancel
                 </button>

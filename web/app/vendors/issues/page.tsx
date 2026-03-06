@@ -236,7 +236,7 @@ function IssuesTab({
             {!showForm && (
                 <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-lg hover:opacity-90 transition-colors"
                 >
                     <Plus className="w-5 h-5" />
                     Report New Issue
@@ -298,7 +298,7 @@ function IssuesTab({
                     <div className="flex gap-3">
                         <button
                             type="submit"
-                            className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:opacity-90 transition-colors"
                         >
                             Submit Issue
                         </button>
@@ -418,7 +418,7 @@ function SubstitutionsTab({
             {!showForm && (
                 <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-lg hover:opacity-90 transition-colors"
                 >
                     <Plus className="w-5 h-5" />
                     Request Material Substitution
@@ -524,7 +524,7 @@ function SubstitutionsTab({
                     <div className="flex gap-3">
                         <button
                             type="submit"
-                            className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:opacity-90 transition-colors"
                         >
                             Submit Request
                         </button>

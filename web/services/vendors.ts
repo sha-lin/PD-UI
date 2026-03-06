@@ -5,6 +5,11 @@ import {
     VendorsQueryParams,
     VendorsResponse,
     VendorPerformanceScorecard,
+    VendorIssue,
+    CreateIssuePayload,
+    MaterialSubstitution,
+    CreateSubstitutionPayload,
+    PurchaseOrderBasic,
 } from "@/types/vendors";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -166,6 +171,84 @@ export async function fetchVendorPerformanceScorecard(vendorId: number): Promise
 
     if (!response.ok) {
         throw new Error("Unable to load performance data. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function fetchVendorActivePurchaseOrders(): Promise<PurchaseOrderBasic[]> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-active-pos/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to load purchase orders. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function fetchVendorIssues(): Promise<VendorIssue[]> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-issues/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to load issues. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function createVendorIssue(payload: CreateIssuePayload): Promise<VendorIssue> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-issues/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to create issue. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function fetchMaterialSubstitutions(): Promise<MaterialSubstitution[]> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-material-substitutions/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to load substitutions. Please try again later.");
+    }
+
+    return response.json();
+}
+
+export async function createMaterialSubstitution(payload: CreateSubstitutionPayload): Promise<MaterialSubstitution> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/vendor-portal-material-substitutions/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        throw new Error("Unable to create substitution request. Please try again later.");
     }
 
     return response.json();

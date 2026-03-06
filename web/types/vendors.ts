@@ -125,3 +125,54 @@ export interface VendorPerformanceScorecard {
     decline_rate: number;
     insights: VendorPerformanceInsight[];
 }
+
+export interface PurchaseOrderBasic {
+    id: number;
+    po_number: string;
+    product_type: string;
+}
+
+export type IssueStatus = "open" | "in_progress" | "resolved" | "closed";
+export type IssueType = "quality" | "delivery" | "technical" | "material" | "other";
+
+export interface VendorIssue {
+    id: number;
+    purchase_order: PurchaseOrderBasic;
+    issue_type: string;
+    description: string;
+    status: IssueStatus;
+    created_at: string;
+}
+
+export interface CreateIssuePayload {
+    purchase_order_id: number;
+    issue_type: IssueType;
+    description: string;
+}
+
+export type ApprovalStatus = "pending" | "approved" | "rejected" | "customer_notified";
+
+export interface MaterialSubstitution {
+    id: number;
+    purchase_order: PurchaseOrderBasic;
+    original_material: string;
+    substitute_material: string;
+    reason: string;
+    original_cost: number;
+    substitute_cost: number;
+    cost_difference: number;
+    cost_impact_percentage: number;
+    approval_status: ApprovalStatus;
+    approval_notes: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateSubstitutionPayload {
+    purchase_order_id: number;
+    original_material: string;
+    substitute_material: string;
+    reason: string;
+    original_cost: number;
+    substitute_cost: number;
+}

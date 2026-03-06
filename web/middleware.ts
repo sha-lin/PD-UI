@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-const protectedRoutes = ['/dashboard', '/admin', '/client', '/vendor', '/staff'];
+const protectedRoutes = ['/dashboard', '/admin', '/client', '/vendor', '/staff', '/portal'];
 const authRoutes = ['/login', '/register'];
 
 export async function middleware(request: NextRequest) {
@@ -80,6 +80,8 @@ export const config = {
         '/client/:path*',
         '/vendor/:path*',
         '/staff/:path*',
+        '/portal/:path*',
+        '/portal',
         '/login',
         '/register',
     ],

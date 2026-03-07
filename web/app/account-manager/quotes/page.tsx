@@ -126,6 +126,10 @@ export default function MultiProductQuotesPage() {
         setCloneConfirmQuoteId(quoteId);
     };
 
+    const handleEdit = (quoteId: number) => {
+        router.push(`/account-manager/quotes/create?edit=${quoteId}`);
+    };
+
     const handleConfirmClone = async () => {
         if (cloneConfirmQuoteId) {
             try {
@@ -215,7 +219,7 @@ export default function MultiProductQuotesPage() {
                             className="px-4 py-2 bg-brand-black text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
                         >
                             <Plus className="w-4 h-4" />
-                            New Multi-Product Quote
+                            New Quote
                         </button>
                     </div>
 
@@ -287,6 +291,7 @@ export default function MultiProductQuotesPage() {
                             onViewDetail={handleViewDetail}
                             onDownloadPdf={handleDownloadPdf}
                             onClone={handleClone}
+                            onEdit={handleEdit}
                         />
                     )}
                 </div>

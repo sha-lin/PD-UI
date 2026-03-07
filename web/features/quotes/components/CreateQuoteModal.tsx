@@ -34,6 +34,10 @@ export default function CreateQuoteModal({
     const [clientType, setClientType] = useState<"client" | "lead">("client");
     const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
     const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
+    const [quoteDate, setQuoteDate] = useState(new Date().toISOString().split("T")[0]);
+    const [validUntil, setValidUntil] = useState(
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+    );
     const [paymentTerms, setPaymentTerms] = useState<PaymentTerms>("Prepaid");
     const [includeVat, setIncludeVat] = useState(true);
     const [taxRate, setTaxRate] = useState(16);
@@ -154,6 +158,8 @@ export default function CreateQuoteModal({
         const quoteData: CreateQuoteInput = {
             client_id: clientType === "client" ? selectedClientId || undefined : undefined,
             lead_id: clientType === "lead" ? selectedLeadId || undefined : undefined,
+            quote_date: quoteDate,
+            valid_until: validUntil,
             payment_terms: paymentTerms,
             include_vat: includeVat,
             tax_rate: taxRate,
@@ -187,7 +193,7 @@ export default function CreateQuoteModal({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full my-8">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                    <h2 className="text-2xl font-semibold text-gray-900">New Multi-Product Quote</h2>
+                    <h2 className="text-2xl font-semibold text-gray-900">New Quote</h2>
                     <button
                         onClick={handleClose}
                         disabled={isSubmitting}

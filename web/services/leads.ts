@@ -2,6 +2,13 @@ import type { Lead, LeadConvertPayload, LeadConvertResponse, LeadQualifyResponse
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
+class BusinessValidationError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "BusinessValidationError";
+    }
+}
+
 const buildQueryString = (params: LeadsQueryParams): string => {
     const searchParams = new URLSearchParams();
     searchParams.set("page", params.page.toString());
@@ -84,7 +91,10 @@ export async function deleteLead(leadId: number): Promise<void> {
 
     if (!response.ok) {
         const errorText = await extractErrorDetail(response);
-        throw new Error(`Failed to delete lead: ${response.status} ${errorText}`);
+        if (response.status >= 400 && response.status < 500) {
+            throw new BusinessValidationError(errorText);
+        }
+        throw new Error("Unable to delete lead. Please try again.");
     }
 }
 
@@ -114,7 +124,10 @@ export async function qualifyLead(leadId: number): Promise<LeadQualifyResponse> 
 
     if (!response.ok) {
         const errorText = await extractErrorDetail(response);
-        throw new Error(`Failed to qualify lead: ${response.status} ${errorText}`);
+        if (response.status >= 400 && response.status < 500) {
+            throw new BusinessValidationError(errorText);
+        }
+        throw new Error("Unable to qualify lead. Please try again.");
     }
 
     return response.json();
@@ -130,7 +143,10 @@ export async function convertLead(leadId: number, payload: LeadConvertPayload): 
 
     if (!response.ok) {
         const errorText = await extractErrorDetail(response);
-        throw new Error(`Failed to convert lead: ${response.status} ${errorText}`);
+        if (response.status >= 400 && response.status < 500) {
+            throw new BusinessValidationError(errorText);
+        }
+        throw new Error("Unable to convert lead. Please try again.");
     }
 
     return response.json();
@@ -146,7 +162,10 @@ export async function createLead(payload: Partial<Lead>): Promise<Lead> {
 
     if (!response.ok) {
         const errorText = await extractErrorDetail(response);
-        throw new Error(`Failed to create lead: ${response.status} ${errorText}`);
+        if (response.status >= 400 && response.status < 500) {
+            throw new BusinessValidationError(errorText);
+        }
+        throw new Error("Unable to create lead. Please try again.");
     }
 
     return response.json();
@@ -162,7 +181,10 @@ export async function updateLead(leadId: number, payload: Partial<Lead>): Promis
 
     if (!response.ok) {
         const errorText = await extractErrorDetail(response);
-        throw new Error(`Failed to update lead: ${response.status} ${errorText}`);
+        if (response.status >= 400 && response.status < 500) {
+            throw new BusinessValidationError(errorText);
+        }
+        throw new Error("Unable to update lead. Please try again.");
     }
 
     return response.json();

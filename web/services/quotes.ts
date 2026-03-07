@@ -137,6 +137,71 @@ export async function fetchQuote(quoteId: number): Promise<Quote> {
     return normalizeQuote(payload);
 }
 
+export async function updateQuote(quoteId: number, data: CreateQuoteInput): Promise<Quote> {
+    const totalQuantity = data.line_items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    const subtotal = data.line_items.reduce((sum, item) => {
+        const lineTotal = (Number(item.quantity) || 0) * (Number(item.unit_price) || 0);
+        const discount = item.discount_type === "percent"
+            ? lineTotal * ((Number(item.discount_amount) || 0) / 100)
+            : (Number(item.discount_amount) || 0);
+        return sum + lineTotal - discount + (Number(item.variable_amount) || 0);
+    }, 0);
+    const taxAmount = data.include_vat ? subtotal * ((Number(data.tax_rate) || 0) / 100) : 0;
+    const shippingAmount = Number(data.shipping_charges) || 0;
+    const adjustmentAmount = Number(data.adjustment_amount) || 0;
+    const totalAmount = subtotal + taxAmount + shippingAmount + adjustmentAmount;
+
+    const productName = data.line_items.length === 1
+        ? data.line_items[0].product_name
+        : `Multi-Product Quote (${data.line_items.length} items)`;
+
+    const payload = {
+        client: data.client_id || null,
+        lead: data.lead_id || null,
+        reference_number: data.reference_number || "",
+        quote_date: data.quote_date,
+        valid_until: data.valid_until,
+        product_name: productName,
+        quantity: totalQuantity,
+        total_amount: (Number(totalAmount) || 0).toFixed(2),
+        payment_terms: data.payment_terms,
+        include_vat: data.include_vat,
+        tax_rate: data.tax_rate,
+        shipping_charges: data.shipping_charges || 0,
+        adjustment_amount: data.adjustment_amount || 0,
+        adjustment_reason: data.adjustment_reason || "",
+        customer_notes: data.notes || "",
+        custom_terms: data.custom_terms || "",
+        line_items: data.line_items.map((item, index) => ({
+            product: item.product_id,
+            product_name: item.product_name,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            discount_amount: item.discount_amount || 0,
+            discount_type: item.discount_type || "percent",
+            variable_amount: item.variable_amount || 0,
+            customization_level_snapshot: "",
+            base_price_snapshot: item.unit_price,
+            order: index,
+        })),
+    };
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/quotes/${quoteId}/`, {
+        method: "PATCH",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
+        throw new Error(`Failed to update quote: ${response.status} ${errorText}`);
+    }
+
+    const apiQuote = (await response.json()) as ApiQuote;
+    return normalizeQuote(apiQuote);
+}
+
 export async function fetchQuoteHistory(quoteId: number): Promise<QuoteHistoryResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/quotes/${quoteId}/history/`, {
         headers: {
@@ -312,9 +377,32 @@ export async function fetchMultiProductQuoteDetail(quoteId: string): Promise<Mul
 }
 
 export async function createMultiProductQuote(data: CreateQuoteInput): Promise<MultiProductQuote> {
+    const totalQuantity = data.line_items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    const subtotal = data.line_items.reduce((sum, item) => {
+        const lineTotal = (Number(item.quantity) || 0) * (Number(item.unit_price) || 0);
+        const discount = item.discount_type === "percent"
+            ? lineTotal * ((Number(item.discount_amount) || 0) / 100)
+            : (Number(item.discount_amount) || 0);
+        return sum + lineTotal - discount + (Number(item.variable_amount) || 0);
+    }, 0);
+    const taxAmount = data.include_vat ? subtotal * ((Number(data.tax_rate) || 0) / 100) : 0;
+    const shippingAmount = Number(data.shipping_charges) || 0;
+    const adjustmentAmount = Number(data.adjustment_amount) || 0;
+    const totalAmount = subtotal + taxAmount + shippingAmount + adjustmentAmount;
+
+    const productName = data.line_items.length === 1
+        ? data.line_items[0].product_name
+        : `Multi-Product Quote (${data.line_items.length} items)`;
+
     const payload = {
         client: data.client_id || null,
         lead: data.lead_id || null,
+        reference_number: data.reference_number || "",
+        quote_date: data.quote_date,
+        valid_until: data.valid_until,
+        product_name: productName,
+        quantity: totalQuantity,
+        total_amount: (Number(totalAmount) || 0).toFixed(2),
         payment_terms: data.payment_terms,
         include_vat: data.include_vat,
         tax_rate: data.tax_rate,
@@ -386,4 +474,56 @@ export async function downloadQuotePdf(quoteId: string): Promise<Blob> {
     }
 
     return response.blob();
+}
+
+export async function fetchQuoteByToken(token: string): Promise<Quote> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/quotes/public/${token}/`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
+        throw new Error(`Failed to fetch quote: ${response.status} ${errorText}`);
+    }
+
+    const apiQuote: ApiQuote = await response.json();
+    return normalizeQuote(apiQuote);
+}
+
+export async function acceptQuoteByToken(token: string): Promise<QuoteActionResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/quotes/public/${token}/accept/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
+        throw new Error(`Failed to accept quote: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
+}
+
+export async function rejectQuoteByToken(token: string, reason?: string): Promise<QuoteActionResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/quotes/public/${token}/reject/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: reason ? JSON.stringify({ reason }) : undefined,
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
+        throw new Error(`Failed to reject quote: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
 }

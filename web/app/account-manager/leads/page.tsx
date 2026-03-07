@@ -79,8 +79,12 @@ export default function LeadIntakePage(): ReactElement {
             toast.success("Lead created successfully");
             setDrawerState({ isOpen: false, mode: "create", lead: null });
         },
-        onError: () => {
-            toast.error("Failed to create lead. Please try again.");
+        onError: (error: Error) => {
+            if (error.name === "BusinessValidationError") {
+                toast.error(error.message);
+            } else {
+                toast.error("Failed to create lead. Please try again.");
+            }
         },
     });
 
@@ -92,8 +96,12 @@ export default function LeadIntakePage(): ReactElement {
             toast.success("Lead updated successfully");
             setDrawerState({ isOpen: false, mode: "create", lead: null });
         },
-        onError: () => {
-            toast.error("Failed to update lead. Please try again.");
+        onError: (error: Error) => {
+            if (error.name === "BusinessValidationError") {
+                toast.error(error.message);
+            } else {
+                toast.error("Failed to update lead. Please try again.");
+            }
         },
     });
 
@@ -102,11 +110,16 @@ export default function LeadIntakePage(): ReactElement {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["leads"] });
             toast.success("Lead qualified successfully");
+            setDetailDrawerState({ isOpen: false, lead: null });
             setPendingLeadId(null);
             setPendingAction(null);
         },
-        onError: () => {
-            toast.error("Failed to qualify lead. Please try again.");
+        onError: (error: Error) => {
+            if (error.name === "BusinessValidationError") {
+                toast.error(error.message);
+            } else {
+                toast.error("Failed to qualify lead. Please try again.");
+            }
             setPendingLeadId(null);
             setPendingAction(null);
         },
@@ -135,8 +148,12 @@ export default function LeadIntakePage(): ReactElement {
             toast.success("Lead converted to client successfully");
             setDetailDrawerState({ isOpen: false, lead: null });
         },
-        onError: () => {
-            toast.error("Failed to convert lead. Please try again.");
+        onError: (error: Error) => {
+            if (error.name === "BusinessValidationError") {
+                toast.error(error.message);
+            } else {
+                toast.error("Failed to convert lead. Please try again.");
+            }
         },
     });
 
@@ -145,6 +162,7 @@ export default function LeadIntakePage(): ReactElement {
     };
 
     const handleEdit = (lead: Lead): void => {
+        setDetailDrawerState({ isOpen: false, lead: null });
         setDrawerState({ isOpen: true, mode: "edit", lead });
     };
 
@@ -265,10 +283,11 @@ export default function LeadIntakePage(): ReactElement {
                         />
 
                         <LeadsPagination
-                            currentPage={currentPage}
-                            totalCount={data.count}
+                            page={currentPage}
+                            count={data.count}
                             pageSize={20}
                             onPageChange={setCurrentPage}
+                            onPageSizeChange={() => { }}
                         />
                     </>
                 )}

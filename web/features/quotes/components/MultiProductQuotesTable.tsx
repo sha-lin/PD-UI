@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Eye, Download, FileEdit, Copy, CheckCircle, XCircle, Clock, AlertCircle, MoreVertical } from "lucide-react";
+import { Eye, Download, FileEdit, Copy, CheckCircle, XCircle, Clock, AlertCircle, MoreVertical, Edit } from "lucide-react";
 import type { MultiProductQuote, QuoteStatus } from "@/types/quotes";
 
 interface MultiProductQuotesTableProps {
@@ -7,6 +7,7 @@ interface MultiProductQuotesTableProps {
     onViewDetail: (quote: MultiProductQuote) => void;
     onDownloadPdf: (quoteId: string) => void;
     onClone: (quoteId: number) => void;
+    onEdit: (quoteId: number) => void;
 }
 
 export default function MultiProductQuotesTable({
@@ -14,6 +15,7 @@ export default function MultiProductQuotesTable({
     onViewDetail,
     onDownloadPdf,
     onClone,
+    onEdit,
 }: MultiProductQuotesTableProps) {
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
@@ -239,6 +241,19 @@ export default function MultiProductQuotesTable({
                                     <Eye className="w-4 h-4" />
                                     View
                                 </button>
+                                {quote.status === "Draft" && (
+                                    <button
+                                        onClick={(): void => {
+                                            onEdit(quote.id);
+                                            setOpenMenuId(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                        type="button"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                        Edit
+                                    </button>
+                                )}
                                 <button
                                     onClick={(): void => {
                                         onDownloadPdf(quote.quote_id);

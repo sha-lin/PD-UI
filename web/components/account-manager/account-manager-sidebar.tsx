@@ -37,7 +37,7 @@ const menuSections: MenuSection[] = [
         items: [
             { label: "Lead Intake", href: "/account-manager/leads", icon: UserPlus },
             { label: "Client List", href: "/account-manager/clients", icon: Users },
-            { label: "Multi Product Quotes", href: "/account-manager/quotes", icon: FileText },
+            { label: "Quotes", href: "/account-manager/quotes", icon: FileText },
             { label: "Analytics", href: "/account-manager/analytics", icon: BarChart3 },
             { label: "Jobs", href: "/account-manager/jobs", icon: Briefcase },
             { label: "Notifications", href: "/account-manager/notifications", icon: Bell },

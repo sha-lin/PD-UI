@@ -17,6 +17,12 @@ export interface QuoteLineItem {
     quantity: number;
     unit_price: number | string | null;
     production_cost?: number | string | null;
+    discount_amount?: number;
+    discount_type?: "percent" | "fixed";
+    variable_amount?: number;
+    customization_level_snapshot?: string;
+    base_price_snapshot?: number;
+    order?: number;
 }
 
 export interface QuoteCostPayload {
@@ -48,6 +54,14 @@ export interface Quote {
     lead_name?: string;
     created_by_name?: string;
     line_items?: QuoteLineItem[];
+    include_vat?: boolean;
+    tax_rate?: number;
+    shipping_charges?: number;
+    adjustment_amount?: number;
+    adjustment_reason?: string;
+    customer_notes?: string;
+    custom_terms?: string;
+}
 }
 
 export interface QuoteHistoryItem {
@@ -170,6 +184,9 @@ export interface CreateQuoteLineItemInput {
 export interface CreateQuoteInput {
     client_id?: number;
     lead_id?: number;
+    reference_number?: string;
+    quote_date: string;
+    valid_until: string;
     payment_terms: PaymentTerms;
     include_vat: boolean;
     tax_rate: number;

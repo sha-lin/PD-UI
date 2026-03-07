@@ -2,7 +2,6 @@ import type { ReactElement } from "react";
 import {
     BriefcaseBusinessIcon,
     Building2Icon,
-    ClipboardListIcon,
     FileTextIcon,
     PackageIcon,
     SettingsIcon,
@@ -18,7 +17,6 @@ const productionQuickActions: ProductionQuickAction[] = [
     { label: "My Quotes", href: "/staff/production/my-quotes", Icon: FileTextIcon },
     { label: "My Jobs", href: "/staff/production/my-jobs", Icon: BriefcaseBusinessIcon },
     { label: "Product Catalog", href: "/staff/production/products", Icon: PackageIcon },
-    { label: "LPOs", href: "/staff/production/lpos", Icon: ClipboardListIcon },
     { label: "Processes", href: "/production-team/processes", Icon: SettingsIcon },
     { label: "Vendors", href: "/production-team/vendors", Icon: Building2Icon },
 ];

@@ -264,12 +264,12 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
 
     const proofsQuery = useQuery({
         queryKey: ["production-my-jobs", "proofs"],
-        queryFn: (): Promise<PurchaseOrderProofsResponse> => fetchPurchaseOrderProofs("pending"),
+        queryFn: (): Promise<PurchaseOrderProofsResponse> => fetchPurchaseOrderProofs(""),
     });
 
     const invoicesQuery = useQuery({
         queryKey: ["production-my-jobs", "invoices"],
-        queryFn: (): Promise<VendorInvoicesResponse> => fetchVendorInvoices("submitted"),
+        queryFn: (): Promise<VendorInvoicesResponse> => fetchVendorInvoices(""),
     });
 
     const vendorsQuery = useQuery({
@@ -387,6 +387,24 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
     const invoices = invoicesQuery.data?.results ?? [];
     const vendors = vendorsQuery.data?.results ?? [];
 
+    const sortedProofs = useMemo(
+        (): PurchaseOrderProofListItem[] =>
+            [...proofs].sort((a: PurchaseOrderProofListItem, b: PurchaseOrderProofListItem): number => {
+                const order: Record<string, number> = { pending: 0, rejected: 1, approved: 2 };
+                return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+            }),
+        [proofs]
+    );
+
+    const sortedInvoices = useMemo(
+        (): VendorInvoiceListItem[] =>
+            [...invoices].sort((a: VendorInvoiceListItem, b: VendorInvoiceListItem): number => {
+                const order: Record<string, number> = { submitted: 0, rejected: 1, approved: 2 };
+                return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+            }),
+        [invoices]
+    );
+
     const purchaseOrdersByJob = useMemo((): Map<number, PurchaseOrderListItem[]> => {
         const map = new Map<number, PurchaseOrderListItem[]>();
         purchaseOrders.forEach((purchaseOrder: PurchaseOrderListItem): void => {
@@ -404,8 +422,8 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
     const tabCounts = {
         pending: jobsQuery.data?.count ?? filteredJobs.length,
         assigned: purchaseOrders.length,
-        proofs: proofs.length,
-        invoices: invoices.length,
+        proofs: proofs.filter((p: PurchaseOrderProofListItem): boolean => p.status === "pending").length,
+        invoices: invoices.filter((i: VendorInvoiceListItem): boolean => i.status === "submitted").length,
     };
 
     const isPendingLoading = jobsQuery.isLoading;
@@ -779,34 +797,41 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
                                         <tr>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Proof ID</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">PO</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Submitted</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                                             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                        {proofs.length > 0 ? (
-                                            proofs.map((proof: PurchaseOrderProofListItem): ReactElement => (
-                                                <tr key={proof.id} className="hover:bg-gray-50">
-                                                    <td className="px-4 py-3 font-semibold text-gray-900">#{proof.id}</td>
-                                                    <td className="px-4 py-3 text-gray-700">{proof.purchase_order || "—"}</td>
-                                                    <td className="px-4 py-3 text-gray-700">{proof.proof_type || "Proof"}</td>
-                                                    <td className="px-4 py-3 text-gray-700">{formatDate(proof.submitted_at)}</td>
-                                                    <td className="px-4 py-3 text-right">
-                                                        <button
-                                                            type="button"
-                                                            onClick={(): void => handleReviewProof(proof)}
-                                                            className="text-sm font-semibold text-brand-blue hover:text-brand-blue/80"
-                                                        >
-                                                            Review &rarr;
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
+                                        {sortedProofs.length > 0 ? (
+                                            sortedProofs.map((proof: PurchaseOrderProofListItem): ReactElement => {
+                                                const isPending = proof.status === "pending";
+                                                return (
+                                                    <tr key={proof.id} className="hover:bg-gray-50">
+                                                        <td className="px-4 py-3 font-semibold text-gray-900">#{proof.id}</td>
+                                                        <td className="px-4 py-3 text-gray-700">{proof.po_number || "—"}</td>
+                                                        <td className="px-4 py-3 text-gray-700">{formatDate(proof.submitted_at)}</td>
+                                                        <td className="px-4 py-3">
+                                                            <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 capitalize">
+                                                                {proof.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <button
+                                                                type="button"
+                                                                onClick={(): void => handleReviewProof(proof)}
+                                                                className="text-sm font-semibold text-brand-blue hover:text-brand-blue/80"
+                                                            >
+                                                                {isPending ? <>Review &rarr;</> : <>View &rarr;</>}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
                                         ) : (
                                             <tr>
                                                 <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
-                                                    No proofs pending approval.
+                                                    No proofs submitted yet.
                                                 </td>
                                             </tr>
                                         )}
@@ -824,34 +849,45 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
                                         <tr>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Invoice #</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Vendor</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">PO</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Submitted</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                                             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                        {invoices.length > 0 ? (
-                                            invoices.map((invoice: VendorInvoiceListItem): ReactElement => (
-                                                <tr key={invoice.id} className="hover:bg-gray-50">
-                                                    <td className="px-4 py-3 font-semibold text-gray-900">{invoice.invoice_number || `INV-${invoice.id}`}</td>
-                                                    <td className="px-4 py-3 text-gray-700">{invoice.vendor_name || "Vendor"}</td>
-                                                    <td className="px-4 py-3 text-gray-700">KES {invoice.total_amount ?? "0"}</td>
-                                                    <td className="px-4 py-3 text-gray-700">{formatDate(invoice.submitted_at)}</td>
-                                                    <td className="px-4 py-3 text-right">
-                                                        <button
-                                                            type="button"
-                                                            onClick={(): void => handleReviewInvoice(invoice)}
-                                                            className="text-sm font-semibold text-brand-blue hover:text-brand-blue/80"
-                                                        >
-                                                            Review &rarr;
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
+                                        {sortedInvoices.length > 0 ? (
+                                            sortedInvoices.map((invoice: VendorInvoiceListItem): ReactElement => {
+                                                const isPending = invoice.status === "submitted";
+                                                return (
+                                                    <tr key={invoice.id} className="hover:bg-gray-50">
+                                                        <td className="px-4 py-3 font-semibold text-gray-900">{invoice.invoice_number || `INV-${invoice.id}`}</td>
+                                                        <td className="px-4 py-3 text-gray-700">{invoice.vendor_name || "—"}</td>
+                                                        <td className="px-4 py-3 text-gray-700">{invoice.po_number || "—"}</td>
+                                                        <td className="px-4 py-3 text-gray-700">KES {invoice.total_amount ?? "0"}</td>
+                                                        <td className="px-4 py-3 text-gray-700">{formatDate(invoice.submitted_at)}</td>
+                                                        <td className="px-4 py-3">
+                                                            <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 capitalize">
+                                                                {invoice.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <button
+                                                                type="button"
+                                                                onClick={(): void => handleReviewInvoice(invoice)}
+                                                                className="text-sm font-semibold text-brand-blue hover:text-brand-blue/80"
+                                                            >
+                                                                {isPending ? <>Review &rarr;</> : <>View &rarr;</>}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
                                         ) : (
                                             <tr>
-                                                <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
-                                                    No invoices pending review.
+                                                <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
+                                                    No invoices submitted yet.
                                                 </td>
                                             </tr>
                                         )}
@@ -950,16 +986,18 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
                                     <p className="text-sm text-brand-red">{selectedProof.rejection_reason}</p>
                                 </div>
                             ) : null}
-                            <div>
-                                <label className="block text-xs font-medium uppercase text-gray-500">Rejection Reason <span className="text-gray-400 normal-case">(required to reject)</span></label>
-                                <textarea
-                                    rows={3}
-                                    value={rejectReason}
-                                    onChange={(e: ChangeEvent<HTMLTextAreaElement>): void => setRejectReason(e.target.value)}
-                                    placeholder="Describe why this proof is being rejected…"
-                                    className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
-                                />
-                            </div>
+                            {selectedProof.status === "pending" ? (
+                                <div>
+                                    <label className="block text-xs font-medium uppercase text-gray-500">Rejection Reason <span className="text-gray-400 normal-case">(required to reject)</span></label>
+                                    <textarea
+                                        rows={3}
+                                        value={rejectReason}
+                                        onChange={(e: ChangeEvent<HTMLTextAreaElement>): void => setRejectReason(e.target.value)}
+                                        placeholder="Describe why this proof is being rejected…"
+                                        className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                                    />
+                                </div>
+                            ) : null}
                         </div>
                         <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
                             <button
@@ -967,24 +1005,28 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
                                 onClick={(): void => setSelectedProof(null)}
                                 className="rounded-md px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
                             >
-                                Cancel
+                                Close
                             </button>
-                            <button
-                                type="button"
-                                disabled={!rejectReason.trim() || rejectProofMutation.isPending}
-                                onClick={(): void => rejectProofMutation.mutate({ proofId: selectedProof.id, reason: rejectReason.trim() })}
-                                className="rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
-                            >
-                                {rejectProofMutation.isPending ? "Rejecting…" : "Reject"}
-                            </button>
-                            <button
-                                type="button"
-                                disabled={approveProofMutation.isPending}
-                                onClick={(): void => approveProofMutation.mutate(selectedProof.id)}
-                                className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-brand-green/90 disabled:opacity-50"
-                            >
-                                {approveProofMutation.isPending ? "Approving…" : "Approve Proof"}
-                            </button>
+                            {selectedProof.status === "pending" ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        disabled={!rejectReason.trim() || rejectProofMutation.isPending}
+                                        onClick={(): void => rejectProofMutation.mutate({ proofId: selectedProof.id, reason: rejectReason.trim() })}
+                                        className="rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
+                                    >
+                                        {rejectProofMutation.isPending ? "Rejecting…" : "Reject"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={approveProofMutation.isPending}
+                                        onClick={(): void => approveProofMutation.mutate(selectedProof.id)}
+                                        className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-brand-green/90 disabled:opacity-50"
+                                    >
+                                        {approveProofMutation.isPending ? "Approving…" : "Approve Proof"}
+                                    </button>
+                                </>
+                            ) : null}
                         </div>
                     </div>
                 </div>
@@ -1113,16 +1155,18 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
                                     <p className="text-sm text-brand-red">{selectedInvoice.rejection_reason}</p>
                                 </div>
                             ) : null}
-                            <div>
-                                <label className="block text-xs font-medium uppercase text-gray-500">Rejection Reason <span className="text-gray-400 normal-case">(required to reject)</span></label>
-                                <textarea
-                                    rows={3}
-                                    value={rejectReason}
-                                    onChange={(e: ChangeEvent<HTMLTextAreaElement>): void => setRejectReason(e.target.value)}
-                                    placeholder="Describe why this invoice is being rejected…"
-                                    className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
-                                />
-                            </div>
+                            {selectedInvoice.status === "submitted" ? (
+                                <div>
+                                    <label className="block text-xs font-medium uppercase text-gray-500">Rejection Reason <span className="text-gray-400 normal-case">(required to reject)</span></label>
+                                    <textarea
+                                        rows={3}
+                                        value={rejectReason}
+                                        onChange={(e: ChangeEvent<HTMLTextAreaElement>): void => setRejectReason(e.target.value)}
+                                        placeholder="Describe why this invoice is being rejected…"
+                                        className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                                    />
+                                </div>
+                            ) : null}
                         </div>
                         <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
                             <button
@@ -1130,24 +1174,28 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
                                 onClick={(): void => setSelectedInvoice(null)}
                                 className="rounded-md px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
                             >
-                                Cancel
+                                Close
                             </button>
-                            <button
-                                type="button"
-                                disabled={!rejectReason.trim() || rejectInvoiceMutation.isPending}
-                                onClick={(): void => rejectInvoiceMutation.mutate({ invoiceId: selectedInvoice.id, reason: rejectReason.trim() })}
-                                className="rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
-                            >
-                                {rejectInvoiceMutation.isPending ? "Rejecting…" : "Reject"}
-                            </button>
-                            <button
-                                type="button"
-                                disabled={approveInvoiceMutation.isPending}
-                                onClick={(): void => approveInvoiceMutation.mutate(selectedInvoice.id)}
-                                className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-brand-green/90 disabled:opacity-50"
-                            >
-                                {approveInvoiceMutation.isPending ? "Approving…" : "Approve Invoice"}
-                            </button>
+                            {selectedInvoice.status === "submitted" ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        disabled={!rejectReason.trim() || rejectInvoiceMutation.isPending}
+                                        onClick={(): void => rejectInvoiceMutation.mutate({ invoiceId: selectedInvoice.id, reason: rejectReason.trim() })}
+                                        className="rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
+                                    >
+                                        {rejectInvoiceMutation.isPending ? "Rejecting…" : "Reject"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={approveInvoiceMutation.isPending}
+                                        onClick={(): void => approveInvoiceMutation.mutate(selectedInvoice.id)}
+                                        className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-brand-green/90 disabled:opacity-50"
+                                    >
+                                        {approveInvoiceMutation.isPending ? "Approving…" : "Approve Invoice"}
+                                    </button>
+                                </>
+                            ) : null}
                         </div>
                     </div>
                 </div>
@@ -1321,53 +1369,6 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
             )}
 
             <section className="max-w-7xl mx-auto px-8 pb-8">
-                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                    <h3 className="text-sm font-semibold text-gray-900">Workflow Summary</h3>
-                    <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <div className="rounded-md bg-brand-blue/10 p-3 text-center">
-                            <div className="text-xl font-bold text-brand-blue">{tabCounts.pending}</div>
-                            <div className="text-xs text-gray-600 mt-1">Jobs Pending Assignment</div>
-                        </div>
-                        <div className="rounded-md bg-brand-purple/10 p-3 text-center">
-                            <div className="text-xl font-bold text-brand-purple">{tabCounts.assigned}</div>
-                            <div className="text-xs text-gray-600 mt-1">Assigned to Vendors</div>
-                        </div>
-                        <div className="rounded-md bg-brand-red/10 p-3 text-center">
-                            <div className="text-xl font-bold text-brand-red">{tabCounts.proofs}</div>
-                            <div className="text-xs text-gray-600 mt-1">Proofs Awaiting Approval</div>
-                        </div>
-                        <div className="rounded-md bg-brand-orange/10 p-3 text-center">
-                            <div className="text-xl font-bold text-brand-orange">{tabCounts.invoices}</div>
-                            <div className="text-xs text-gray-600 mt-1">Invoices Pending Review</div>
-                        </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            onClick={(): void => {
-                                queryClient.invalidateQueries({ queryKey: ["production-my-jobs"] });
-                                toast.success("Dashboard refreshed.");
-                            }}
-                            className="rounded-md bg-brand-blue px-4 py-2 text-xs font-semibold text-white"
-                        >
-                            Refresh Dashboard
-                        </button>
-                        <button
-                            type="button"
-                            onClick={(): void => setActiveTab("assigned")}
-                            className="rounded-md border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700"
-                        >
-                            View Assigned Jobs
-                        </button>
-                        <button
-                            type="button"
-                            onClick={(): void => setActiveTab("proofs")}
-                            className="rounded-md border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700"
-                        >
-                            View Proof Approvals
-                        </button>
-                    </div>
-                </div>
             </section>
 
             {(approveProofMutation.isPending || rejectProofMutation.isPending || approveInvoiceMutation.isPending || rejectInvoiceMutation.isPending) && (

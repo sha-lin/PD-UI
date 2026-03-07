@@ -13,10 +13,8 @@ import {
     Building2,
     Settings,
     Truck,
-    ClipboardList,
     BarChart3,
     Bell,
-    ShieldCheck,
 } from "lucide-react";
 
 interface MenuItem {
@@ -41,7 +39,6 @@ const menuSections: MenuSection[] = [
         items: [
             { label: "My Quotes", href: "/production-team/my-quotes", icon: FileText },
             { label: "My Jobs", href: "/production-team/my-jobs", icon: Briefcase },
-            { label: "LPOs", href: "/production-team/lpos", icon: ClipboardList },
         ],
     },
     {

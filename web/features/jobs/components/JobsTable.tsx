@@ -10,6 +10,7 @@ interface JobsTableProps {
     showAssignButton?: boolean;
     showProgressButton?: boolean;
     showReminderButton?: boolean;
+    remindingJobId?: number;
 }
 
 const statusStyles: Record<JobStatus, string> = {
@@ -28,6 +29,7 @@ export default function JobsTable({
     showAssignButton = true,
     showProgressButton = false,
     showReminderButton = false,
+    remindingJobId,
 }: JobsTableProps): ReactElement {
     const formatDate = (value: string | null): string => {
         if (!value) {
@@ -131,9 +133,16 @@ export default function JobsTable({
                                             <button
                                                 type="button"
                                                 onClick={(): void => onSendReminder(job)}
-                                                className="rounded-md bg-brand-yellow px-3 py-1 text-xs font-medium text-brand-black hover:bg-brand-yellow/90"
+                                                disabled={remindingJobId === job.id}
+                                                className="rounded-md bg-brand-yellow px-3 py-1 text-xs font-medium text-brand-black hover:bg-brand-yellow/90 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
                                             >
-                                                Remind
+                                                {remindingJobId === job.id && (
+                                                    <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                )}
+                                                {remindingJobId === job.id ? "Sending..." : "Remind"}
                                             </button>
                                         )}
                                     </div>

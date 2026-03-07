@@ -28,6 +28,7 @@ export default function AccountManagerJobsPage(): ReactElement {
     const [pageSize, setPageSize] = useState<number>(20);
 
     const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+    const [remindingJobId, setRemindingJobId] = useState<number | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
     const [isAssignOpen, setIsAssignOpen] = useState<boolean>(false);
 
@@ -87,9 +88,11 @@ export default function AccountManagerJobsPage(): ReactElement {
         mutationFn: (jobId: number) => sendJobReminder(jobId),
         onSuccess: (): void => {
             toast.success("Reminder sent! Email and notification delivered.");
+            setRemindingJobId(null);
         },
         onError: (): void => {
             toast.error("Unable to send reminder. Please try again.");
+            setRemindingJobId(null);
         },
     });
 
@@ -108,6 +111,7 @@ export default function AccountManagerJobsPage(): ReactElement {
     };
 
     const handleSendReminder = (job: Job): void => {
+        setRemindingJobId(job.id);
         reminderMutation.mutate(job.id);
     };
 
@@ -181,6 +185,7 @@ export default function AccountManagerJobsPage(): ReactElement {
                                 onSendReminder={handleSendReminder}
                                 showAssignButton
                                 showReminderButton
+                                remindingJobId={remindingJobId ?? undefined}
                             />
                             <div className="border-t border-gray-200 p-4">
                                 <JobsPagination
@@ -211,6 +216,7 @@ export default function AccountManagerJobsPage(): ReactElement {
                 productionUsers={productionUsers}
                 onClose={closeModals}
                 onSubmit={handleAssignSubmit}
+                isSubmitting={assignMutation.isPending}
             />
         </AccountManagerLayout>
     );

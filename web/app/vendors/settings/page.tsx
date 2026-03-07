@@ -80,7 +80,6 @@ export default function VendorSettingsPage(): ReactElement {
     function handleSubmit(e: FormEvent<HTMLFormElement>): void {
         e.preventDefault();
         if (!resolvedForm || !vendor) return;
-        setErrorMsg(null);
         mutation.mutate(resolvedForm as UpdateVendorPayload);
     }
 

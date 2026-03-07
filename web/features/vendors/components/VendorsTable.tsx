@@ -69,7 +69,7 @@ export default function VendorsTable({ vendors, onEdit, onDelete, onInvite }: Ve
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-700">
                                 <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
-                                    VPS {vendor.vps_score || "N/A"} ({formatVpsValue(vendor.vps_score_value)})
+                                    VPS {vendor.vps_score_value || "N/A"} ({formatVpsValue(vendor.vps_score_value)})
                                 </span>
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-700">

@@ -176,9 +176,6 @@ export default function LeadsPage(): ReactElement {
         onSuccess: (): void => {
             toast.success("Lead qualified.");
         },
-        onError: (errorValue: unknown): void => {
-            toast.error(extractMutationMessage(errorValue, "Unable to qualify lead."));
-        },
         onError: (errorValue: unknown, leadId: number, context: LeadsMutationContext | undefined): void => {
             if (context !== undefined) {
                 for (const [queryKey, previousValue] of context.previousLeadQueries) {
@@ -277,6 +274,10 @@ export default function LeadsPage(): ReactElement {
 
     const handleView = (lead: Lead): void => {
         setSelectedLeadId(lead.id);
+    };
+
+    const handleEdit = (lead: Lead): void => {
+        setSelectedLeadId(null);
     };
 
     const handleConvert = (lead: Lead, payload: LeadConvertPayload): void => {
@@ -393,6 +394,7 @@ export default function LeadsPage(): ReactElement {
                 isQualifying={qualifyMutation.isPending}
                 isConverting={convertMutation.isPending}
                 onClose={(): void => setSelectedLeadId(null)}
+                onEdit={handleEdit}
                 onQualify={handleQualify}
                 onConvert={handleConvert}
             />

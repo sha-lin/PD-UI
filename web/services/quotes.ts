@@ -169,8 +169,20 @@ const postQuoteAction = async (quoteId: number, actionPath: string): Promise<Quo
     return response.json();
 };
 
-export async function sendQuoteToPT(quoteId: number): Promise<QuoteActionResponse> {
-    return postQuoteAction(quoteId, "send_to_pt_for_review");
+export async function sendQuoteToPT(quoteId: number, assignedTo?: number): Promise<QuoteActionResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/quotes/${quoteId}/send_to_pt_for_review/`, {
+        method: "POST",
+        headers: buildWriteHeaders(),
+        credentials: "include",
+        body: assignedTo ? JSON.stringify({ assigned_to: assignedTo }) : undefined,
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
+        throw new Error(`Failed to send quote to PT: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
 }
 
 export async function sendQuoteToCustomer(quoteId: number): Promise<QuoteActionResponse> {
@@ -359,7 +371,7 @@ export async function markQuoteLost(quoteId: number, reason: string): Promise<Qu
 }
 
 export async function convertQuoteToJob(quoteId: number): Promise<QuoteActionResponse> {
-    return postQuoteAction(quoteId, "convert-to-job");
+    return postQuoteAction(quoteId, "approve");
 }
 
 export async function downloadQuotePdf(quoteId: string): Promise<Blob> {

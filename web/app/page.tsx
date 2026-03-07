@@ -15,39 +15,39 @@ import Link from "next/link";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import { checkSession } from "@/lib/api/auth";
+import LogoCloud from "@/components/ui/logo-cloud";
+import FeaturesSection from "@/components/ui/features-section";
+import HoverSliderSection from "@/components/ui/hover-slider-section";
+import ContactCTASection from "@/components/ui/contact-cta-section";
+import FooterSection from "@/components/ui/footer-section";
+import CallToActionSection from "@/components/ui/call-to-action-section";
 
 const services = [
   {
-    title: "Business Cards",
-    description: "Premium quality, fast turnaround",
-    image: "https://static.vecteezy.com/system/resources/previews/047/920/967/large_2x/formal-shoes-isolated-on-a-transparent-background-free-png.png",
-    href: "/login",
+    title: "Signage & Banners",
+    description: "Large format banners, posters & signage",
+    image: "/banner/banner.jpg",
   },
   {
-    title: "Brochures & Flyers",
-    description: "Full-colour offset & digital",
-    image: "https://static.vecteezy.com/system/resources/previews/035/500/119/non_2x/ai-generated-3d-succulent-plant-isolated-on-transparent-background-free-png.png",
-    href: "/login",
+    title: "Clothing",
+    description: "Branded apparel & custom garments",
+    image: "/banner/clothing.png",
   },
   {
-    title: "Large Format",
-    description: "Banners, posters & signage",
-    image: "https://static.vecteezy.com/system/resources/previews/047/920/967/large_2x/formal-shoes-isolated-on-a-transparent-background-free-png.png",
-    href: "/login",
+    title: "Marketing Material",
+    description: "Brochures, flyers & promotional print",
+    image: "/banner/marketing.jpg",
   },
   {
-    title: "Branded Merch",
-    description: "T-shirts, caps, notebooks & more",
-    image: "https://static.vecteezy.com/system/resources/previews/035/500/119/non_2x/ai-generated-3d-succulent-plant-isolated-on-transparent-background-free-png.png",
-    href: "/login",
+    title: "Office & Stationery",
+    description: "Business essentials & promotional products",
+    image: "/banner/stationary.jpg",
   },
 ];
 
 const navigation = [
   { name: "Services", href: "#services" },
-  { name: "About", href: "#about" },
-  { name: "Blog", href: "#blog" },
-  { name: "Contact", href: "#contact" },
+  { name: "Contact", href: "/contact" },
 ];
 
 import type { PortalRole } from "@/types/auth";
@@ -93,16 +93,16 @@ export default function Home() {
           <div className="w-full md:w-2/3 lg:w-1/2 bg-background/95 backdrop-blur-sm p-4 rounded-br-2xl flex items-center gap-4">
             <Link href="/" className="flex items-center shrink-0">
               <Image
-                src="/logo/pd.png"
+                src="/logo/logo.png"
                 alt="Print Duka"
-                width={120}
-                height={36}
-                className="h-8 w-auto"
+                width={240}
+                height={108}
+                className="h-16 w-auto"
                 priority
               />
             </Link>
 
-            <nav className="hidden lg:flex items-center justify-between w-full">
+            <nav className="hidden lg:flex items-center justify-end gap-2 w-full">
               {navigation.map((item) => (
                 <Button
                   key={item.name}
@@ -129,11 +129,11 @@ export default function Home() {
                 <SheetHeader className="p-6 text-left border-b border-border/50">
                   <SheetTitle>
                     <Image
-                      src="/logo/pd.png"
+                      src="/logo/logo.png"
                       alt="Print Duka"
-                      width={120}
-                      height={36}
-                      className="h-8 w-auto"
+                      width={360}
+                      height={108}
+                      className="h-24 w-auto"
                     />
                   </SheetTitle>
                 </SheetHeader>
@@ -193,9 +193,10 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
             >
-              <span className="bg-gradient-to-r from-[#093756] via-[#093756]/80 to-[#F6B619] bg-clip-text text-transparent">
-                We Build Brands
+              <span className="bg-gradient-to-r from-[#093756] via-[#093756]/80 to-[#093756] bg-clip-text text-transparent">
+                We Build{" "}
               </span>
+              <span className="text-brand-yellow">Brands</span>
               <br />
               <span className="text-foreground">Through Print.</span>
             </motion.h1>
@@ -205,8 +206,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
             >
-              Premium print solutions for businesses across Kenya — from business cards
-              to large-format signage, delivered on time, every time.
+              We are a printing & design company with a passion for bringing ideas to life on paper.
             </motion.p>
             <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center"
@@ -215,10 +215,7 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.55, ease: "easeOut" }}
             >
               <Button asChild size="lg" className="bg-brand-blue hover:bg-brand-blue/90 text-white px-8 rounded-full shadow-lg hover:shadow-xl transition-all">
-                <Link href="/login">Get Started</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full px-8">
-                <Link href="#services">View Services</Link>
+                <Link href="/login">Get Quote</Link>
               </Button>
             </motion.div>
           </div>
@@ -230,33 +227,42 @@ export default function Home() {
         {services.map((service, index) => (
           <motion.div
             key={service.title}
-            className="group relative bg-muted/50 backdrop-blur-sm rounded-3xl p-4 sm:p-6 min-h-[250px] sm:min-h-[300px] w-full overflow-hidden transition-all duration-500"
+            className="group relative rounded-3xl min-h-[250px] sm:min-h-[300px] w-full overflow-hidden transition-all duration-500"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
           >
-            <Link href={service.href} className="absolute inset-0 z-20">
-              <h2 className="text-center text-2xl sm:text-3xl font-bold relative z-10 text-brand-blue my-2 sm:my-4 group-hover:text-brand-blue/80 transition-colors duration-300">
-                {service.title}
-              </h2>
-              <p className="text-center text-xs text-muted-foreground relative z-10 px-2">{service.description}</p>
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={service.image}
-                  alt={service.title}
-                  className="w-full max-w-[140px] h-auto object-contain opacity-80 group-hover:scale-110 group-hover:opacity-100 transition-all duration-500"
-                />
-              </div>
-              <div className="absolute bottom-0 right-0 w-16 h-16 md:w-20 md:h-20 bg-background/95 backdrop-blur-sm rounded-tl-xl flex items-center justify-center z-10 border-l border-t border-border/50">
-                <div className="absolute bottom-2 right-2 md:bottom-3 md:right-3 w-10 h-10 md:w-12 md:h-12 bg-secondary rounded-full flex items-center justify-center group-hover:bg-brand-blue group-hover:text-white group-hover:scale-110 transition-all duration-300 shadow-lg">
-                  <ArrowUpRight className="w-5 h-5" />
-                </div>
-              </div>
-            </Link>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={service.image}
+              alt={service.title}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <h2 className="absolute bottom-4 left-0 right-0 text-center text-2xl sm:text-3xl font-bold text-white px-4">
+              {service.title}
+            </h2>
           </motion.div>
         ))}
       </div>
+
+      {/* Logo Cloud */}
+      <LogoCloud />
+
+      {/* Features Section */}
+      <FeaturesSection />
+
+      {/* Hover Slider Section */}
+      <HoverSliderSection />
+
+      {/* Call to Action Section */}
+      <CallToActionSection />
+
+      {/* Contact CTA */}
+      <ContactCTASection />
+
+      {/* Footer */}
+      <FooterSection />
     </div>
   );
 }

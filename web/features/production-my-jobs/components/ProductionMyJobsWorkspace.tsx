@@ -6,7 +6,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     AlertCircleIcon,
     CheckIcon,
+    ClipboardListIcon,
+    Building2Icon,
+    ImageIcon,
+    ReceiptIcon,
     LoaderCircleIcon,
+    LucideIcon,
     SearchIcon,
     SendHorizonalIcon,
     UploadIcon,
@@ -43,34 +48,29 @@ import type { Vendor, VendorsQueryParams, VendorsResponse } from "@/types/vendor
 interface TabDefinition {
     key: MyJobsTabKey;
     title: string;
-    icon: string;
-    badgeClass: string;
+    icon: LucideIcon;
 }
 
 const tabs: TabDefinition[] = [
     {
         key: "pending",
         title: "Ready for Assignment",
-        icon: "📋",
-        badgeClass: "bg-brand-blue text-white",
+        icon: ClipboardListIcon,
     },
     {
         key: "assigned",
         title: "Assigned to Vendors",
-        icon: "✓",
-        badgeClass: "bg-brand-purple text-white",
+        icon: Building2Icon,
     },
     {
         key: "proofs",
         title: "Awaiting Proof Approval",
-        icon: "📸",
-        badgeClass: "bg-brand-red text-white",
+        icon: ImageIcon,
     },
     {
         key: "invoices",
         title: "Pending Invoices",
-        icon: "💰",
-        badgeClass: "bg-brand-orange text-white",
+        icon: ReceiptIcon,
     },
 ];
 
@@ -220,6 +220,9 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
     const [stageName, setStageName] = useState<string>("Production");
     const [vendorNotes, setVendorNotes] = useState<string>("");
     const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
+    const [selectedProof, setSelectedProof] = useState<PurchaseOrderProofListItem | null>(null);
+    const [selectedInvoice, setSelectedInvoice] = useState<VendorInvoiceListItem | null>(null);
+    const [rejectReason, setRejectReason] = useState<string>("");
 
     useEffect((): (() => void) => {
         const timer = setTimeout((): void => {
@@ -330,6 +333,8 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
         onSuccess: (): void => {
             toast.success("Proof approved.");
             queryClient.invalidateQueries({ queryKey: ["production-my-jobs", "proofs"] });
+            setSelectedProof(null);
+            setRejectReason("");
         },
         onError: (): void => {
             toast.error("Unable to approve proof.");
@@ -341,6 +346,8 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
         onSuccess: (): void => {
             toast.success("Proof rejected.");
             queryClient.invalidateQueries({ queryKey: ["production-my-jobs", "proofs"] });
+            setSelectedProof(null);
+            setRejectReason("");
         },
         onError: (): void => {
             toast.error("Unable to reject proof.");
@@ -352,6 +359,8 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
         onSuccess: (): void => {
             toast.success("Invoice approved.");
             queryClient.invalidateQueries({ queryKey: ["production-my-jobs", "invoices"] });
+            setSelectedInvoice(null);
+            setRejectReason("");
         },
         onError: (): void => {
             toast.error("Unable to approve invoice.");
@@ -363,6 +372,8 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
         onSuccess: (): void => {
             toast.success("Invoice rejected.");
             queryClient.invalidateQueries({ queryKey: ["production-my-jobs", "invoices"] });
+            setSelectedInvoice(null);
+            setRejectReason("");
         },
         onError: (): void => {
             toast.error("Unable to reject invoice.");
@@ -474,28 +485,14 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
         });
     };
 
-    const handleRejectProof = (proof: PurchaseOrderProofListItem): void => {
-        const reason = window.prompt("Enter rejection reason");
-        if (!reason || !reason.trim()) {
-            return;
-        }
-
-        rejectProofMutation.mutate({
-            proofId: proof.id,
-            reason: reason.trim(),
-        });
+    const handleReviewProof = (proof: PurchaseOrderProofListItem): void => {
+        setRejectReason("");
+        setSelectedProof(proof);
     };
 
-    const handleRejectInvoice = (invoice: VendorInvoiceListItem): void => {
-        const reason = window.prompt("Enter rejection reason");
-        if (!reason || !reason.trim()) {
-            return;
-        }
-
-        rejectInvoiceMutation.mutate({
-            invoiceId: invoice.id,
-            reason: reason.trim(),
-        });
+    const handleReviewInvoice = (invoice: VendorInvoiceListItem): void => {
+        setRejectReason("");
+        setSelectedInvoice(invoice);
     };
 
     return (
@@ -518,23 +515,26 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
 
             <main className="bg-gray-50 min-h-screen">
                 <div className="max-w-7xl mx-auto px-8 py-6 space-y-6">
-                    <section className="w-full rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-                        <div className="flex flex-wrap gap-2">
+                    <section className="w-full border-b border-gray-200 bg-white">
+                        <div className="flex overflow-x-auto">
                             {tabs.map((tab: TabDefinition): ReactElement => {
                                 const active = tab.key === activeTab;
                                 const badgeCount = tabCounts[tab.key];
+                                const Icon = tab.icon;
                                 return (
                                     <button
                                         key={tab.key}
                                         type="button"
                                         onClick={(): void => setActiveTab(tab.key)}
-                                        className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${active
-                                            ? "bg-brand-blue/10 text-brand-blue"
-                                            : "text-gray-600 hover:bg-gray-100"
+                                        className={`flex items-center gap-2 whitespace-nowrap px-5 py-3.5 text-sm font-medium border-b-2 transition-colors ${active
+                                            ? "border-brand-blue text-brand-blue"
+                                            : "border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300"
                                             }`}
                                     >
-                                        <span>{tab.icon} {tab.title}</span>
-                                        <span className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${tab.badgeClass}`}>
+                                        <Icon className="w-4 h-4" />
+                                        <span>{tab.title}</span>
+                                        <span className={`inline-flex min-w-[20px] justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${active ? "bg-brand-blue text-white" : "bg-gray-100 text-gray-600"
+                                            }`}>
                                             {badgeCount}
                                         </span>
                                     </button>
@@ -793,22 +793,13 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
                                                     <td className="px-4 py-3 text-gray-700">{proof.proof_type || "Proof"}</td>
                                                     <td className="px-4 py-3 text-gray-700">{formatDate(proof.submitted_at)}</td>
                                                     <td className="px-4 py-3 text-right">
-                                                        <div className="inline-flex gap-2">
-                                                            <button
-                                                                type="button"
-                                                                onClick={(): void => approveProofMutation.mutate(proof.id)}
-                                                                className="rounded-md bg-brand-green px-3 py-1 text-xs font-semibold text-white hover:bg-brand-green/90"
-                                                            >
-                                                                Approve
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={(): void => handleRejectProof(proof)}
-                                                                className="rounded-md bg-brand-red px-3 py-1 text-xs font-semibold text-white hover:bg-brand-red/90"
-                                                            >
-                                                                Reject
-                                                            </button>
-                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(): void => handleReviewProof(proof)}
+                                                            className="text-sm font-semibold text-brand-blue hover:text-brand-blue/80"
+                                                        >
+                                                            Review &rarr;
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))
@@ -847,22 +838,13 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
                                                     <td className="px-4 py-3 text-gray-700">KES {invoice.total_amount ?? "0"}</td>
                                                     <td className="px-4 py-3 text-gray-700">{formatDate(invoice.submitted_at)}</td>
                                                     <td className="px-4 py-3 text-right">
-                                                        <div className="inline-flex gap-2">
-                                                            <button
-                                                                type="button"
-                                                                onClick={(): void => approveInvoiceMutation.mutate(invoice.id)}
-                                                                className="rounded-md bg-brand-green px-3 py-1 text-xs font-semibold text-white hover:bg-brand-green/90"
-                                                            >
-                                                                Approve
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={(): void => handleRejectInvoice(invoice)}
-                                                                className="rounded-md bg-brand-red px-3 py-1 text-xs font-semibold text-white hover:bg-brand-red/90"
-                                                            >
-                                                                Reject
-                                                            </button>
-                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(): void => handleReviewInvoice(invoice)}
+                                                            className="text-sm font-semibold text-brand-blue hover:text-brand-blue/80"
+                                                        >
+                                                            Review &rarr;
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))
@@ -880,6 +862,296 @@ export default function ProductionMyJobsWorkspace(): ReactElement {
                     ) : null}
                 </div>
             </main>
+
+            {selectedProof ? (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+                    <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-lg bg-white shadow-xl">
+                        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
+                            <div>
+                                <h2 className="text-base font-semibold text-gray-900">Proof Review</h2>
+                                <p className="mt-0.5 text-xs text-gray-500">PO #{selectedProof.po_number || selectedProof.purchase_order || "—"} &middot; Submitted {formatDate(selectedProof.submitted_at)}</p>
+                            </div>
+                            <button type="button" onClick={(): void => setSelectedProof(null)} className="rounded-md p-1 text-gray-400 hover:bg-gray-100">
+                                <XIcon className="h-4 w-4" />
+                            </button>
+                        </div>
+                        <div className="px-6 py-5 space-y-5">
+                            {selectedProof.proof_image ? (
+                                <div>
+                                    <p className="mb-2 text-xs font-medium uppercase text-gray-400">Attached Proof</p>
+                                    {/\.(pdf)$/i.test(selectedProof.proof_image) ? (
+                                        <div className="flex items-center gap-3 rounded-md border border-gray-200 p-4">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded bg-brand-blue/10 text-brand-blue text-xs font-bold">PDF</div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 truncate">Proof Document</p>
+                                                <p className="text-xs text-gray-500 truncate">{selectedProof.proof_image.split('/').pop()}</p>
+                                            </div>
+                                            <a
+                                                href={selectedProof.proof_image}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="shrink-0 rounded-md bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-blue/90"
+                                            >
+                                                Open PDF
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-md border border-gray-200 overflow-hidden">
+                                            <img
+                                                src={selectedProof.proof_image}
+                                                alt="Proof"
+                                                className="w-full object-contain max-h-[400px] bg-gray-50"
+                                            />
+                                            <div className="border-t border-gray-100 px-4 py-2 flex justify-end">
+                                                <a
+                                                    href={selectedProof.proof_image}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs font-semibold text-brand-blue hover:underline"
+                                                >
+                                                    Open full size &rarr;
+                                                </a>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 py-8 text-center text-sm text-gray-500">
+                                    No proof file attached.
+                                </div>
+                            )}
+                            <div className="grid grid-cols-3 gap-4 text-sm">
+                                <div>
+                                    <p className="text-xs font-medium uppercase text-gray-400">Type</p>
+                                    <p className="mt-0.5 text-gray-700">{selectedProof.proof_type || "—"}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium uppercase text-gray-400">Status</p>
+                                    <p className="mt-0.5">
+                                        <span className="inline-flex rounded-full bg-brand-yellow/20 px-2 py-0.5 text-xs font-semibold text-brand-black">{selectedProof.status}</span>
+                                    </p>
+                                </div>
+                                {selectedProof.reviewed_by_name ? (
+                                    <div>
+                                        <p className="text-xs font-medium uppercase text-gray-400">Reviewed By</p>
+                                        <p className="mt-0.5 text-gray-700">{selectedProof.reviewed_by_name}</p>
+                                    </div>
+                                ) : null}
+                            </div>
+                            {selectedProof.description ? (
+                                <div className="rounded-md bg-gray-50 px-4 py-3">
+                                    <p className="text-xs font-medium uppercase text-gray-400 mb-1">Vendor Notes</p>
+                                    <p className="text-sm text-gray-700">{selectedProof.description}</p>
+                                </div>
+                            ) : null}
+                            {selectedProof.rejection_reason ? (
+                                <div className="rounded-md bg-brand-red/5 border border-brand-red/20 px-4 py-3">
+                                    <p className="text-xs font-medium uppercase text-brand-red mb-1">Previous Rejection Reason</p>
+                                    <p className="text-sm text-brand-red">{selectedProof.rejection_reason}</p>
+                                </div>
+                            ) : null}
+                            <div>
+                                <label className="block text-xs font-medium uppercase text-gray-500">Rejection Reason <span className="text-gray-400 normal-case">(required to reject)</span></label>
+                                <textarea
+                                    rows={3}
+                                    value={rejectReason}
+                                    onChange={(e: ChangeEvent<HTMLTextAreaElement>): void => setRejectReason(e.target.value)}
+                                    placeholder="Describe why this proof is being rejected…"
+                                    className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
+                            <button
+                                type="button"
+                                onClick={(): void => setSelectedProof(null)}
+                                className="rounded-md px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                disabled={!rejectReason.trim() || rejectProofMutation.isPending}
+                                onClick={(): void => rejectProofMutation.mutate({ proofId: selectedProof.id, reason: rejectReason.trim() })}
+                                className="rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
+                            >
+                                {rejectProofMutation.isPending ? "Rejecting…" : "Reject"}
+                            </button>
+                            <button
+                                type="button"
+                                disabled={approveProofMutation.isPending}
+                                onClick={(): void => approveProofMutation.mutate(selectedProof.id)}
+                                className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-brand-green/90 disabled:opacity-50"
+                            >
+                                {approveProofMutation.isPending ? "Approving…" : "Approve Proof"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {selectedInvoice ? (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+                    <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-lg bg-white shadow-xl">
+                        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
+                            <div>
+                                <h2 className="text-base font-semibold text-gray-900">{selectedInvoice.invoice_number || `INV-${selectedInvoice.id}`}</h2>
+                                <p className="mt-0.5 text-xs text-gray-500">{selectedInvoice.vendor_name || "Vendor"} &middot; Submitted {formatDate(selectedInvoice.submitted_at)}</p>
+                            </div>
+                            <button type="button" onClick={(): void => setSelectedInvoice(null)} className="rounded-md p-1 text-gray-400 hover:bg-gray-100">
+                                <XIcon className="h-4 w-4" />
+                            </button>
+                        </div>
+                        <div className="px-6 py-5 space-y-5">
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                <div>
+                                    <p className="text-xs font-medium uppercase text-gray-400">Purchase Order</p>
+                                    <p className="mt-0.5 font-medium text-gray-900">{selectedInvoice.po_number ? `PO ${selectedInvoice.po_number}` : "—"}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium uppercase text-gray-400">Job</p>
+                                    <p className="mt-0.5 font-medium text-gray-900">{selectedInvoice.job_number || "—"}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium uppercase text-gray-400">Invoice Date</p>
+                                    <p className="mt-0.5 text-gray-700">{formatDate(selectedInvoice.invoice_date ?? null)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium uppercase text-gray-400">Due Date</p>
+                                    <p className="mt-0.5 text-gray-700">{formatDate(selectedInvoice.due_date ?? null)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium uppercase text-gray-400">Payment Terms</p>
+                                    <p className="mt-0.5 text-gray-700">{selectedInvoice.payment_terms || "—"}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium uppercase text-gray-400">Status</p>
+                                    <p className="mt-0.5">
+                                        <span className="inline-flex rounded-full bg-brand-yellow/20 px-2 py-0.5 text-xs font-semibold text-brand-black">{selectedInvoice.status}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            {selectedInvoice.line_items && selectedInvoice.line_items.length > 0 ? (
+                                <div>
+                                    <p className="mb-2 text-xs font-medium uppercase text-gray-400">Line Items</p>
+                                    <div className="overflow-hidden rounded-md border border-gray-200">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Description</th>
+                                                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase">Qty</th>
+                                                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase">Unit Price</th>
+                                                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {selectedInvoice.line_items.map((item, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="px-4 py-2.5 text-gray-700">{item.description}</td>
+                                                        <td className="px-4 py-2.5 text-right text-gray-700">{item.quantity}</td>
+                                                        <td className="px-4 py-2.5 text-right text-gray-700">KES {item.unit_price}</td>
+                                                        <td className="px-4 py-2.5 text-right font-medium text-gray-900">KES {item.amount}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                            <tfoot className="bg-gray-50 border-t border-gray-200">
+                                                {selectedInvoice.subtotal ? (
+                                                    <tr>
+                                                        <td colSpan={3} className="px-4 py-2 text-right text-xs text-gray-500">Subtotal</td>
+                                                        <td className="px-4 py-2 text-right text-sm text-gray-700">KES {selectedInvoice.subtotal}</td>
+                                                    </tr>
+                                                ) : null}
+                                                {selectedInvoice.tax_amount ? (
+                                                    <tr>
+                                                        <td colSpan={3} className="px-4 py-2 text-right text-xs text-gray-500">Tax ({selectedInvoice.tax_rate ?? 0}%)</td>
+                                                        <td className="px-4 py-2 text-right text-sm text-gray-700">KES {selectedInvoice.tax_amount}</td>
+                                                    </tr>
+                                                ) : null}
+                                                <tr>
+                                                    <td colSpan={3} className="px-4 py-2 text-right text-xs font-semibold uppercase text-gray-700">Total</td>
+                                                    <td className="px-4 py-2 text-right text-sm font-bold text-brand-blue">KES {selectedInvoice.total_amount ?? "0"}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between rounded-md border border-gray-200 px-4 py-3">
+                                    <p className="text-sm font-medium text-gray-700">Total Amount</p>
+                                    <p className="text-base font-bold text-brand-blue">KES {selectedInvoice.total_amount ?? "0"}</p>
+                                </div>
+                            )}
+                            {selectedInvoice.invoice_file ? (
+                                <div>
+                                    <p className="mb-2 text-xs font-medium uppercase text-gray-400">Invoice Document</p>
+                                    <div className="flex items-center gap-3 rounded-md border border-gray-200 p-4">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-brand-blue/10 text-brand-blue text-xs font-bold">PDF</div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 truncate">Invoice File</p>
+                                            <p className="text-xs text-gray-500 truncate">{selectedInvoice.invoice_file.split('/').pop()}</p>
+                                        </div>
+                                        <a
+                                            href={selectedInvoice.invoice_file}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="shrink-0 rounded-md bg-brand-blue px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-blue/90"
+                                        >
+                                            Open File
+                                        </a>
+                                    </div>
+                                </div>
+                            ) : null}
+                            {selectedInvoice.vendor_notes ? (
+                                <div className="rounded-md bg-gray-50 px-4 py-3">
+                                    <p className="text-xs font-medium uppercase text-gray-400 mb-1">Vendor Notes</p>
+                                    <p className="text-sm text-gray-700">{selectedInvoice.vendor_notes}</p>
+                                </div>
+                            ) : null}
+                            {selectedInvoice.rejection_reason ? (
+                                <div className="rounded-md bg-brand-red/5 border border-brand-red/20 px-4 py-3">
+                                    <p className="text-xs font-medium uppercase text-brand-red mb-1">Previous Rejection Reason</p>
+                                    <p className="text-sm text-brand-red">{selectedInvoice.rejection_reason}</p>
+                                </div>
+                            ) : null}
+                            <div>
+                                <label className="block text-xs font-medium uppercase text-gray-500">Rejection Reason <span className="text-gray-400 normal-case">(required to reject)</span></label>
+                                <textarea
+                                    rows={3}
+                                    value={rejectReason}
+                                    onChange={(e: ChangeEvent<HTMLTextAreaElement>): void => setRejectReason(e.target.value)}
+                                    placeholder="Describe why this invoice is being rejected…"
+                                    className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
+                            <button
+                                type="button"
+                                onClick={(): void => setSelectedInvoice(null)}
+                                className="rounded-md px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                disabled={!rejectReason.trim() || rejectInvoiceMutation.isPending}
+                                onClick={(): void => rejectInvoiceMutation.mutate({ invoiceId: selectedInvoice.id, reason: rejectReason.trim() })}
+                                className="rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
+                            >
+                                {rejectInvoiceMutation.isPending ? "Rejecting…" : "Reject"}
+                            </button>
+                            <button
+                                type="button"
+                                disabled={approveInvoiceMutation.isPending}
+                                onClick={(): void => approveInvoiceMutation.mutate(selectedInvoice.id)}
+                                className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white hover:bg-brand-green/90 disabled:opacity-50"
+                            >
+                                {approveInvoiceMutation.isPending ? "Approving…" : "Approve Invoice"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
 
             {isAssignModalOpen && selectedJob && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

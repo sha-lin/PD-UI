@@ -49,6 +49,7 @@ export default function VendorsWorkspace({
     const [page, setPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(20);
     const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
+    const [inviteTarget, setInviteTarget] = useState<Vendor | null>(null);
 
     useEffect((): (() => void) => {
         const handleDebounce = (): void => {
@@ -163,17 +164,61 @@ export default function VendorsWorkspace({
     };
 
     const handleInvite = (vendor: Vendor): void => {
-        const actionLabel = vendor.user ? "Resend" : "Invite";
-        const confirmInvite = window.confirm(`${actionLabel} access for ${vendor.name}?`);
-        if (!confirmInvite) {
-            return;
-        }
+        setInviteTarget(vendor);
+    };
+
+    const handleInviteConfirm = (): void => {
+        if (!inviteTarget) return;
         setNotice(null);
-        inviteMutation.mutate(vendor.id);
+        inviteMutation.mutate(inviteTarget.id);
+        setInviteTarget(null);
+    };
+
+    const handleInviteCancel = (): void => {
+        setInviteTarget(null);
     };
 
     return (
         <>
+            {inviteTarget ? (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+                    <div className="w-full max-w-md rounded-lg bg-white shadow-xl">
+                        <div className="border-b border-gray-100 px-6 py-5">
+                            <h2 className="text-base font-semibold text-gray-900">
+                                {inviteTarget.user ? "Resend portal invite" : "Send portal invite"}
+                            </h2>
+                            <p className="mt-1 text-sm text-gray-500">
+                                {inviteTarget.user
+                                    ? `A new invite link will be generated and sent to ${inviteTarget.email}.`
+                                    : `An invite will be sent to ${inviteTarget.email} so they can set their password.`}
+                            </p>
+                        </div>
+                        <div className="px-6 py-4">
+                            <div className="rounded-md bg-gray-50 px-4 py-3">
+                                <p className="text-sm font-semibold text-gray-800">{inviteTarget.name}</p>
+                                <p className="text-xs text-gray-500">{inviteTarget.email}</p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
+                            <button
+                                type="button"
+                                onClick={handleInviteCancel}
+                                className="rounded-md px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleInviteConfirm}
+                                disabled={inviteMutation.isPending}
+                                className="rounded-md bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue/90 disabled:opacity-60"
+                            >
+                                {inviteMutation.isPending ? "Sending…" : inviteTarget.user ? "Resend Invite" : "Send Invite"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
             <header className="border-b border-gray-200 bg-white">
                 <div className="px-8 py-4">
                     <div className="mb-3 flex items-center gap-2 text-xs text-gray-500">

@@ -3,14 +3,13 @@
 import type { ReactElement } from "react";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import {
     AlertCircleIcon,
-    BarChart3Icon,
-    CheckCircle2Icon,
-    Clock3Icon,
     RefreshCcwIcon,
-    ShieldCheckIcon,
     Users2Icon,
+    ArrowRightIcon,
+    ActivityIcon,
 } from "lucide-react";
 import {
     Bar,
@@ -33,7 +32,6 @@ import type { Job } from "@/types/jobs";
 import type {
     JobStatusDistributionItem,
     ProductionAnalyticsData,
-    TeamPerformanceItem,
 } from "@/types/production-analytics";
 
 interface StatusChartItem {
@@ -43,12 +41,12 @@ interface StatusChartItem {
 }
 
 const STATUS_COLORS: string[] = [
-    "#093756",
-    "#F6B619",
-    "#009444",
-    "#F15A29",
-    "#662D91",
-    "#ED1C24",
+    "#093756", // brand-blue
+    "#F6B619", // brand-yellow
+    "#009444", // brand-green
+    "#F15A29", // brand-orange
+    "#662D91", // brand-purple
+    "#ED1C24", // brand-red
 ];
 
 const toTitleCase = (value: string): string => {
@@ -115,16 +113,40 @@ const buildStatusChartData = (items: JobStatusDistributionItem[]): StatusChartIt
     });
 };
 
-const getAverageCompletionRate = (items: TeamPerformanceItem[]): number => {
-    if (items.length === 0) {
-        return 0;
+// Custom Tooltip for Bar Chart
+const BarChartTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white p-3 border border-gray-200 shadow-xl rounded-xl">
+                <p className="font-semibold text-gray-900 mb-1">{label}</p>
+                <div className="flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 rounded-full bg-brand-blue"></div>
+                    <p className="text-gray-700 font-medium">
+                        {payload[0].value.toFixed(1)}% <span className="text-gray-500 font-normal text-xs ml-1">Completion</span>
+                    </p>
+                </div>
+            </div>
+        );
     }
+    return null;
+};
 
-    const totalCompletionRate = items.reduce((sum: number, item: TeamPerformanceItem): number => {
-        return sum + item.completion_rate;
-    }, 0);
-
-    return totalCompletionRate / items.length;
+// Custom Tooltip for Pie Chart
+const PieChartTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white p-3 border border-gray-200 shadow-xl rounded-xl">
+                <div className="flex items-center gap-2 mb-1">
+                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: payload[0].payload.fill }}></div>
+                    <p className="font-semibold text-gray-900">{payload[0].name}</p>
+                </div>
+                <p className="text-gray-700 font-medium">
+                    {payload[0].value.toLocaleString()} <span className="text-gray-500 font-normal text-xs ml-1">Jobs</span>
+                </p>
+            </div>
+        );
+    }
+    return null;
 };
 
 export default function ProductionAnalyticsWorkspace(): ReactElement {
@@ -143,10 +165,6 @@ export default function ProductionAnalyticsWorkspace(): ReactElement {
         return buildStatusChartData(analytics?.job_status_distribution ?? []);
     }, [analytics?.job_status_distribution]);
 
-    const averageTeamCompletion = useMemo((): number => {
-        return getAverageCompletionRate(analytics?.team_performance ?? []);
-    }, [analytics?.team_performance]);
-
     const totalTrackedJobs = useMemo((): number => {
         return (analytics?.job_status_distribution ?? []).reduce((sum: number, item: JobStatusDistributionItem): number => {
             return sum + item.count;
@@ -155,28 +173,19 @@ export default function ProductionAnalyticsWorkspace(): ReactElement {
 
     if (analyticsQuery.isLoading) {
         return (
-            <main className="bg-gray-50 min-h-screen">
-                <header className="border-b border-gray-200 bg-white">
-                    <div className="px-8 py-4">
-                        <div className="h-3 w-52 animate-pulse rounded bg-gray-200" />
-                        <div className="mt-4 h-8 w-72 animate-pulse rounded bg-gray-200" />
-                        <div className="mt-3 h-4 w-96 animate-pulse rounded bg-gray-200" />
-                    </div>
+            <main className="bg-[#f8fafc] min-h-screen pb-12">
+                <header className="bg-white border-b border-gray-200 px-8 py-6">
+                    <div className="h-4 w-48 animate-pulse rounded bg-gray-200" />
+                    <div className="mt-4 h-8 w-72 animate-pulse rounded bg-gray-200" />
                 </header>
-
-                <div className="max-w-7xl mx-auto px-8 py-6 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                        {Array.from({ length: 4 }).map((_, index: number): ReactElement => (
-                            <div key={`metric-skeleton-${index}`} className="rounded-xl border border-gray-200 bg-white p-5">
-                                <div className="h-4 w-32 animate-pulse rounded bg-gray-200" />
-                                <div className="mt-4 h-8 w-24 animate-pulse rounded bg-gray-200" />
-                                <div className="mt-4 h-3 w-40 animate-pulse rounded bg-gray-200" />
+                <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="h-32 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                <div className="h-4 w-32 animate-pulse rounded bg-gray-200 mb-4" />
+                                <div className="h-8 w-24 animate-pulse rounded bg-gray-200" />
                             </div>
                         ))}
-                    </div>
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <div className="h-96 rounded-xl border border-gray-200 bg-white" />
-                        <div className="h-96 rounded-xl border border-gray-200 bg-white" />
                     </div>
                 </div>
             </main>
@@ -185,40 +194,26 @@ export default function ProductionAnalyticsWorkspace(): ReactElement {
 
     if (analyticsQuery.isError || !analytics) {
         return (
-            <main className="bg-gray-50 min-h-screen">
-                <header className="border-b border-gray-200 bg-white">
-                    <div className="px-8 py-4">
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                            <a href="/staff/production-team" className="hover:text-brand-blue">Production Team</a>
-                            <span>/</span>
-                            <span className="text-gray-900">Analytics</span>
-                        </div>
-                        <h1 className="text-2xl font-bold text-gray-900">Production Analytics</h1>
-                    </div>
+            <main className="bg-[#f8fafc] min-h-screen pb-12">
+                <header className="bg-white border-b border-gray-200 px-8 py-6">
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Production Analytics</h1>
                 </header>
-
-                <div className="max-w-4xl mx-auto px-8 py-8">
-                    <div className="rounded-lg border border-brand-red/20 bg-brand-red/5 p-6">
-                        <div className="flex items-start gap-3">
-                            <AlertCircleIcon className="h-6 w-6 text-brand-red mt-0.5" />
-                            <div>
-                                <h2 className="text-lg font-semibold text-brand-red">Unable to load production analytics</h2>
-                                <p className="mt-2 text-sm text-gray-600">
-                                    The analytics service did not return data. Try refreshing.
-                                </p>
-                                <button
-                                    type="button"
-                                    onClick={(): void => {
-                                        void analyticsQuery.refetch();
-                                        void recentJobsQuery.refetch();
-                                    }}
-                                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue/90"
-                                >
-                                    <RefreshCcwIcon className="h-4 w-4" />
-                                    Retry
-                                </button>
-                            </div>
-                        </div>
+                <div className="max-w-4xl mx-auto px-8 py-12">
+                    <div className="rounded-2xl border border-brand-red/20 bg-brand-red/5 p-8 text-center">
+                        <AlertCircleIcon className="h-12 w-12 text-brand-red mx-auto mb-4" />
+                        <h2 className="text-lg font-semibold text-brand-red">Unable to load production analytics</h2>
+                        <p className="mt-2 text-gray-600">The analytics service did not return data. Please try again later.</p>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                void analyticsQuery.refetch();
+                                void recentJobsQuery.refetch();
+                            }}
+                            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-blue px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 shadow-sm"
+                        >
+                            <RefreshCcwIcon className="h-4 w-4" />
+                            Retry
+                        </button>
                     </div>
                 </div>
             </main>
@@ -226,248 +221,234 @@ export default function ProductionAnalyticsWorkspace(): ReactElement {
     }
 
     return (
-        <main className="bg-gray-50 min-h-screen">
-            <header className="border-b border-gray-200 bg-white">
-                <div className="px-8 py-4">
-                    <div className="flex items-center justify-between gap-4">
-                        <div>
-                            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                                <a href="/staff/production-team" className="hover:text-brand-blue">Production Team</a>
-                                <span>/</span>
-                                <span className="text-gray-900">Analytics</span>
-                            </div>
-                            <h1 className="text-2xl font-bold text-gray-900">Production Analytics</h1>
-                            <p className="mt-2 text-sm text-gray-600">
-                                Operations-focused visibility for turnaround, quality, and team execution.
-                            </p>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={(): void => {
-                                void analyticsQuery.refetch();
-                                void recentJobsQuery.refetch();
-                            }}
-                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:border-brand-blue hover:text-brand-blue"
-                        >
-                            <RefreshCcwIcon className="h-4 w-4" />
-                            Refresh
-                        </button>
+        <main className="bg-[#f8fafc] min-h-screen pb-12">
+            <header className="bg-white border-b border-gray-200">
+                <div className="max-w-7xl mx-auto px-8 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <nav className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-3">
+                            <Link href="/production-team" className="hover:text-brand-blue transition-colors">Production Team</Link>
+                            <span>/</span>
+                            <span className="text-gray-900">Analytics</span>
+                        </nav>
+                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-3">
+                            Production Analytics
+                            <span className="inline-flex items-center gap-1.5 rounded-md bg-brand-blue/10 px-2.5 py-1 text-xs font-semibold text-brand-blue">
+                                <ActivityIcon className="h-3.5 w-3.5" />
+                                Live View
+                            </span>
+                        </h1>
+                        <p className="mt-2 text-sm text-gray-500">
+                            Operations-focused visibility for turnaround, quality, and team execution.
+                        </p>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            void analyticsQuery.refetch();
+                            void recentJobsQuery.refetch();
+                        }}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-brand-blue hover:text-brand-blue focus:ring-2 focus:ring-brand-blue/20"
+                    >
+                        <RefreshCcwIcon className={`h-4 w-4 ${analyticsQuery.isFetching ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </button>
                 </div>
             </header>
 
-            <div className="max-w-7xl mx-auto px-8 py-6 space-y-6">
-                <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                    <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                        <div className="flex items-start justify-between">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Avg Turnaround</p>
-                            <Clock3Icon className="h-4 w-4 text-brand-blue" />
+            <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+                {/* Metrics Row */}
+                <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <article className="rounded-xl border border-brand-blue/15 bg-white px-4 py-4 shadow-sm transition-colors hover:border-brand-blue/30">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">Avg Turnaround</p>
+                        <div className="mt-3 flex items-end gap-1.5">
+                            <h3 className="text-2xl font-bold tracking-tight text-gray-900">{analytics.average_turnaround_days.toFixed(1)}</h3>
+                            <span className="pb-0.5 text-xs font-medium text-gray-500">days</span>
                         </div>
-                        <p className="mt-4 text-3xl font-bold text-gray-900">{analytics.average_turnaround_days.toFixed(1)}d</p>
-                        <p className="mt-2 text-sm text-gray-600">Average time to complete a job.</p>
                     </article>
 
-                    <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                        <div className="flex items-start justify-between">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">QC Rejection</p>
-                            <ShieldCheckIcon className="h-4 w-4 text-brand-red" />
-                        </div>
-                        <p className="mt-4 text-3xl font-bold text-gray-900">{formatPercentage(analytics.qc_rejection_rate)}</p>
-                        <p className="mt-2 text-sm text-gray-600">Share of inspections rejected in the latest window.</p>
+                    <article className="rounded-xl border border-brand-red/15 bg-white px-4 py-4 shadow-sm transition-colors hover:border-brand-red/30">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">QC Rejection</p>
+                        <h3 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">{formatPercentage(analytics.qc_rejection_rate)}</h3>
                     </article>
 
-                    <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                        <div className="flex items-start justify-between">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Vendor On-Time</p>
-                            <CheckCircle2Icon className="h-4 w-4 text-brand-green" />
-                        </div>
-                        <p className="mt-4 text-3xl font-bold text-gray-900">{formatPercentage(analytics.vendor_on_time_rate)}</p>
-                        <p className="mt-2 text-sm text-gray-600">Completed vendor stages delivered on schedule.</p>
+                    <article className="rounded-xl border border-brand-green/15 bg-white px-4 py-4 shadow-sm transition-colors hover:border-brand-green/30">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">Vendor On-Time</p>
+                        <h3 className="mt-3 text-2xl font-bold tracking-tight text-gray-900">{formatPercentage(analytics.vendor_on_time_rate)}</h3>
                     </article>
 
-                    <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                        <div className="flex items-start justify-between">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Monthly Revenue</p>
-                            <BarChart3Icon className="h-4 w-4 text-brand-purple" />
-                        </div>
-                        <p className="mt-4 text-3xl font-bold text-gray-900">{formatCurrency(analytics.monthly_revenue)}</p>
-                        <p className="mt-2 text-sm text-gray-600">Current production revenue snapshot.</p>
+                    <article className="rounded-xl border border-brand-purple/15 bg-white px-4 py-4 shadow-sm transition-colors hover:border-brand-purple/30">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">Monthly Rev</p>
+                        <h3 className="mt-3 text-xl font-bold tracking-tight text-gray-900 truncate" title={formatCurrency(analytics.monthly_revenue)}>
+                            {formatCurrency(analytics.monthly_revenue)}
+                        </h3>
                     </article>
                 </section>
 
-                <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                    <article className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm xl:col-span-2">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Team Completion Performance</h2>
-                            <span className="inline-flex items-center gap-1 rounded-full bg-brand-blue/10 px-3 py-1 text-xs font-semibold text-brand-blue">
-                                <Users2Icon className="h-3.5 w-3.5" />
-                                {analytics.team_performance.length} Members
-                            </span>
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+                    <div>
+                        <article className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-900">Completion Performance</h2>
+                                    <p className="text-sm text-gray-500 mt-1">Completion rates across the production team</p>
+                                </div>
+                                <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-brand-blue/5 border border-brand-blue/10 px-3 py-1.5 text-xs font-semibold text-brand-blue">
+                                    <Users2Icon className="h-3.5 w-3.5" />
+                                    {analytics.team_performance.length} Members tracked
+                                </span>
+                            </div>
+
+                            {analytics.team_performance.length === 0 ? (
+                                <div className="h-[300px] rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-sm text-gray-500">
+                                    Team performance data is not available yet.
+                                </div>
+                            ) : (
+                                <div className="h-[300px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={analytics.team_performance} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                            <XAxis
+                                                dataKey="user_name"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fill: "#6B7280", fontSize: 13, fontWeight: 500 }}
+                                                dy={10}
+                                            />
+                                            <YAxis
+                                                domain={[0, 100]}
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fill: "#6B7280", fontSize: 12 }}
+                                                tickFormatter={(value: number): string => `${value}%`}
+                                            />
+                                            <Tooltip content={<BarChartTooltip />} cursor={{ fill: "#F3F4F6", opacity: 0.4 }} />
+                                            <Bar dataKey="completion_rate" fill="#093756" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            )}
+                        </article>
+                    </div>
+
+                    <div>
+                        <article className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                            <h2 className="text-lg font-bold text-gray-900 mb-1">Job Status Map</h2>
+                            <p className="text-sm text-gray-500 mb-6">{totalTrackedJobs.toLocaleString()} jobs currently tracked</p>
+
+                            {statusChartData.length === 0 ? (
+                                <div className="h-[240px] rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-sm text-gray-500">
+                                    Status data is not available yet.
+                                </div>
+                            ) : (
+                                <div className="h-[260px] relative">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={statusChartData}
+                                                dataKey="value"
+                                                nameKey="name"
+                                                innerRadius={68}
+                                                outerRadius={96}
+                                                paddingAngle={3}
+                                                stroke="none"
+                                            >
+                                                {statusChartData.map((item: StatusChartItem): ReactElement => (
+                                                    <Cell key={item.name} fill={item.color} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip content={<PieChartTooltip />} />
+                                            <Legend
+                                                verticalAlign="bottom"
+                                                height={40}
+                                                iconType="circle"
+                                                iconSize={8}
+                                                wrapperStyle={{ fontSize: '13px', color: '#4B5563', paddingTop: '20px' }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            )}
+                        </article>
+                    </div>
+                </div>
+
+                <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                    <div className="flex items-center justify-between border-b border-gray-100 p-6 sm:p-8">
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900">Recent Jobs</h2>
+                            <p className="mt-1 text-sm text-gray-500">Latest production jobs updated recently</p>
                         </div>
+                        <Link
+                            href="/production-team/my-jobs"
+                            className="group inline-flex items-center gap-1 text-sm font-semibold text-brand-blue transition-colors hover:text-brand-blue/80"
+                        >
+                            View all
+                            <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Link>
+                    </div>
 
-                        {analytics.team_performance.length === 0 ? (
-                            <div className="h-72 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-sm text-gray-500">
-                                Team performance data is not available yet.
-                            </div>
-                        ) : (
-                            <div className="h-80">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={analytics.team_performance}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                        <XAxis dataKey="user_name" stroke="#9ca3af" tick={{ fill: "#6b7280", fontSize: 12 }} />
-                                        <YAxis
-                                            domain={[0, 100]}
-                                            stroke="#9ca3af"
-                                            tick={{ fill: "#6b7280", fontSize: 12 }}
-                                            tickFormatter={(value: number): string => `${value}%`}
-                                        />
-                                        <Tooltip
-                                            formatter={(value: number): [string, string] => [`${value.toFixed(1)}%`, "Completion"]}
-                                            contentStyle={{
-                                                borderRadius: "8px",
-                                                border: "1px solid #e5e7eb",
-                                            }}
-                                        />
-                                        <Bar dataKey="completion_rate" fill="#093756" radius={[8, 8, 0, 0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        )}
-                    </article>
-
-                    <article className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                        <h2 className="text-lg font-semibold text-gray-900">Job Status Distribution</h2>
-                        <p className="mt-1 text-sm text-gray-600">{totalTrackedJobs.toLocaleString()} tracked jobs</p>
-
-                        {statusChartData.length === 0 ? (
-                            <div className="mt-6 h-72 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center text-sm text-gray-500">
-                                Status data is not available yet.
-                            </div>
-                        ) : (
-                            <div className="mt-4 h-72">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={statusChartData}
-                                            dataKey="value"
-                                            nameKey="name"
-                                            innerRadius={65}
-                                            outerRadius={95}
-                                            paddingAngle={2}
-                                        >
-                                            {statusChartData.map((item: StatusChartItem): ReactElement => (
-                                                <Cell key={item.name} fill={item.color} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip
-                                            formatter={(value: number, name: string): [string, string] => [
-                                                value.toLocaleString(),
-                                                name,
-                                            ]}
-                                        />
-                                        <Legend verticalAlign="bottom" height={36} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        )}
-                    </article>
-                </section>
-
-                <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                    <article className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm xl:col-span-2">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Recent Jobs</h2>
-                            <a href="/staff/jobs" className="text-sm font-medium text-brand-blue hover:underline">
-                                View all jobs
-                            </a>
-                        </div>
-
-                        {recentJobsQuery.isLoading ? (
-                            <div className="space-y-3">
-                                {Array.from({ length: 5 }).map((_, index: number): ReactElement => (
-                                    <div key={`job-skeleton-${index}`} className="h-12 animate-pulse rounded bg-gray-100" />
-                                ))}
-                            </div>
-                        ) : null}
-
-                        {recentJobsQuery.isError ? (
-                            <div className="rounded-lg border border-brand-red/20 bg-brand-red/5 p-4 text-sm text-brand-red">
-                                Unable to load recent jobs.
-                            </div>
-                        ) : null}
-
-                        {!recentJobsQuery.isLoading && !recentJobsQuery.isError ? (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b border-gray-200">
-                                            <th className="py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Job</th>
-                                            <th className="py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Client</th>
-                                            <th className="py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Product</th>
-                                            <th className="py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Due</th>
-                                            <th className="py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-left">
+                            <thead>
+                                <tr className="bg-gray-50/50">
+                                    <th className="whitespace-nowrap border-b border-gray-100 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Job</th>
+                                    <th className="whitespace-nowrap border-b border-gray-100 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Client</th>
+                                    <th className="whitespace-nowrap border-b border-gray-100 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Product</th>
+                                    <th className="whitespace-nowrap border-b border-gray-100 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Due</th>
+                                    <th className="whitespace-nowrap border-b border-gray-100 px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {recentJobsQuery.isLoading ? (
+                                    <tr>
+                                        <td colSpan={5} className="border-b-0 p-6">
+                                            <div className="space-y-4">
+                                                {Array.from({ length: 4 }).map((_, i) => (
+                                                    <div key={i} className="h-10 animate-pulse rounded-lg bg-gray-100" />
+                                                ))}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : recentJobsQuery.isError ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-10 text-center text-sm text-brand-red/80">
+                                            Unable to load recent jobs.
+                                        </td>
+                                    </tr>
+                                ) : (recentJobsQuery.data ?? []).length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-500">
+                                            No recent production jobs found.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    (recentJobsQuery.data ?? []).map((job: Job): ReactElement => (
+                                        <tr key={job.id} className="transition-colors hover:bg-gray-50/50">
+                                            <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-gray-900">
+                                                <Link href={`/production-team/my-jobs/${job.id}`} className="hover:text-brand-blue hover:underline">
+                                                    {job.job_number || `#${job.id}`}
+                                                </Link>
+                                            </td>
+                                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-700">
+                                                {job.client?.name || <span className="text-gray-400 italic">Unassigned</span>}
+                                            </td>
+                                            <td className="max-w-[320px] px-6 py-4 text-sm text-gray-600 truncate" title={job.product ?? ""}>
+                                                {job.product || <span className="text-gray-400 italic">Not set</span>}
+                                            </td>
+                                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">{formatDate(job.expected_completion)}</td>
+                                            <td className="whitespace-nowrap px-6 py-4 text-right">
+                                                <span className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClass(job.status)}`}>
+                                                    {toTitleCase(job.status)}
+                                                </span>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {(recentJobsQuery.data ?? []).length === 0 ? (
-                                            <tr>
-                                                <td colSpan={5} className="py-10 text-center text-sm text-gray-500">
-                                                    No recent production jobs found.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            (recentJobsQuery.data ?? []).map((job: Job): ReactElement => (
-                                                <tr key={job.id} className="border-b border-gray-100 last:border-0">
-                                                    <td className="py-3 text-sm font-semibold text-gray-900">{job.job_number || `#${job.id}`}</td>
-                                                    <td className="py-3 text-sm text-gray-700">{job.client?.name || "Unassigned"}</td>
-                                                    <td className="py-3 text-sm text-gray-700">{job.product || "Not set"}</td>
-                                                    <td className="py-3 text-sm text-gray-700">{formatDate(job.expected_completion)}</td>
-                                                    <td className="py-3 text-right">
-                                                        <span
-                                                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClass(job.status)}`}
-                                                        >
-                                                            {toTitleCase(job.status)}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : null}
-                    </article>
-
-                    <article className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                        <h2 className="text-lg font-semibold text-gray-900">Quick Summary</h2>
-
-                        <dl className="mt-5 space-y-4">
-                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                                <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Team Completion Average</dt>
-                                <dd className="mt-2 text-2xl font-bold text-gray-900">{formatPercentage(averageTeamCompletion)}</dd>
-                            </div>
-
-                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                                <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Tracked Job Status Records</dt>
-                                <dd className="mt-2 text-2xl font-bold text-gray-900">{totalTrackedJobs.toLocaleString()}</dd>
-                            </div>
-
-                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                                <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Top Team Member</dt>
-                                <dd className="mt-2 text-lg font-semibold text-gray-900">
-                                    {analytics.team_performance.length > 0
-                                        ? analytics.team_performance
-                                            .slice()
-                                            .sort((first: TeamPerformanceItem, second: TeamPerformanceItem): number => {
-                                                return second.completion_rate - first.completion_rate;
-                                            })[0].user_name
-                                        : "Not available"}
-                                </dd>
-                            </div>
-                        </dl>
-                    </article>
-                </section>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
             </div>
         </main>
     );

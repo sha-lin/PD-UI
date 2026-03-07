@@ -8,13 +8,14 @@ const ROLE_DASHBOARD: Record<PortalRole, string> = {
     client: '/portal',
     admin: '/admin/dashboard',
     account_manager: '/account-manager',
-    production_team: '/production/dashboard',
+    production_team: '/production-team/dashboard',
     vendor: '/vendors',
 };
 
 const ROUTE_ALLOWED_ROLES: Array<{ prefix: string; roles: PortalRole[] }> = [
     { prefix: '/portal', roles: ['client'] },
     { prefix: '/admin', roles: ['admin'] },
+    { prefix: '/production-team', roles: ['production_team'] },
     { prefix: '/production', roles: ['production_team'] },
     { prefix: '/account-manager', roles: ['account_manager'] },
     { prefix: '/vendors', roles: ['vendor'] },
@@ -86,6 +87,8 @@ export const config = {
         '/portal',
         '/admin/:path*',
         '/admin',
+        '/production-team/:path*',
+        '/production-team',
         '/production/:path*',
         '/production',
         '/account-manager/:path*',

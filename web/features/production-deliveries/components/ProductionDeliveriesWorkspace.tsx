@@ -361,7 +361,7 @@ export default function ProductionDeliveriesWorkspace(): ReactElement {
             <header className="border-b border-gray-200 bg-white">
                 <div className="px-8 py-4">
                     <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                        <Link href="/staff/production-team" className="hover:text-brand-blue">
+                        <Link href="/production-team" className="hover:text-brand-blue">
                             Production Team
                         </Link>
                         <span>/</span>

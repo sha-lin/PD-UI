@@ -14,7 +14,7 @@ const productionLinks: ProductionLink[] = [
     {
         label: "Dashboard",
         description: "Monitor production KPIs, alerts, and activity trends.",
-        href: "/staff/production-team/dashboard",
+        href: "/production-team/dashboard",
     },
     {
         label: "Clients",
@@ -44,22 +44,22 @@ const productionLinks: ProductionLink[] = [
     {
         label: "Processes",
         description: "Maintain production workflows and steps.",
-        href: "/staff/production-team/processes",
+        href: "/production-team/processes",
     },
     {
         label: "Delivery Handover",
         description: "Run QC checks and complete handoff to Account Management for dispatch.",
-        href: "/staff/production-team/deliveries",
+        href: "/production-team/deliveries",
     },
     {
         label: "Analytics",
         description: "Track operational metrics, quality, and team performance.",
-        href: "/staff/production-team/analytics",
+        href: "/production-team/analytics",
     },
     {
         label: "Notifications",
         description: "Review production alerts and team notifications.",
-        href: "/staff/production-team/notifications",
+        href: "/production-team/notifications",
     },
 ];
 

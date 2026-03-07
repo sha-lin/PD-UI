@@ -1,6 +1,6 @@
 export const STAFF_PRODUCTS_BASE_PATH = "/staff/products" as const;
 export const PRODUCTION_PRODUCTS_BASE_PATH = "/staff/production/products" as const;
-export const PRODUCTION_TEAM_PRODUCTS_BASE_PATH = "/staff/production-team/products" as const;
+export const PRODUCTION_TEAM_PRODUCTS_BASE_PATH = "/production-team/products" as const;
 
 export type ProductsBasePath =
     | typeof STAFF_PRODUCTS_BASE_PATH

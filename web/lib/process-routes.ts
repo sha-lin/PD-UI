@@ -1,5 +1,5 @@
 export const STAFF_PROCESSES_BASE_PATH = "/staff/processes" as const;
-export const PRODUCTION_TEAM_PROCESSES_BASE_PATH = "/staff/production-team/processes" as const;
+export const PRODUCTION_TEAM_PROCESSES_BASE_PATH = "/production-team/processes" as const;
 
 export type ProcessesBasePath =
     | typeof STAFF_PROCESSES_BASE_PATH

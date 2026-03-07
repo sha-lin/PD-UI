@@ -289,19 +289,36 @@ export default function ProcessForm({
     };
 
     const handleVendorSelectChange = (index: number, value: string): void => {
-        if (!value) {
-            handleVendorChange(index, "vendor_name", "");
-            handleVendorChange(index, "vendor_id", "");
-            handleVendorChange(index, "vps_score", "0");
-            return;
-        }
-        const selectedVendor = resolveSelectedVendor(value);
-        if (!selectedVendor) {
-            return;
-        }
-        handleVendorChange(index, "vendor_name", selectedVendor.name);
-        handleVendorChange(index, "vendor_id", String(selectedVendor.id));
-        handleVendorChange(index, "vps_score", String(selectedVendor.vps_score_value));
+        const nextVendors = values.vendors.map(
+            (vendor: ProcessVendorFormValues, vendorIndex: number): ProcessVendorFormValues => {
+                if (vendorIndex !== index) {
+                    return vendor;
+                }
+
+                if (!value) {
+                    return {
+                        ...vendor,
+                        vendor_name: "",
+                        vendor_id: "",
+                        vps_score: "0",
+                    };
+                }
+
+                const selectedVendor = resolveSelectedVendor(value);
+                if (!selectedVendor) {
+                    return vendor;
+                }
+
+                return {
+                    ...vendor,
+                    vendor_name: selectedVendor.name,
+                    vendor_id: String(selectedVendor.id),
+                    vps_score: String(selectedVendor.vps_score_value ?? "0"),
+                };
+            }
+        );
+
+        updateField("vendors", nextVendors);
     };
 
     return (
@@ -501,7 +518,7 @@ export default function ProcessForm({
                             <tbody className="divide-y divide-gray-200">
                                 {values.tiers.length > 0 ? (
                                     values.tiers.map((tier: ProcessTierFormValues, index: number): ReactElement => (
-                                        <tr key={`${tier.tier_number}-${index}`}>
+                                        <tr key={tier.id ?? `tier-${index}`}>
                                             <td className="px-3 py-2">
                                                 <div className="flex flex-col">
                                                     <input
@@ -616,7 +633,7 @@ export default function ProcessForm({
                         {values.variables.length > 0 ? (
                             values.variables.map(
                                 (variable: ProcessVariableFormValues, index: number): ReactElement => (
-                                    <div key={`${variable.variable_name}-${index}`} className="border border-gray-200 rounded-lg p-4">
+                                    <div key={variable.id ?? `variable-${index}`} className="border border-gray-200 rounded-lg p-4">
                                         <div className="flex items-center justify-between">
                                             <div className="text-sm font-semibold text-gray-900">Variable {index + 1}</div>
                                             <button
@@ -749,18 +766,26 @@ export default function ProcessForm({
                     <div className="mt-4 space-y-4">
                         {values.vendors.length > 0 ? (
                             values.vendors.map((vendor: ProcessVendorFormValues, index: number): ReactElement => (
-                                <div key={`${vendor.vendor_name}-${index}`} className="border border-gray-200 rounded-lg p-4">
+                                <div key={vendor.id ?? `vendor-${index}`} className="border border-gray-200 rounded-lg p-4">
                                     {((): ReactElement => {
                                         const filteredVendors = getFilteredVendors(index);
                                         const selectedVendor = resolveSelectedVendor(vendor.vendor_id);
-                                        const isLocked = Boolean(selectedVendor);
 
                                         return (
                                             <>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                                                <div className="mb-3 flex items-center justify-between">
+                                                    <div className="text-sm font-semibold text-gray-900">Vendor {index + 1}</div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(): void => removeVendor(index)}
+                                                        className="text-sm font-semibold text-brand-red hover:text-brand-red/80"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                                <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                                                     <div>
-                                                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Find Vendor</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Type to filter vendor names.</p>
+                                                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Search</label>
                                                         <input
                                                             type="text"
                                                             value={vendorSearch[index] ?? ""}
@@ -768,12 +793,13 @@ export default function ProcessForm({
                                                                 handleVendorSearchChange(index, event.target.value)
                                                             }
                                                             className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                                                            placeholder="Search vendor name"
+                                                            placeholder="Filter vendors..."
                                                         />
                                                     </div>
                                                     <div>
-                                                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vendor</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Select the vendor and auto-fill details.</p>
+                                                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                                            Vendor <span className="text-brand-red">*</span>
+                                                        </label>
                                                         <select
                                                             value={selectedVendor ? String(selectedVendor.id) : ""}
                                                             onChange={(event: ChangeEvent<HTMLSelectElement>): void =>
@@ -791,65 +817,28 @@ export default function ProcessForm({
                                                         </select>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="text-sm font-semibold text-gray-900">Vendor {index + 1}</div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={(): void => removeVendor(index)}
-                                                        className="text-sm font-semibold text-brand-red hover:text-brand-red/80"
-                                                    >
-                                                        Remove
-                                                    </button>
-                                                </div>
-                                                <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vendor Name</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Auto-filled from the vendor list.</p>
-                                                        <input
-                                                            type="text"
-                                                            value={vendor.vendor_name}
-                                                            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
-                                                                handleVendorChange(index, "vendor_name", event.target.value)
-                                                            }
-                                                            disabled={isLocked}
-                                                            className={`mt-2 w-full rounded-md border px-3 py-2 text-sm ${isLocked ? "bg-gray-100 text-gray-500 border-gray-200" : "border-gray-300"
-                                                                }`}
-                                                            required
-                                                        />
+                                                {selectedVendor ? (
+                                                    <div className="mb-4 grid grid-cols-1 gap-3 rounded-md border border-brand-blue/20 bg-brand-blue/5 px-4 py-3 text-sm md:grid-cols-3">
+                                                        <div>
+                                                            <p className="text-xs font-medium uppercase text-gray-400">Vendor</p>
+                                                            <p className="mt-0.5 font-semibold text-gray-900">{selectedVendor.name}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-medium uppercase text-gray-400">Email</p>
+                                                            <p className="mt-0.5 text-gray-700">{selectedVendor.email || "—"}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-medium uppercase text-gray-400">VPS Score</p>
+                                                            <p className="mt-0.5 font-semibold text-brand-blue">
+                                                                {selectedVendor.vps_score_value ?? "—"}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vendor ID</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Internal ID from the vendor list.</p>
-                                                        <input
-                                                            type="text"
-                                                            value={vendor.vendor_id}
-                                                            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
-                                                                handleVendorChange(index, "vendor_id", event.target.value)
-                                                            }
-                                                            disabled={isLocked}
-                                                            className={`mt-2 w-full rounded-md border px-3 py-2 text-sm ${isLocked ? "bg-gray-100 text-gray-500 border-gray-200" : "border-gray-300"
-                                                                }`}
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">VPS Score</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Vendor performance score.</p>
-                                                        <input
-                                                            type="text"
-                                                            value={vendor.vps_score}
-                                                            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
-                                                                handleVendorChange(index, "vps_score", event.target.value)
-                                                            }
-                                                            disabled={isLocked}
-                                                            className={`mt-2 w-full rounded-md border px-3 py-2 text-sm ${isLocked ? "bg-gray-100 text-gray-500 border-gray-200" : "border-gray-300"
-                                                                }`}
-                                                            required
-                                                        />
-                                                    </div>
+                                                ) : null}
+                                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                                                     <div>
                                                         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Priority</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Preferred vendors are selected first.</p>
+                                                        <p className="mt-1 text-xs text-gray-500">Preferred vendors are selected first.</p>
                                                         <select
                                                             value={vendor.priority}
                                                             onChange={(event: ChangeEvent<HTMLSelectElement>): void =>
@@ -865,7 +854,7 @@ export default function ProcessForm({
                                                     </div>
                                                     <div>
                                                         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Standard Lead Time (days)</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Typical time this vendor needs.</p>
+                                                        <p className="mt-1 text-xs text-gray-500">Typical time this vendor needs.</p>
                                                         <input
                                                             type="number"
                                                             min={1}
@@ -879,7 +868,7 @@ export default function ProcessForm({
                                                     </div>
                                                     <div>
                                                         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Rush Lead Time (days)</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Fastest time for rush orders.</p>
+                                                        <p className="mt-1 text-xs text-gray-500">Fastest time for rush orders.</p>
                                                         <input
                                                             type="number"
                                                             min={1}
@@ -896,7 +885,7 @@ export default function ProcessForm({
                                                     </div>
                                                     <div>
                                                         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Rush Fee (%)</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Extra percent charged for rush work.</p>
+                                                        <p className="mt-1 text-xs text-gray-500">Extra percent charged for rush work.</p>
                                                         <input
                                                             type="text"
                                                             value={vendor.rush_fee_percentage}
@@ -909,7 +898,7 @@ export default function ProcessForm({
                                                     </div>
                                                     <div>
                                                         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Rush Threshold (days)</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Orders below this lead time are rush.</p>
+                                                        <p className="mt-1 text-xs text-gray-500">Orders below this lead time are rush.</p>
                                                         <input
                                                             type="number"
                                                             min={1}
@@ -923,7 +912,7 @@ export default function ProcessForm({
                                                     </div>
                                                     <div>
                                                         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Minimum Order (KES)</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Smallest order this vendor accepts.</p>
+                                                        <p className="mt-1 text-xs text-gray-500">Smallest order this vendor accepts.</p>
                                                         <input
                                                             type="text"
                                                             value={vendor.minimum_order}
@@ -936,7 +925,7 @@ export default function ProcessForm({
                                                     </div>
                                                     <div className="md:col-span-2">
                                                         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Notes</label>
-                                                        <p className="text-xs text-gray-500 mt-1">Extra vendor instructions or context.</p>
+                                                        <p className="mt-1 text-xs text-gray-500">Extra vendor instructions or context.</p>
                                                         <textarea
                                                             value={vendor.notes}
                                                             onChange={(event: ChangeEvent<HTMLTextAreaElement>): void =>

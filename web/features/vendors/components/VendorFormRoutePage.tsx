@@ -32,8 +32,8 @@ const VENDOR_FORM_ROUTE_CONFIG: Record<VendorFormRouteContext, VendorFormRouteCo
     },
     production: {
         homeLabel: "Production Team",
-        homeHref: "/staff/production-team",
-        listHref: "/staff/production-team/vendors",
+        homeHref: "/production-team",
+        listHref: "/production-team/vendors",
         createTitle: "Create Production Vendor",
         editTitle: "Edit Production Vendor",
     },

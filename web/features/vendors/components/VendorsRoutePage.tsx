@@ -29,12 +29,12 @@ const VENDORS_ROUTE_CONFIG: Record<VendorsRouteContext, VendorsRouteConfig> = {
         editVendorBaseHref: "/staff/vendors",
     },
     production: {
-        breadcrumbHref: "/staff/production-team",
+        breadcrumbHref: "/production-team",
         breadcrumbLabel: "Production Team",
         title: "Production Vendors",
         description: "Manage production vendors, capacity, and performance.",
-        addVendorHref: "/staff/production-team/vendors/new",
-        editVendorBaseHref: "/staff/production-team/vendors",
+        addVendorHref: "/production-team/vendors/new",
+        editVendorBaseHref: "/production-team/vendors",
     },
 };
 

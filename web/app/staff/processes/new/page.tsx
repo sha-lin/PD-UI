@@ -204,7 +204,7 @@ export default function NewProcessPage(): ReactElement {
                 </div>
             </header>
             <main className="bg-gray-50 min-h-screen">
-                <div className="max-w-5xl mx-auto px-8 py-6 space-y-6">
+                <div className="max-w-5xl px-8 py-6 space-y-6">
                     {errorMessage && (
                         <div className="bg-brand-red/10 border border-brand-red/20 rounded-lg p-4">
                             <div className="flex items-center gap-3">

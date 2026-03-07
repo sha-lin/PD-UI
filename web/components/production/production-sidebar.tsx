@@ -33,33 +33,33 @@ interface MenuSection {
 const menuSections: MenuSection[] = [
     {
         items: [
-            { label: "Dashboard", href: "/staff/production-team/dashboard", icon: LayoutDashboard },
+            { label: "Dashboard", href: "/production-team/dashboard", icon: LayoutDashboard },
         ],
     },
     {
         title: "MY WORK",
         items: [
-            { label: "My Quotes", href: "/staff/production-team/my-quotes", icon: FileText },
-            { label: "My Jobs", href: "/staff/production-team/my-jobs", icon: Briefcase },
-            { label: "LPOs", href: "/staff/production-team/lpos", icon: ClipboardList },
+            { label: "My Quotes", href: "/production-team/my-quotes", icon: FileText },
+            { label: "My Jobs", href: "/production-team/my-jobs", icon: Briefcase },
+            { label: "LPOs", href: "/production-team/lpos", icon: ClipboardList },
         ],
     },
     {
         title: "PRODUCTION",
         items: [
-            { label: "Product Catalog", href: "/staff/production-team/products", icon: Package },
-            { label: "Costing", href: "/staff/production-team/processes", icon: BookOpen },
-            { label: "Quality Control", href: "/staff/production-team/quality-control", icon: ShieldCheck },
-            { label: "Vendors", href: "/staff/production-team/vendors", icon: Building2 },
-            { label: "Deliveries", href: "/staff/production-team/deliveries", icon: Truck },
+            { label: "Product Catalog", href: "/production-team/products", icon: Package },
+            { label: "Costing", href: "/production-team/processes", icon: BookOpen },
+            // { label: "Quality Control", href: "/production-team/quality-control", icon: ShieldCheck },
+            { label: "Vendors", href: "/production-team/vendors", icon: Building2 },
+            { label: "Deliveries", href: "/production-team/deliveries", icon: Truck },
         ],
     },
     {
         title: "INSIGHTS",
         items: [
-            { label: "Analytics", href: "/staff/production-team/analytics", icon: BarChart3 },
-            { label: "Notifications", href: "/staff/production-team/notifications", icon: Bell },
-            { label: "Settings", href: "/staff/production-team/settings", icon: Settings },
+            { label: "Analytics", href: "/production-team/analytics", icon: BarChart3 },
+            { label: "Notifications", href: "/production-team/notifications", icon: Bell },
+            { label: "Settings", href: "/production-team/settings", icon: Settings },
         ],
     },
 ];
@@ -69,7 +69,7 @@ export default function ProductionSidebar() {
 
     const isActiveLink = (href: string): boolean =>
         pathname === href ||
-        (href !== "/production/dashboard" && pathname.startsWith(href));
+        (href !== "/production-team/dashboard" && pathname.startsWith(href));
 
     return (
         <aside className="w-64 bg-brand-blue text-white h-screen fixed left-0 top-0 overflow-y-auto">

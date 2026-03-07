@@ -65,6 +65,13 @@ export interface PurchaseOrdersResponse {
     results: PurchaseOrderListItem[];
 }
 
+export interface LineItem {
+    description: string;
+    quantity: number;
+    unit_price: string | number;
+    amount: string | number;
+}
+
 export interface PurchaseOrderProofListItem {
     id: number;
     status: string;
@@ -72,6 +79,11 @@ export interface PurchaseOrderProofListItem {
     submitted_at: string | null;
     rejection_reason: string | null;
     purchase_order: number | null;
+    po_number?: string | null;
+    proof_image: string | null;
+    description?: string | null;
+    reviewed_by_name?: string | null;
+    reviewed_at?: string | null;
 }
 
 export interface PurchaseOrderProofsResponse {
@@ -84,12 +96,26 @@ export interface PurchaseOrderProofsResponse {
 export interface VendorInvoiceListItem {
     id: number;
     invoice_number: string | null;
+    vendor_invoice_ref?: string | null;
     status: string;
     total_amount: string | number | null;
+    subtotal?: string | number | null;
+    tax_rate?: string | number | null;
+    tax_amount?: string | number | null;
     submitted_at: string | null;
+    invoice_date?: string | null;
+    due_date?: string | null;
+    payment_terms?: string | null;
     vendor_name?: string | null;
     vendor?: number | { id: number; name?: string | null } | null;
     job?: number | { id: number; job_number?: string | null } | null;
+    job_number?: string | null;
+    po_number?: string | null;
+    purchase_order?: number | null;
+    line_items?: LineItem[] | null;
+    invoice_file?: string | null;
+    vendor_notes?: string | null;
+    rejection_reason?: string | null;
 }
 
 export interface VendorInvoicesResponse {

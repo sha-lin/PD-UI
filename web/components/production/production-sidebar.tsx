@@ -3,8 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LucideIcon } from "lucide-react";
+import { useState, type ReactElement } from "react";
 import {
+    type LucideIcon,
     LayoutDashboard,
     BookOpen,
     FileText,
@@ -15,7 +16,12 @@ import {
     Truck,
     BarChart3,
     Bell,
+    LogOut,
+    Loader2,
+    X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { logoutUserSession } from "@/lib/api/auth";
 
 interface MenuItem {
     label: string;
@@ -46,7 +52,6 @@ const menuSections: MenuSection[] = [
         items: [
             { label: "Product Catalog", href: "/production-team/products", icon: Package },
             { label: "Costing", href: "/production-team/processes", icon: BookOpen },
-            // { label: "Quality Control", href: "/production-team/quality-control", icon: ShieldCheck },
             { label: "Vendors", href: "/production-team/vendors", icon: Building2 },
             { label: "Deliveries", href: "/production-team/deliveries", icon: Truck },
         ],
@@ -61,16 +66,39 @@ const menuSections: MenuSection[] = [
     },
 ];
 
-export default function ProductionSidebar() {
+interface ProductionSidebarProps {
+    isDrawerOpen: boolean;
+    onClose: () => void;
+}
+
+export default function ProductionSidebar({ isDrawerOpen, onClose }: ProductionSidebarProps): ReactElement {
     const pathname = usePathname();
+    const router = useRouter();
+    const [loggingOut, setLoggingOut] = useState(false);
 
     const isActiveLink = (href: string): boolean =>
         pathname === href ||
         (href !== "/production-team/dashboard" && pathname.startsWith(href));
 
+    async function handleLogout(): Promise<void> {
+        setLoggingOut(true);
+        try {
+            await logoutUserSession();
+        } finally {
+            router.push("/login");
+        }
+    }
+
     return (
-        <aside className="w-64 bg-brand-blue text-white h-screen fixed left-0 top-0 overflow-y-auto">
-            <div className="px-4 py-3 border-b border-white/10">
+        <aside
+            className={`
+                fixed left-0 top-0 z-30 h-screen w-64 bg-brand-blue text-white
+                flex flex-col overflow-y-auto
+                transition-transform duration-200 ease-in-out
+                ${isDrawerOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+            `}
+        >
+            <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
                 <Image
                     src="/logo/pd.png"
                     alt="PrintDuka"
@@ -79,9 +107,16 @@ export default function ProductionSidebar() {
                     className="w-20 h-auto"
                     priority
                 />
+                <button
+                    onClick={onClose}
+                    className="lg:hidden p-1.5 rounded hover:bg-white/10 transition-colors"
+                    aria-label="Close menu"
+                >
+                    <X className="w-4 h-4" />
+                </button>
             </div>
 
-            <nav className="py-4">
+            <nav className="py-4 flex-1">
                 {menuSections.map((section, sectionIndex) => (
                     <div key={sectionIndex} className="mb-6">
                         {section.title && (
@@ -97,9 +132,10 @@ export default function ProductionSidebar() {
                                     <li key={item.href}>
                                         <Link
                                             href={item.href}
+                                            onClick={onClose}
                                             className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${isActive
-                                                ? "bg-brand-yellow text-brand-blue font-semibold"
-                                                : "text-white hover:bg-white/10"
+                                                    ? "bg-brand-yellow text-brand-blue font-semibold"
+                                                    : "text-white hover:bg-white/10"
                                                 }`}
                                         >
                                             <Icon className="w-5 h-5" />
@@ -112,6 +148,21 @@ export default function ProductionSidebar() {
                     </div>
                 ))}
             </nav>
+
+            <div className="px-4 py-4 border-t border-white/10">
+                <button
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-white hover:bg-white/10 rounded transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                    {loggingOut ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                        <LogOut className="w-5 h-5" />
+                    )}
+                    <span>{loggingOut ? "Logging out…" : "Logout"}</span>
+                </button>
+            </div>
         </aside>
     );
 }

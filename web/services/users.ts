@@ -33,14 +33,5 @@ export async function fetchProductionUsers(): Promise<ProductionUsersResponse> {
         throw new Error(`Failed to fetch production users: ${response.status} ${errorText}`);
     }
 
-    const data = await response.json();
-
-    if (Array.isArray(data)) {
-        return {
-            results: data,
-            count: data.length,
-        };
-    }
-
-    return data;
+    return response.json();
 }

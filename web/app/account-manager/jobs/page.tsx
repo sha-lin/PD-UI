@@ -73,7 +73,7 @@ export default function AccountManagerJobsPage(): ReactElement {
                 remind_days_before: remindDays,
             }),
         onSuccess: (): void => {
-            toast.success("Job assigned to production team.");
+            toast.success("Job assigned! Email notification sent to production team member.");
             queryClient.invalidateQueries({ queryKey: ["account-manager-jobs"] });
             queryClient.invalidateQueries({ queryKey: ["job", selectedJobId] });
             setIsAssignOpen(false);
@@ -86,7 +86,7 @@ export default function AccountManagerJobsPage(): ReactElement {
     const reminderMutation = useMutation({
         mutationFn: (jobId: number) => sendJobReminder(jobId),
         onSuccess: (): void => {
-            toast.success("Reminder sent successfully.");
+            toast.success("Reminder sent! Email and notification delivered.");
         },
         onError: (): void => {
             toast.error("Unable to send reminder. Please try again.");
@@ -95,7 +95,7 @@ export default function AccountManagerJobsPage(): ReactElement {
 
     const jobs = data?.results ?? [];
     const totalCount = data?.count ?? 0;
-    const productionUsers = productionUsersQuery.data?.results ?? [];
+    const productionUsers = productionUsersQuery.data?.users ?? [];
 
     const openDetailModal = (job: Job): void => {
         setSelectedJobId(job.id);

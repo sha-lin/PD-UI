@@ -76,6 +76,15 @@ const parseMoney = (value: number | string | null): number | null => {
     return Number.isFinite(parsed) ? parsed : null;
 };
 
+const parseErrorMessage = (errorText: string, fallbackMessage: string): string => {
+    try {
+        const errorJson = JSON.parse(errorText);
+        return errorJson.detail || errorJson.message || errorJson.error || fallbackMessage;
+    } catch {
+        return fallbackMessage;
+    }
+};
+
 const normalizeQuote = (quote: ApiQuote): Quote => {
     return {
         ...quote,
@@ -96,7 +105,7 @@ export async function fetchQuotes(params: QuotesQueryParams): Promise<QuotesResp
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to fetch quotes: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to fetch quotes"));
     }
 
     const payload = (await response.json()) as ApiQuotesResponse;
@@ -115,7 +124,7 @@ export async function deleteQuote(quoteId: number): Promise<void> {
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to delete quote: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to delete quote"));
     }
 }
 
@@ -130,7 +139,7 @@ export async function fetchQuote(quoteId: number): Promise<Quote> {
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to fetch quote: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to fetch quote"));
     }
 
     const payload = (await response.json()) as ApiQuote;
@@ -195,7 +204,7 @@ export async function updateQuote(quoteId: number, data: CreateQuoteInput): Prom
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to update quote: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to update quote"));
     }
 
     const apiQuote = (await response.json()) as ApiQuote;
@@ -213,7 +222,7 @@ export async function fetchQuoteHistory(quoteId: number): Promise<QuoteHistoryRe
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to fetch quote history: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to fetch quote history"));
     }
 
     return response.json();
@@ -228,7 +237,7 @@ const postQuoteAction = async (quoteId: number, actionPath: string): Promise<Quo
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed quote action (${actionPath}): ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, `Failed quote action: ${actionPath}`));
     }
 
     return response.json();
@@ -244,7 +253,7 @@ export async function sendQuoteToPT(quoteId: number, assignedTo?: number): Promi
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to send quote to PT: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to send quote to PT"));
     }
 
     return response.json();
@@ -272,7 +281,7 @@ export async function costQuote(quoteId: number, payload: QuoteCostPayload): Pro
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed quote action (cost): ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to cost quote"));
     }
 
     return response.json();
@@ -305,7 +314,7 @@ export async function fetchMultiProductQuotes(
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to fetch multi-product quotes: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to fetch quotes"));
     }
 
     const data = await response.json();
@@ -323,7 +332,7 @@ export async function fetchQuoteStats(): Promise<QuoteStatsResponse> {
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to fetch quote stats: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to fetch quote statistics"));
     }
 
     const data = await response.json();
@@ -370,7 +379,7 @@ export async function fetchMultiProductQuoteDetail(quoteId: string): Promise<Mul
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to fetch quote detail: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to fetch quote detail"));
     }
 
     return response.json();
@@ -436,7 +445,7 @@ export async function createMultiProductQuote(data: CreateQuoteInput): Promise<M
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to create quote: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to create quote"));
     }
 
     return response.json();
@@ -452,7 +461,7 @@ export async function markQuoteLost(quoteId: number, reason: string): Promise<Qu
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to mark quote as lost: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to mark quote as lost"));
     }
 
     return response.json();
@@ -470,7 +479,7 @@ export async function downloadQuotePdf(quoteId: string): Promise<Blob> {
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to download quote PDF: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to download quote PDF"));
     }
 
     return response.blob();
@@ -486,7 +495,7 @@ export async function fetchQuoteByToken(token: string): Promise<Quote> {
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to fetch quote: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to fetch quote"));
     }
 
     const apiQuote: ApiQuote = await response.json();
@@ -504,7 +513,7 @@ export async function acceptQuoteByToken(token: string): Promise<QuoteActionResp
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to accept quote: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to accept quote"));
     }
 
     return response.json();
@@ -522,7 +531,7 @@ export async function rejectQuoteByToken(token: string, reason?: string): Promis
 
     if (!response.ok) {
         const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to reject quote: ${response.status} ${errorText}`);
+        throw new Error(parseErrorMessage(errorText, "Failed to reject quote"));
     }
 
     return response.json();

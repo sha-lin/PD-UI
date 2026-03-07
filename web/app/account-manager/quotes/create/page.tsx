@@ -497,30 +497,38 @@ export default function CreateQuotePage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button
-                                type="button"
-                                onClick={() => handleSubmit("draft")}
-                                disabled={createMutation.isPending}
-                                className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
-                            >
-                                {isEditMode ? "Save Changes" : "Save as Draft"}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleSubmit("send_pt")}
-                                disabled={createMutation.isPending}
-                                className="px-5 py-2 bg-brand-blue text-white rounded hover:bg-blue-700 font-medium text-sm disabled:opacity-50"
-                            >
-                                {isEditMode ? "Save & Send to PT" : "Send to PT for Costing"}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleSubmit("send_customer")}
-                                disabled={createMutation.isPending}
-                                className="px-5 py-2 bg-brand-green text-white rounded hover:bg-green-700 font-medium text-sm disabled:opacity-50"
-                            >
-                                {isEditMode ? "Save & Email Client" : "Email Client"}
-                            </button>
+                            {(!isEditMode || existingQuote?.status === "Draft") ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSubmit("draft")}
+                                        disabled={createMutation.isPending}
+                                        className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
+                                    >
+                                        {isEditMode ? "Save Changes" : "Save as Draft"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSubmit("send_pt")}
+                                        disabled={createMutation.isPending}
+                                        className="px-5 py-2 bg-brand-blue text-white rounded hover:bg-blue-700 font-medium text-sm disabled:opacity-50"
+                                    >
+                                        {isEditMode ? "Save & Send to PT" : "Send to PT for Costing"}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSubmit("send_customer")}
+                                        disabled={createMutation.isPending}
+                                        className="px-5 py-2 bg-brand-green text-white rounded hover:bg-green-700 font-medium text-sm disabled:opacity-50"
+                                    >
+                                        {isEditMode ? "Save & Email Client" : "Email Client"}
+                                    </button>
+                                </>
+                            ) : (
+                                <div className="text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded border border-gray-200">
+                                    Quote status: <span className="font-semibold">{existingQuote?.status}</span> - Cannot be edited
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

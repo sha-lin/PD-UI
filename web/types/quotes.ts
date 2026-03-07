@@ -21,7 +21,7 @@ export interface QuoteLineItem {
     discount_type?: "percent" | "fixed";
     variable_amount?: number;
     customization_level_snapshot?: string;
-    base_price_snapshot?: number;
+    base_price_snapshot?: number | null;
     order?: number;
 }
 
@@ -61,7 +61,6 @@ export interface Quote {
     adjustment_reason?: string;
     customer_notes?: string;
     custom_terms?: string;
-}
 }
 
 export interface QuoteHistoryItem {

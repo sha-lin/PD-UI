@@ -53,7 +53,6 @@ export default function QuotesTable({
                 <thead className="bg-gray-50">
                     <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Quote</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Client / Lead</th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
                         <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
@@ -64,10 +63,9 @@ export default function QuotesTable({
                 <tbody>
                     {quotes.map((quote: Quote): ReactElement => (
                         <tr key={quote.id} className="border-b border-gray-100 last:border-0">
-                            <td className="py-3 px-4 text-sm text-gray-700 font-semibold">{quote.quote_id}</td>
-                            <td className="py-3 px-4 text-sm text-gray-700">{quote.product_name}</td>
+                            <td className="py-3 px-4 text-sm text-gray-700">{quote.quote_id}</td>
                             <td className="py-3 px-4 text-sm text-gray-700">
-                                {quote.client !== null ? `Client #${quote.client}` : quote.lead !== null ? `Lead #${quote.lead}` : "—"}
+                                {quote.client_name || "—"}
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-700">{formatAmount(quote.total_amount)}</td>
                             <td className="py-3 px-4 text-sm">

@@ -238,7 +238,7 @@ export default function JobsPage(): ReactElement {
                                 <>
                                     <JobsTable
                                         jobs={jobs}
-                                        onView={openDetailModal}
+                                        onViewDetails={openDetailModal}
                                         onAssign={openAssignModal}
                                         onProgress={openProgressModal}
                                     />

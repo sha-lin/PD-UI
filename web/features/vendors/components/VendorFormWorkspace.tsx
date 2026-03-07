@@ -259,7 +259,7 @@ export default function VendorFormWorkspace({
             </header>
 
             <main className="min-h-screen bg-gray-50">
-                <div className="mx-auto max-w-5xl space-y-6 px-8 py-6">
+                <div className="max-w-5xl space-y-6 px-8 py-6">
                     {mode === "edit" && !hasValidId ? (
                         <div className="rounded-lg border border-brand-red/20 bg-brand-red/10 p-6">
                             <div className="flex items-center gap-3">

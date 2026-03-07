@@ -104,11 +104,14 @@ export default function JobAssignModal({
                 </div>
                 <div className="p-6 space-y-4">
                     <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vendor</label>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            Vendor <span className="text-brand-red">*</span>
+                        </label>
+                        <p className="text-xs text-gray-600 mt-0.5 mb-2">Select the vendor who will handle this production stage</p>
                         <select
                             value={vendorId ?? ""}
                             onChange={handleVendorChange}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                         >
                             <option value="">Select vendor</option>
                             {vendorOptions.map((vendor: Vendor): ReactElement => (
@@ -119,31 +122,40 @@ export default function JobAssignModal({
                         </select>
                     </div>
                     <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Stage Name</label>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            Stage Name <span className="text-brand-red">*</span>
+                        </label>
+                        <p className="text-xs text-gray-600 mt-0.5 mb-2">Name of the production stage (e.g., Printing, Binding, Finishing)</p>
                         <input
                             type="text"
                             value={stageName}
                             onChange={(event: ChangeEvent<HTMLInputElement>): void => setStageName(event.target.value)}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                         />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Stage Order</label>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                Stage Order <span className="text-brand-red">*</span>
+                            </label>
+                            <p className="text-xs text-gray-600 mt-0.5 mb-2">Sequence number in production workflow</p>
                             <input
                                 type="number"
                                 min={1}
                                 value={stageOrder}
                                 onChange={(event: ChangeEvent<HTMLInputElement>): void => setStageOrder(Number(event.target.value))}
-                                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</label>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                Status <span className="text-brand-red">*</span>
+                            </label>
+                            <p className="text-xs text-gray-600 mt-0.5 mb-2">Current status of this stage</p>
                             <select
                                 value={status}
                                 onChange={(event: ChangeEvent<HTMLSelectElement>): void => setStatus(event.target.value as JobVendorStageStatus)}
-                                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                             >
                                 {statusOptions.map((option: JobVendorStageStatus): ReactElement => (
                                     <option key={option} value={option}>
@@ -155,42 +167,54 @@ export default function JobAssignModal({
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Progress (%)</label>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                Progress (%) <span className="text-gray-400">(Optional)</span>
+                            </label>
+                            <p className="text-xs text-gray-600 mt-0.5 mb-2">Completion percentage (0-100)</p>
                             <input
                                 type="number"
                                 min={0}
                                 max={100}
                                 value={progress}
                                 onChange={(event: ChangeEvent<HTMLInputElement>): void => setProgress(Number(event.target.value))}
-                                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Expected Completion</label>
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                Expected Completion <span className="text-gray-400">(Optional)</span>
+                            </label>
+                            <p className="text-xs text-gray-600 mt-0.5 mb-2">Target completion date for this stage</p>
                             <input
                                 type="date"
                                 value={expectedCompletion}
                                 onChange={(event: ChangeEvent<HTMLInputElement>): void => setExpectedCompletion(event.target.value)}
-                                className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vendor Cost (KES)</label>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            Vendor Cost (KES) <span className="text-gray-400">(Optional)</span>
+                        </label>
+                        <p className="text-xs text-gray-600 mt-0.5 mb-2">Cost charged by vendor for this stage</p>
                         <input
                             type="text"
                             value={vendorCost}
                             onChange={(event: ChangeEvent<HTMLInputElement>): void => setVendorCost(event.target.value)}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                         />
                     </div>
                     <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Notes</label>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            Notes <span className="text-brand-red">*</span>
+                        </label>
+                        <p className="text-xs text-gray-600 mt-0.5 mb-2">Additional information or special instructions</p>
                         <textarea
                             value={notes}
                             onChange={(event: ChangeEvent<HTMLTextAreaElement>): void => setNotes(event.target.value)}
                             rows={3}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                         />
                     </div>
                 </div>

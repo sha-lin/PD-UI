@@ -28,7 +28,7 @@ export default function RevenueByCategoryChart({ data }: RevenueByCategoryChartP
                         tickFormatter={(value) => `KES ${(value / 1000).toFixed(0)}k`}
                     />
                     <Tooltip
-                        formatter={(value: number) => [`KES ${value.toLocaleString()}`, "Revenue"]}
+                        formatter={(value: number | undefined) => [`KES ${(value ?? 0).toLocaleString()}`, "Revenue"]}
                         contentStyle={{
                             backgroundColor: "#fff",
                             border: "1px solid #e5e7eb",

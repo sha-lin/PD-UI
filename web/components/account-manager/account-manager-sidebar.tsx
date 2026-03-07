@@ -29,7 +29,7 @@ interface MenuSection {
 const menuSections: MenuSection[] = [
     {
         items: [
-            { label: "Dashboard", href: "/account-manager/dashboard", icon: LayoutDashboard },
+            { label: "Dashboard", href: "/account-manager", icon: LayoutDashboard },
         ],
     },
     {

@@ -5,9 +5,7 @@ import type { ReactElement } from "react";
 import AccountManagerLayout from "@/components/account-manager/account-manager-layout";
 import DashboardKPICards from "@/features/dashboard/components/DashboardKPICards";
 import RevenueTrendChart from "@/features/dashboard/components/RevenueTrendChart";
-import QuotePerformanceChart from "@/features/dashboard/components/QuotePerformanceChart";
 import ClientGrowthChart from "@/features/dashboard/components/ClientGrowthChart";
-import TopProductsChart from "@/features/dashboard/components/TopProductsChart";
 import RecentQuotesTable from "@/features/dashboard/components/RecentQuotesTable";
 import { fetchAccountManagerDashboard } from "@/services/dashboard";
 
@@ -50,7 +48,7 @@ export default function AccountManagerDashboardPage(): ReactElement {
                 <DashboardKPICards
                     kpis={data?.kpis || {
                         my_revenue_this_month: 0,
-                        my_win_rate: 0,
+                        my_quotes_this_month: 0,
                         active_jobs_count: 0,
                         new_clients_this_month: 0,
                     }}
@@ -62,24 +60,8 @@ export default function AccountManagerDashboardPage(): ReactElement {
                         data={data?.revenue_trend || []}
                         isLoading={isLoading}
                     />
-                    <QuotePerformanceChart
-                        data={data?.quote_status || {
-                            draft: 0,
-                            quoted: 0,
-                            approved: 0,
-                            lost: 0,
-                        }}
-                        isLoading={isLoading}
-                    />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <ClientGrowthChart
                         data={data?.client_growth || []}
-                        isLoading={isLoading}
-                    />
-                    <TopProductsChart
-                        data={data?.top_products || []}
                         isLoading={isLoading}
                     />
                 </div>

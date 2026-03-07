@@ -48,12 +48,12 @@ export default function DashboardKPICards({ kpis, isLoading }: DashboardKPICards
 
             <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                    Win Rate
+                    Quotes This Month
                 </p>
                 <p className="text-3xl font-bold text-brand-green">
-                    {kpis.my_win_rate.toFixed(1)}%
+                    {kpis.my_quotes_this_month}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">Approved / Total Quotes</p>
+                <p className="text-xs text-gray-500 mt-1">Total Quotes Created</p>
             </div>
 
             <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -68,7 +68,7 @@ export default function DashboardKPICards({ kpis, isLoading }: DashboardKPICards
 
             <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                    New Clients
+                    Active Clients
                 </p>
                 <p className="text-3xl font-bold text-brand-blue">
                     {kpis.new_clients_this_month}

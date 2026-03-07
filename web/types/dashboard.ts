@@ -100,7 +100,7 @@ export interface DashboardActivityResponse {
 
 export interface AccountManagerKPIs {
     my_revenue_this_month: number;
-    my_win_rate: number;
+    my_quotes_this_month: number;
     active_jobs_count: number;
     new_clients_this_month: number;
 }
@@ -168,10 +168,8 @@ export interface UpcomingAction {
 export interface AccountManagerDashboard {
     kpis: AccountManagerKPIs;
     lead_funnel: LeadFunnel;
-    quote_status: QuoteStatusDistribution;
     revenue_trend: RevenueTrendPoint[];
     client_growth: ClientGrowthPoint[];
-    top_products: TopProduct[];
     jobs_status: JobsStatusDistribution;
     recent_quotes: RecentQuote[];
     upcoming_actions: UpcomingAction[];

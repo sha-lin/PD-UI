@@ -31,9 +31,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return response.json() as Promise<T>;
 }
 
-// Session-based authentication using httpOnly cookies
+// Session-based authentication — routes through Next.js proxy so cookies are set on same domain
+const PROXY_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXTAUTH_URL || 'http://localhost:3000');
+
 export async function getCsrfToken(): Promise<string> {
-    const response = await fetch(`${API_BASE_URL}/api/auth/csrf/`, {
+    const response = await fetch(`${PROXY_BASE}/api/auth/csrf`, {
         method: 'GET',
         credentials: 'include',
     });
@@ -43,14 +45,9 @@ export async function getCsrfToken(): Promise<string> {
 }
 
 export async function loginUserSession(credentials: LoginCredentials): Promise<{ success: boolean; user: User }> {
-    const csrfToken = await getCsrfToken();
-
-    const response = await fetch(`${API_BASE_URL}/api/auth/session/login/`, {
+    const response = await fetch(`${PROXY_BASE}/api/auth/session/login`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken,
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(credentials),
     });
@@ -59,13 +56,8 @@ export async function loginUserSession(credentials: LoginCredentials): Promise<{
 }
 
 export async function logoutUserSession(): Promise<{ success: boolean }> {
-    const csrfToken = await getCsrfToken();
-
-    const response = await fetch(`${API_BASE_URL}/api/auth/session/logout/`, {
+    const response = await fetch(`${PROXY_BASE}/api/auth/session/logout`, {
         method: 'POST',
-        headers: {
-            'X-CSRFToken': csrfToken,
-        },
         credentials: 'include',
     });
 
@@ -73,7 +65,7 @@ export async function logoutUserSession(): Promise<{ success: boolean }> {
 }
 
 export async function checkSession(): Promise<{ authenticated: boolean; user?: User }> {
-    const response = await fetch(`${API_BASE_URL}/api/auth/session/check/`, {
+    const response = await fetch(`${PROXY_BASE}/api/auth/session/check`, {
         method: 'GET',
         credentials: 'include',
     });
@@ -86,7 +78,7 @@ export async function checkSession(): Promise<{ authenticated: boolean; user?: U
 }
 
 export async function getCurrentUser(): Promise<User> {
-    const response = await fetch(`${API_BASE_URL}/api/auth/session/check/`, {
+    const response = await fetch(`${PROXY_BASE}/api/auth/session/check`, {
         method: 'GET',
         credentials: 'include',
     });

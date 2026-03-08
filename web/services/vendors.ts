@@ -22,7 +22,7 @@ import {
     POStats,
 } from "@/types/vendors";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const buildQueryString = (params: VendorsQueryParams): string => {
     const searchParams = new URLSearchParams();

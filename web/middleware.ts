@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { PortalRole } from '@/types/auth';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const INTERNAL_BASE = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
 const ROLE_DASHBOARD: Record<PortalRole, string> = {
     client: '/portal',
@@ -33,6 +34,7 @@ async function fetchSessionData(sessionId: string): Promise<SessionData | null> 
         const response = await fetch(`${API_BASE_URL}/api/auth/session/check/`, {
             method: 'GET',
             headers: { Cookie: `sessionid=${sessionId}` },
+            cache: 'no-store',
         });
         if (!response.ok) return null;
         return await response.json() as SessionData;

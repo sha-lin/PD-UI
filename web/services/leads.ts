@@ -1,6 +1,6 @@
 import type { Lead, LeadConvertPayload, LeadConvertResponse, LeadQualifyResponse, LeadsQueryParams, LeadsResponse } from "@/types/leads";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 class BusinessValidationError extends Error {
     constructor(message: string) {

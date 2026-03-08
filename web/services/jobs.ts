@@ -7,7 +7,7 @@ import {
     UpdateJobVendorStagePayload,
 } from "@/types/jobs";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const buildQueryString = (params: JobsQueryParams): string => {
     const searchParams = new URLSearchParams();

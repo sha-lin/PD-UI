@@ -19,7 +19,7 @@ import {
     UpdateProcessVendorPayload,
 } from "@/types/processes";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const buildQueryString = (params: ProcessesQueryParams): string => {
     const searchParams = new URLSearchParams();

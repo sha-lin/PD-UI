@@ -28,8 +28,8 @@ async function handler(
     { params }: { params: Promise<{ path: string[] }> }
 ): Promise<NextResponse> {
     const { path } = await params;
-    const targetPath = path.join('/') + '/';
-    const targetUrl = `${DJANGO_API}/${targetPath}${request.nextUrl.search}`;
+    const targetPath = path.join('/');
+    const targetUrl = `${DJANGO_API}/${targetPath}/${request.nextUrl.search}`;
 
     const cookieStore = await cookies();
     const sessionId = cookieStore.get('sessionid')?.value;

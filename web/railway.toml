@@ -1,7 +1,7 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
-buildArgs = { NEXT_PUBLIC_API_URL = "https://print-duka-api-production.up.railway.app" }
+buildArgs = { NEXT_PUBLIC_API_URL = "https://printduka.co.ke/api/proxy" }
 
 [deploy]
 restartPolicyType = "ON_FAILURE"

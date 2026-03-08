@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     remotePatterns: [
       {
@@ -8,6 +9,16 @@ const nextConfig: NextConfig = {
         hostname: "localhost",
         port: "8000",
         pathname: "/media/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.up.railway.app",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "api.printduka.co.ke",
+        pathname: "/**",
       },
       {
         protocol: "https",

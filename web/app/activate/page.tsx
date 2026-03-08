@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle, XCircle, Loader2, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
@@ -14,6 +14,14 @@ interface ValidationResult {
 }
 
 export default function ActivatePage() {
+    return (
+        <Suspense fallback={null}>
+            <ActivatePageContent />
+        </Suspense>
+    );
+}
+
+function ActivatePageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const token = searchParams.get("token");

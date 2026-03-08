@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -40,6 +40,14 @@ interface LineItem {
 }
 
 export default function CreateQuotePage() {
+    return (
+        <Suspense fallback={null}>
+            <CreateQuotePageContent />
+        </Suspense>
+    );
+}
+
+function CreateQuotePageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const queryClient = useQueryClient();

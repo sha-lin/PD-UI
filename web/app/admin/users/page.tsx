@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import AdminLayout from "@/components/admin/admin-layout";
@@ -19,6 +19,14 @@ import { UserPlus, Shield, AlertTriangle } from "lucide-react";
 import { User, UpdateUserPayload } from "@/types/user";
 
 export default function UsersPage() {
+    return (
+        <Suspense fallback={null}>
+            <UsersPageContent />
+        </Suspense>
+    );
+}
+
+function UsersPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const queryClient = useQueryClient();

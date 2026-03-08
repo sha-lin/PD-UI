@@ -215,7 +215,7 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.55, ease: "easeOut" }}
             >
               <Button asChild size="lg" className="bg-brand-blue hover:bg-brand-blue/90 text-white px-8 rounded-full shadow-lg hover:shadow-xl transition-all">
-                <Link href="/login">Get Quote</Link>
+                <a href="mailto:query@printduka.co.ke">Get Quote</a>
               </Button>
             </motion.div>
           </div>

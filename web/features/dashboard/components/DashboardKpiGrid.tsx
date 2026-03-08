@@ -4,10 +4,6 @@ import {
     ClipboardCheckIcon,
     FileTextIcon,
     HandCoinsIcon,
-    PackageIcon,
-    TrendingUpIcon,
-    UsersIcon,
-    UserRoundCheckIcon,
 } from "lucide-react";
 import type { DashboardAnalytics, DashboardOverview } from "@/types/dashboard";
 
@@ -18,35 +14,28 @@ interface DashboardKpiGridProps {
 
 export default function DashboardKpiGrid({ overview, analytics }: DashboardKpiGridProps): ReactElement {
     const totalRevenue = Number(analytics.dashboard_stats.total_revenue || 0);
+    const revenueTrend = Number(analytics.dashboard_stats.revenue_trend || 0);
 
     const cards = [
         {
-            label: "Total Clients",
-            value: overview.clients.total.toLocaleString("en-US"),
-            trend: `+${analytics.dashboard_stats.new_clients_trend} last 30d`,
-            icon: UsersIcon,
+            label: "Monthly Revenue",
+            value: `KES ${totalRevenue.toLocaleString("en-US", {
+                maximumFractionDigits: 0,
+            })}`,
+            trend: `+KES ${revenueTrend.toLocaleString("en-US", {
+                maximumFractionDigits: 0,
+            })} this month`,
+            icon: HandCoinsIcon,
             accent: "text-brand-blue",
-        },
-        {
-            label: "Active Leads",
-            value: overview.leads.total.toLocaleString("en-US"),
-            trend: `${overview.leads.new} new`,
-            icon: UserRoundCheckIcon,
-            accent: "text-brand-yellow",
-        },
-        {
-            label: "Quotes",
-            value: overview.quotes.total.toLocaleString("en-US"),
-            trend: `${overview.quotes.approved} approved`,
-            icon: FileTextIcon,
-            accent: "text-brand-purple",
+            bgAccent: "bg-brand-blue/10",
         },
         {
             label: "Jobs In Progress",
             value: overview.jobs.in_progress.toLocaleString("en-US"),
-            trend: `${overview.jobs.pending} pending`,
+            trend: `${overview.jobs.pending} pending approval`,
             icon: BriefcaseBusinessIcon,
             accent: "text-brand-orange",
+            bgAccent: "bg-brand-orange/10",
         },
         {
             label: "Pending Orders",
@@ -54,51 +43,37 @@ export default function DashboardKpiGrid({ overview, analytics }: DashboardKpiGr
             trend: `${overview.lpos.approved} approved`,
             icon: ClipboardCheckIcon,
             accent: "text-brand-red",
+            bgAccent: "bg-brand-red/10",
         },
         {
-            label: "Published Products",
-            value: analytics.dashboard_stats.total_products.toLocaleString("en-US"),
-            trend: "Catalog items",
-            icon: PackageIcon,
-            accent: "text-brand-green",
-        },
-        {
-            label: "Total Revenue",
-            value: `KES ${totalRevenue.toLocaleString("en-US", {
-                maximumFractionDigits: 0,
-            })}`,
-            trend: `KES ${Number(analytics.dashboard_stats.revenue_trend || 0).toLocaleString("en-US", {
-                maximumFractionDigits: 0,
-            })} last 30d`,
-            icon: HandCoinsIcon,
-            accent: "text-brand-black",
-        },
-        {
-            label: "Quote Approval Rate",
-            value:
-                overview.quotes.total > 0
-                    ? `${Math.round((overview.quotes.approved / overview.quotes.total) * 100)}%`
-                    : "0%",
-            trend: `${overview.quotes.lost} lost`,
-            icon: TrendingUpIcon,
-            accent: "text-brand-blue",
+            label: "Active Quotes",
+            value: overview.quotes.total.toLocaleString("en-US"),
+            trend: `${overview.quotes.approved} approved · ${overview.quotes.lost} lost`,
+            icon: FileTextIcon,
+            accent: "text-brand-yellow",
+            bgAccent: "bg-brand-yellow/10",
         },
     ] as const;
 
     return (
-        <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
             {cards.map((card): ReactElement => {
                 const Icon = card.icon;
                 return (
-                    <article key={card.label} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                            <div>
-                                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{card.label}</p>
-                                <p className="mt-2 text-2xl font-bold text-gray-900">{card.value}</p>
-                                <p className="mt-1 text-xs text-gray-600">{card.trend}</p>
+                    <article
+                        key={card.label}
+                        className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                    {card.label}
+                                </p>
+                                <p className="mt-3 text-3xl font-bold text-gray-900">{card.value}</p>
+                                <p className="mt-2 text-xs font-medium text-gray-600">{card.trend}</p>
                             </div>
-                            <div className="rounded-md bg-gray-100 p-2">
-                                <Icon className={`h-5 w-5 ${card.accent}`} />
+                            <div className={`rounded-lg ${card.bgAccent} p-3`}>
+                                <Icon className={`h-6 w-6 ${card.accent}`} />
                             </div>
                         </div>
                     </article>

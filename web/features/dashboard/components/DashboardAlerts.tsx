@@ -50,7 +50,7 @@ export default function DashboardAlerts({ alerts }: DashboardAlertsProps): React
     };
 
     return (
-        <section className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold text-gray-900">System Alerts</h2>
                 <a href="/staff/alerts" className="text-sm font-medium text-brand-blue hover:underline">
@@ -60,12 +60,12 @@ export default function DashboardAlerts({ alerts }: DashboardAlertsProps): React
 
             <div className="mt-4 space-y-3">
                 {alerts.length === 0 ? (
-                    <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                         <p className="text-sm text-gray-600">No active alerts right now.</p>
                     </div>
                 ) : (
                     alerts.map((alert: DashboardAlert): ReactElement => (
-                        <article key={alert.id} className={`rounded-md border p-3 ${getCardStyle(alert.severity)}`}>
+                        <article key={alert.id} className={`rounded-lg border p-3 ${getCardStyle(alert.severity)}`}>
                             <div className="flex items-start gap-2">
                                 <span className="mt-0.5">{getIcon(alert.severity)}</span>
                                 <div className="min-w-0 flex-1">

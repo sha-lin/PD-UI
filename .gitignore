@@ -8,5 +8,4 @@ client2/
 *.sqlite3
 db.sqlite3
 
-# Ignore Makefile (local development only)
-Makefile
+# Makefile is tracked in git

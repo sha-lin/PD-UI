@@ -6,20 +6,9 @@ import type {
     SendJobToVendorResponse,
     VendorInvoicesResponse,
 } from "@/types/production-my-jobs";
+import { getCsrfToken } from "@/lib/api/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-const getCsrfToken = (): string | null => {
-    const name = "csrftoken";
-    const cookies = document.cookie.split(";");
-    for (const cookie of cookies) {
-        const trimmed = cookie.trim();
-        if (trimmed.startsWith(`${name}=`)) {
-            return decodeURIComponent(trimmed.substring(name.length + 1));
-        }
-    }
-    return null;
-};
 
 const parseText = async (response: Response): Promise<string> => {
     const text = await response.text().catch((_error: unknown): string => "Unknown error");
@@ -56,8 +45,8 @@ const parseListResponse = async <T>(response: Response): Promise<{ count: number
     };
 };
 
-const buildWriteHeaders = (): HeadersInit => {
-    const csrfToken = getCsrfToken();
+const buildWriteHeaders = async (): Promise<HeadersInit> => {
+    const csrfToken = await getCsrfToken();
     return {
         "Content-Type": "application/json",
         ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
@@ -136,7 +125,7 @@ export async function fetchVendorInvoices(status: string): Promise<VendorInvoice
 export async function sendJobToVendor(jobId: number, payload: SendJobToVendorPayload): Promise<SendJobToVendorResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/jobs/${jobId}/send_to_vendor/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -150,7 +139,7 @@ export async function sendJobToVendor(jobId: number, payload: SendJobToVendorPay
 }
 
 export async function uploadJobAttachments(jobId: number, files: File[]): Promise<JobUploadAttachmentsResponse> {
-    const csrfToken = getCsrfToken();
+    const csrfToken = await getCsrfToken();
     const formData = new FormData();
     files.forEach((file: File): void => {
         formData.append("files", file);
@@ -176,7 +165,7 @@ export async function uploadJobAttachments(jobId: number, files: File[]): Promis
 export async function approveProof(proofId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/purchase-order-proofs/${proofId}/approve/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify({}),
     });
@@ -190,7 +179,7 @@ export async function approveProof(proofId: number): Promise<void> {
 export async function rejectProof(proofId: number, reason: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/purchase-order-proofs/${proofId}/reject/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify({ reason }),
     });
@@ -204,7 +193,7 @@ export async function rejectProof(proofId: number, reason: string): Promise<void
 export async function approveInvoice(invoiceId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/vendor-invoices/${invoiceId}/approve/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify({}),
     });
@@ -218,7 +207,7 @@ export async function approveInvoice(invoiceId: number): Promise<void> {
 export async function rejectInvoice(invoiceId: number, reason: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/vendor-invoices/${invoiceId}/reject/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify({ reason }),
     });

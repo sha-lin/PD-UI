@@ -9,6 +9,7 @@ import type {
     QuoteStatsResponse,
     CreateQuoteInput,
 } from "@/types/quotes";
+import { getCsrfToken } from "@/lib/api/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -34,20 +35,8 @@ const buildQueryString = (params: QuotesQueryParams): string => {
     return searchParams.toString();
 };
 
-const getCsrfToken = (): string | null => {
-    const name = "csrftoken";
-    const cookies = document.cookie.split(";");
-    for (const cookie of cookies) {
-        const trimmed = cookie.trim();
-        if (trimmed.startsWith(`${name}=`)) {
-            return decodeURIComponent(trimmed.substring(name.length + 1));
-        }
-    }
-    return null;
-};
-
-const buildWriteHeaders = (): HeadersInit => {
-    const csrfToken = getCsrfToken();
+const buildWriteHeaders = async (): Promise<HeadersInit> => {
+    const csrfToken = await getCsrfToken();
     return {
         "Content-Type": "application/json",
         ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
@@ -118,7 +107,7 @@ export async function fetchQuotes(params: QuotesQueryParams): Promise<QuotesResp
 export async function deleteQuote(quoteId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/quotes/${quoteId}/`, {
         method: "DELETE",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -197,7 +186,7 @@ export async function updateQuote(quoteId: number, data: CreateQuoteInput): Prom
 
     const response = await fetch(`${API_BASE_URL}/api/v1/quotes/${quoteId}/`, {
         method: "PATCH",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -231,7 +220,7 @@ export async function fetchQuoteHistory(quoteId: number): Promise<QuoteHistoryRe
 const postQuoteAction = async (quoteId: number, actionPath: string): Promise<QuoteActionResponse> => {
     const response = await fetch(`${API_BASE_URL}/api/v1/quotes/${quoteId}/${actionPath}/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -246,7 +235,7 @@ const postQuoteAction = async (quoteId: number, actionPath: string): Promise<Quo
 export async function sendQuoteToPT(quoteId: number, assignedTo?: number): Promise<QuoteActionResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/quotes/${quoteId}/send_to_pt_for_review/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: assignedTo ? JSON.stringify({ assigned_to: assignedTo }) : undefined,
     });
@@ -274,7 +263,7 @@ export async function cloneQuote(quoteId: number): Promise<QuoteActionResponse> 
 export async function costQuote(quoteId: number, payload: QuoteCostPayload): Promise<QuoteActionResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/quotes/${quoteId}/cost/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -438,7 +427,7 @@ export async function createMultiProductQuote(data: CreateQuoteInput): Promise<M
 
     const response = await fetch(`${API_BASE_URL}/api/v1/quotes/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -454,7 +443,7 @@ export async function createMultiProductQuote(data: CreateQuoteInput): Promise<M
 export async function markQuoteLost(quoteId: number, reason: string): Promise<QuoteActionResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/quotes/${quoteId}/mark-lost/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify({ reason }),
     });

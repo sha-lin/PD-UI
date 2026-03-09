@@ -7,8 +7,6 @@ import { fetchCurrentVendor, fetchVendorPerformanceScorecard } from "@/services/
 import PerformanceGaugeChart from "@/features/vendors/components/PerformanceGaugeChart";
 import {
     AlertCircle,
-    Award,
-    FileCheck,
     AlertTriangle,
 } from "lucide-react";
 
@@ -64,13 +62,6 @@ export default function VendorPerformancePage(): ReactElement {
     });
 
     const isLoading = isLoadingVendor || isLoadingPerformance;
-
-    const getGradeColor = (grade: string): string => {
-        if (grade === "A") return "text-green-600 bg-green-50 border-green-200";
-        if (grade === "B") return "text-blue-600 bg-blue-50 border-blue-200";
-        if (grade === "C") return "text-yellow-600 bg-yellow-50 border-yellow-200";
-        return "text-red-600 bg-red-50 border-red-200";
-    };
 
     return (
         <VendorLayout>
@@ -143,41 +134,6 @@ export default function VendorPerformancePage(): ReactElement {
 
                 {data && (
                     <>
-                        {/* Hero - Overall Score */}
-                        <div className="bg-gradient-to-br from-brand-blue to-blue-700 rounded-lg p-8 text-white shadow-lg">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <Award className="w-8 h-8" />
-                                        <h2 className="text-2xl font-bold">Vendor Performance Score (VPS)</h2>
-                                    </div>
-                                    <p className="text-blue-100 text-sm">
-                                        Overall rating across quality, delivery, and reliability metrics
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-6xl font-bold">{data.overall_score}</div>
-                                    <div className={`inline-block px-4 py-2 rounded-lg border-2 mt-2 ${getGradeColor(data.vps_grade)}`}>
-                                        <span className="text-2xl font-bold">Grade {data.vps_grade}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Status badges */}
-                            <div className="flex gap-3 mt-6 pt-6 border-t border-white/20">
-                                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
-                                    <FileCheck className="w-4 h-4" />
-                                    <span className="text-sm">{data.tax_status}</span>
-                                </div>
-                                {data.certifications.length > 0 && (
-                                    <div className="flex items-center gap-2 bg-brand-yellow text-brand-blue px-3 py-1.5 rounded-full">
-                                        <Award className="w-4 h-4" />
-                                        <span className="text-sm font-semibold">{data.certifications[0]}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
                         {/* Key Performance Metrics - Gauges */}
                         <section>
                             <h2 className="text-lg font-bold text-gray-900 mb-4">Performance Gauges</h2>

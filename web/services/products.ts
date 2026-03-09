@@ -5,6 +5,7 @@ import {
     ProductsResponse,
     UpdateProductPayload,
 } from "@/types/products";
+import { getCsrfToken } from "@/lib/api/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -40,28 +41,16 @@ const buildQueryString = (params: ProductsQueryParams): string => {
     return searchParams.toString();
 };
 
-const getCsrfToken = (): string | null => {
-    const name = "csrftoken";
-    const cookies = document.cookie.split(";");
-    for (const cookie of cookies) {
-        const trimmed = cookie.trim();
-        if (trimmed.startsWith(`${name}=`)) {
-            return decodeURIComponent(trimmed.substring(name.length + 1));
-        }
-    }
-    return null;
-};
-
-const buildWriteHeaders = (): HeadersInit => {
-    const csrfToken = getCsrfToken();
+const buildWriteHeaders = async (): Promise<HeadersInit> => {
+    const csrfToken = await getCsrfToken();
     return {
         "Content-Type": "application/json",
         ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
     };
 };
 
-const buildMultipartHeaders = (): HeadersInit => {
-    const csrfToken = getCsrfToken();
+const buildMultipartHeaders = async (): Promise<HeadersInit> => {
+    const csrfToken = await getCsrfToken();
     return {
         ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
     };
@@ -138,7 +127,7 @@ export async function fetchProduct(productId: number): Promise<Product> {
 export async function createProduct(payload: CreateProductPayload): Promise<Product> {
     const response = await fetch(`${API_BASE_URL}/api/v1/products/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -155,7 +144,7 @@ export async function createProduct(payload: CreateProductPayload): Promise<Prod
 export async function updateProduct(productId: number, payload: UpdateProductPayload): Promise<Product> {
     const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/`, {
         method: "PATCH",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -172,7 +161,7 @@ export async function updateProduct(productId: number, payload: UpdateProductPay
 export async function deleteProduct(productId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/`, {
         method: "DELETE",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -185,7 +174,7 @@ export async function deleteProduct(productId: number): Promise<void> {
 export async function publishProduct(productId: number): Promise<Product> {
     const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/publish/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -201,7 +190,7 @@ export async function publishProduct(productId: number): Promise<Product> {
 export async function archiveProduct(productId: number): Promise<Product> {
     const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/archive/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -217,7 +206,7 @@ export async function archiveProduct(productId: number): Promise<Product> {
 export async function saveDraft(productId: number): Promise<Product> {
     const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/save-draft/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -237,7 +226,7 @@ export async function uploadProductPrimaryImage(productId: number, image: File, 
 
     const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/upload_primary_image/`, {
         method: "POST",
-        headers: buildMultipartHeaders(),
+        headers: await buildMultipartHeaders(),
         credentials: "include",
         body: formData,
     });
@@ -257,7 +246,7 @@ export async function uploadProductGalleryImages(productId: number, images: File
 
     const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/upload_gallery_images/`, {
         method: "POST",
-        headers: buildMultipartHeaders(),
+        headers: await buildMultipartHeaders(),
         credentials: "include",
         body: formData,
     });

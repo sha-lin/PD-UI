@@ -6,6 +6,7 @@ import {
     JobsResponse,
     UpdateJobVendorStagePayload,
 } from "@/types/jobs";
+import { getCsrfToken } from "@/lib/api/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -25,20 +26,8 @@ const buildQueryString = (params: JobsQueryParams): string => {
     return searchParams.toString();
 };
 
-const getCsrfToken = (): string | null => {
-    const name = "csrftoken";
-    const cookies = document.cookie.split(";");
-    for (const cookie of cookies) {
-        const trimmed = cookie.trim();
-        if (trimmed.startsWith(`${name}=`)) {
-            return decodeURIComponent(trimmed.substring(name.length + 1));
-        }
-    }
-    return null;
-};
-
-const buildWriteHeaders = (): HeadersInit => {
-    const csrfToken = getCsrfToken();
+const buildWriteHeaders = async (): Promise<HeadersInit> => {
+    const csrfToken = await getCsrfToken();
     return {
         "Content-Type": "application/json",
         ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
@@ -101,7 +90,7 @@ export async function fetchJobVendorStages(jobId: number): Promise<JobVendorStag
 export async function createJobVendorStage(payload: CreateJobVendorStagePayload): Promise<JobVendorStage> {
     const response = await fetch(`${API_BASE_URL}/api/v1/job-vendor-stages/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -120,7 +109,7 @@ export async function updateJobVendorStage(
 ): Promise<JobVendorStage> {
     const response = await fetch(`${API_BASE_URL}/api/v1/job-vendor-stages/${stageId}/`, {
         method: "PATCH",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -149,11 +138,12 @@ export async function assignJobToProductionTeam(jobId: number, payload: AssignJo
         formData.append("remind_days_before", payload.remind_days_before.toString());
     }
 
+    const csrfToken = await getCsrfToken();
     const response = await fetch(`${API_BASE_URL}/api/job/${jobId}/assign/`, {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
-            ...(getCsrfToken() ? { "X-CSRFToken": getCsrfToken() as string } : {}),
+            ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
         },
         credentials: "include",
         body: formData.toString(),
@@ -170,7 +160,7 @@ export async function assignJobToProductionTeam(jobId: number, payload: AssignJo
 export async function sendJobReminder(jobId: number): Promise<{ success: boolean; message: string }> {
     const response = await fetch(`${API_BASE_URL}/api/job/${jobId}/remind/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
     });
 

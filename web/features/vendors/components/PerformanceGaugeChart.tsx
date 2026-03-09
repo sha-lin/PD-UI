@@ -70,9 +70,6 @@ export default function PerformanceGaugeChart({
                             {value}
                             <span className="text-lg">{unit}</span>
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                            Target: {target}{unit}
-                        </div>
                     </div>
                 </div>
 

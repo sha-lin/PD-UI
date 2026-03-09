@@ -14,7 +14,7 @@ import EmptyState from "@/components/admin/empty-state";
 import UserModal from "@/components/admin/user-modal";
 import AddUserModal from "@/components/admin/add-user-modal";
 import GroupModal from "@/components/admin/group-modal";
-import { fetchUsers, updateUser, fetchGroups, createGroup, updateGroup, deleteGroup } from "@/lib/api/users";
+import { fetchUsers, updateUser, deleteUser, fetchGroups, createGroup, updateGroup, deleteGroup } from "@/lib/api/users";
 import { UserPlus, Shield, AlertTriangle } from "lucide-react";
 import { User, UpdateUserPayload } from "@/types/user";
 
@@ -40,6 +40,7 @@ function UsersPageContent() {
     const [editingGroup, setEditingGroup] = useState<GroupWithCount | null>(null);
     const [showGroupModal, setShowGroupModal] = useState(false);
     const [deletingGroup, setDeletingGroup] = useState<GroupWithCount | null>(null);
+    const [deletingUser, setDeletingUser] = useState<User | null>(null);
 
     useEffect(() => {
         const tab = searchParams.get("tab");
@@ -98,6 +99,14 @@ function UsersPageContent() {
         },
     });
 
+    const deleteUserMutation = useMutation({
+        mutationFn: (userId: number) => deleteUser(userId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["users"] });
+            setDeletingUser(null);
+        },
+    });
+
     const deleteGroupMutation = useMutation({
         mutationFn: (groupId: number) => deleteGroup(groupId),
         onSuccess: () => {
@@ -115,6 +124,16 @@ function UsersPageContent() {
             await updateGroupMutation.mutateAsync({ groupId, name });
         } else {
             await createGroupMutation.mutateAsync(name);
+        }
+    };
+
+    const handleDeleteUser = (user: User) => {
+        setDeletingUser(user);
+    };
+
+    const confirmDeleteUser = async () => {
+        if (deletingUser) {
+            await deleteUserMutation.mutateAsync(deletingUser.id);
         }
     };
 
@@ -228,7 +247,7 @@ function UsersPageContent() {
                                 <TableSkeleton rows={10} columns={7} />
                             ) : usersData && usersData.results.length > 0 ? (
                                 <>
-                                    <UsersTable users={usersData.results} onViewUser={setEditingUser} />
+                                    <UsersTable users={usersData.results} onViewUser={setEditingUser} onDeleteUser={handleDeleteUser} />
                                     <Pagination
                                         currentPage={page}
                                         totalPages={calculateTotalPages(usersData.count)}
@@ -287,6 +306,36 @@ function UsersPageContent() {
                     }}
                     onSave={handleSaveGroup}
                 />
+
+                {deletingUser && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                                </div>
+                                <h2 className="text-lg font-semibold text-gray-900">Delete User</h2>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-6">
+                                Are you sure you want to delete <strong>{deletingUser.username}</strong>? This action cannot be undone.
+                            </p>
+                            <div className="flex items-center justify-end gap-3">
+                                <button
+                                    onClick={() => setDeletingUser(null)}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDeleteUser}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+                                >
+                                    Delete User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {deletingGroup && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

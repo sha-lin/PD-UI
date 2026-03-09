@@ -97,16 +97,15 @@ export default function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModa
             handleClose();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to invite user");
+        } finally {
             setIsSubmitting(false);
         }
     };
 
-    const toggleGroup = (groupId: number) => {
+    const selectGroup = (groupId: number) => {
         setFormData(prev => ({
             ...prev,
-            group_ids: prev.group_ids.includes(groupId)
-                ? prev.group_ids.filter(id => id !== groupId)
-                : [...prev.group_ids, groupId]
+            group_ids: prev.group_ids[0] === groupId ? [] : [groupId],
         }));
     };
 
@@ -212,13 +211,14 @@ export default function AddUserModal({ isOpen, onClose, onSuccess }: AddUserModa
                                         <div
                                             key={group.id}
                                             className="flex items-center cursor-pointer"
-                                            onClick={() => toggleGroup(group.id)}
+                                            onClick={() => selectGroup(group.id)}
                                         >
                                             <input
-                                                type="checkbox"
-                                                checked={formData.group_ids.includes(group.id)}
-                                                onChange={() => toggleGroup(group.id)}
-                                                className="w-4 h-4 text-brand-blue border-gray-300 rounded focus:ring-brand-blue"
+                                                type="radio"
+                                                name="group"
+                                                checked={formData.group_ids[0] === group.id}
+                                                onChange={() => selectGroup(group.id)}
+                                                className="w-4 h-4 text-brand-blue border-gray-300 focus:ring-brand-blue"
                                             />
                                             <label className="ml-2 text-sm text-gray-700 cursor-pointer">
                                                 {group.name}

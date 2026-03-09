@@ -98,9 +98,9 @@ export default function ProductionDashboardWorkspace(): ReactElement {
                     <DashboardKpiGrid overview={overviewQuery.data} analytics={analyticsQuery.data} />
                 ) : null}
 
-                <ProductionDashboardQuickActions />
-
                 <DashboardCharts revenueSeries={revenueSeries} />
+
+                <ProductionDashboardQuickActions />
 
                 <DashboardAlerts alerts={topAlerts} />
 

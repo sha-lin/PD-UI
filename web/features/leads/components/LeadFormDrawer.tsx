@@ -134,12 +134,11 @@ export default function LeadFormDrawer({
             preferred_contact: formState.preferred_contact,
             preferred_client_type: formState.preferred_client_type,
             follow_up_date: formState.follow_up_date || null,
-            status: formState.status,
             notes: formState.notes.trim(),
         };
 
         if (mode === "edit" && lead !== null) {
-            onSubmit(payload, lead.id);
+            onSubmit({ ...payload, status: formState.status }, lead.id);
             return;
         }
 
@@ -270,17 +269,21 @@ export default function LeadFormDrawer({
                             <div>
                                 <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</label>
                                 <p className="text-xs text-gray-500 mt-0.5">Current lead status</p>
-                                <select
-                                    value={formState.status}
-                                    onChange={handleInputChange("status")}
-                                    className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                                >
-                                    <option value="New">New</option>
-                                    <option value="Contacted">Contacted</option>
-                                    <option value="Qualified">Qualified</option>
-                                    <option value="Converted">Converted</option>
-                                    <option value="Lost">Lost</option>
-                                </select>
+                                {mode === "create" ? (
+                                    <p className="mt-2 text-sm text-gray-700 font-medium">New</p>
+                                ) : (
+                                    <select
+                                        value={formState.status}
+                                        onChange={handleInputChange("status")}
+                                        className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                    >
+                                        <option value="New">New</option>
+                                        <option value="Contacted">Contacted</option>
+                                        <option value="Qualified">Qualified</option>
+                                        <option value="Converted">Converted</option>
+                                        <option value="Lost">Lost</option>
+                                    </select>
+                                )}
                             </div>
 
                             <div>

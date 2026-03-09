@@ -232,6 +232,40 @@ export async function updateGroup(groupId: number, name: string): Promise<Group>
     }
 }
 
+export async function deleteUser(userId: number): Promise<void> {
+    const url = `${API_BASE_URL}/api/v1/users/${userId}/`;
+    const csrfToken = getCsrfToken();
+
+    try {
+        const response = await fetch(url, {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                ...(csrfToken && { "X-CSRFToken": csrfToken }),
+            },
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new UsersApiError("Authentication required", 401);
+            }
+            if (response.status === 403) {
+                throw new UsersApiError("Access denied", 403);
+            }
+            if (response.status === 404) {
+                throw new UsersApiError("User not found", 404);
+            }
+            throw new UsersApiError("Failed to delete user");
+        }
+    } catch (error) {
+        if (error instanceof UsersApiError) {
+            throw error;
+        }
+        throw new UsersApiError("Unable to delete user. Please try again.");
+    }
+}
+
 export async function deleteGroup(groupId: number): Promise<void> {
     const url = `${API_BASE_URL}/api/v1/groups/${groupId}/`;
     const csrfToken = getCsrfToken();

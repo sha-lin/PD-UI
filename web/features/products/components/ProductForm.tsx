@@ -1,4 +1,5 @@
-import type { ChangeEvent, FormEvent, ReactElement } from "react";
+import { useState, type ChangeEvent, type FormEvent, type ReactElement } from "react";
+import { ImageIcon, X, UploadCloud } from "lucide-react";
 import type { ProductFormValues, ProductCustomizationLevel } from "@/types/products";
 
 interface ProductFormProps {
@@ -30,6 +31,27 @@ export default function ProductForm({
     submitLabel,
     isSubmitting,
 }: ProductFormProps): ReactElement {
+    const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+    const [primaryFileName, setPrimaryFileName] = useState<string | null>(null);
+
+    const addGalleryFiles = (incoming: File[]): void => {
+        setGalleryFiles(prev => {
+            const existing = new Set(prev.map(f => f.name + f.size));
+            const deduped = incoming.filter(f => !existing.has(f.name + f.size));
+            const next = [...prev, ...deduped].slice(0, 10);
+            onGalleryImagesChange(next);
+            return next;
+        });
+    };
+
+    const removeGalleryFile = (index: number): void => {
+        setGalleryFiles(prev => {
+            const next = prev.filter((_, i) => i !== index);
+            onGalleryImagesChange(next);
+            return next;
+        });
+    };
+
     const updateField = <K extends keyof ProductFormValues>(field: K, value: ProductFormValues[K]): void => {
         onValuesChange({
             ...values,
@@ -291,46 +313,80 @@ export default function ProductForm({
 
             <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                 <h2 className="text-lg font-semibold text-gray-900">Product Images</h2>
-                <p className="text-xs text-gray-500 mt-2">Add one primary image and any other supporting images.</p>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p className="text-xs text-gray-500 mt-2">Add one primary image and up to 10 additional gallery images.</p>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Primary Image</label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(event): void => {
-                                const file = event.target.files?.[0] ?? null;
-                                onPrimaryImageChange(file);
-                            }}
-                            className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                        />
-                        <p className="text-xs text-gray-500 mt-2">
-                            {selectedPrimaryImageName
-                                ? `Selected: ${selectedPrimaryImageName}`
-                                : hasExistingPrimaryImage
-                                    ? "Primary image already exists."
-                                    : "No primary image selected."}
-                        </p>
+                        <label className="mt-2 flex flex-col items-center justify-center gap-2 w-full rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 cursor-pointer hover:border-brand-blue hover:bg-brand-blue/5 transition-colors">
+                            <UploadCloud className="w-6 h-6 text-gray-400" />
+                            <span className="text-sm text-gray-600">
+                                {primaryFileName ?? (hasExistingPrimaryImage ? "Replace existing image" : "Click to select image")}
+                            </span>
+                            <span className="text-xs text-gray-400">PNG, JPG, WEBP</span>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="sr-only"
+                                onChange={(event): void => {
+                                    const file = event.target.files?.[0] ?? null;
+                                    onPrimaryImageChange(file);
+                                    setPrimaryFileName(file?.name ?? null);
+                                }}
+                            />
+                        </label>
+                        {hasExistingPrimaryImage && !primaryFileName && (
+                            <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                                <ImageIcon className="w-3 h-3" /> Primary image already uploaded
+                            </p>
+                        )}
                     </div>
+
                     <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Other Images</label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={(event): void => {
-                                const files = Array.from(event.target.files ?? []).slice(0, 10);
-                                onGalleryImagesChange(files);
-                            }}
-                            className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                        />
-                        <p className="text-xs text-gray-500 mt-2">
-                            {selectedGalleryImageCount > 0
-                                ? `Selected: ${selectedGalleryImageCount}`
-                                : typeof existingImageCount === "number"
-                                    ? `Existing images: ${existingImageCount}`
-                                    : "No other images selected."}
-                        </p>
+                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                            Additional Images
+                            <span className="ml-2 text-gray-400 font-normal normal-case">up to 10</span>
+                        </label>
+                        <label className="mt-2 flex flex-col items-center justify-center gap-2 w-full rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 cursor-pointer hover:border-brand-blue hover:bg-brand-blue/5 transition-colors">
+                            <UploadCloud className="w-6 h-6 text-gray-400" />
+                            <span className="text-sm text-gray-600">Click to add more images</span>
+                            <span className="text-xs text-gray-400">Each pick adds to the list · Max 10 total</span>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="sr-only"
+                                onChange={(event): void => {
+                                    const files = Array.from(event.target.files ?? []);
+                                    addGalleryFiles(files);
+                                    event.target.value = "";
+                                }}
+                            />
+                        </label>
+
+                        {galleryFiles.length > 0 ? (
+                            <div className="mt-3 space-y-1">
+                                <p className="text-xs font-medium text-gray-600">{galleryFiles.length}/10 image{galleryFiles.length > 1 ? "s" : ""} queued</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {galleryFiles.map((file, i) => (
+                                        <span key={i} className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue text-xs font-medium max-w-[200px]">
+                                            <ImageIcon className="w-3 h-3 flex-shrink-0" />
+                                            <span className="truncate">{file.name}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeGalleryFile(i)}
+                                                className="flex-shrink-0 ml-0.5 rounded-full hover:bg-brand-blue/20 p-0.5"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : typeof existingImageCount === "number" && existingImageCount > 0 ? (
+                            <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                                <ImageIcon className="w-3 h-3" /> {existingImageCount} existing image{existingImageCount > 1 ? "s" : ""} uploaded
+                            </p>
+                        ) : null}
                     </div>
                 </div>
             </div>

@@ -14,7 +14,7 @@ import EmptyState from "@/components/admin/empty-state";
 import UserModal from "@/components/admin/user-modal";
 import AddUserModal from "@/components/admin/add-user-modal";
 import GroupModal from "@/components/admin/group-modal";
-import { fetchUsers, updateUser, fetchGroups, createGroup, updateGroup, deleteGroup } from "@/lib/api/users";
+import { fetchUsers, updateUser, fetchGroups, createGroup, updateGroup, deleteGroup, deleteUser } from "@/lib/api/users";
 import { UserPlus, Shield, AlertTriangle } from "lucide-react";
 import { User, UpdateUserPayload } from "@/types/user";
 
@@ -40,6 +40,7 @@ function UsersPageContent() {
     const [editingGroup, setEditingGroup] = useState<GroupWithCount | null>(null);
     const [showGroupModal, setShowGroupModal] = useState(false);
     const [deletingGroup, setDeletingGroup] = useState<GroupWithCount | null>(null);
+    const [deletingUser, setDeletingUser] = useState<User | null>(null);
 
     useEffect(() => {
         const tab = searchParams.get("tab");
@@ -98,6 +99,13 @@ function UsersPageContent() {
         },
     });
 
+    const deleteUserMutation = useMutation({
+        mutationFn: (userId: number) => deleteUser(userId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["users"] });
+        },
+    });
+
     const deleteGroupMutation = useMutation({
         mutationFn: (groupId: number) => deleteGroup(groupId),
         onSuccess: () => {
@@ -108,6 +116,18 @@ function UsersPageContent() {
 
     const handleSaveUser = async (userId: number, updates: UpdateUserPayload) => {
         await updateUserMutation.mutateAsync({ userId, updates });
+    };
+
+    const handleDeleteUser = (user: User) => {
+        setDeletingUser(user);
+    };
+
+    const confirmDeleteUser = async () => {
+        if (deletingUser) {
+            await deleteUserMutation.mutateAsync(deletingUser.id);
+            setDeletingUser(null);
+            setEditingUser(null);
+        }
     };
 
     const handleSaveGroup = async (groupId: number | null, name: string) => {
@@ -168,10 +188,10 @@ function UsersPageContent() {
     return (
         <AdminLayout>
             <header className="border-b border-gray-200 bg-white">
-                <div className="flex items-center justify-between px-8 py-6">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-                        <p className="mt-2 text-sm text-gray-600">
+                <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-8 sm:py-6">
+                    <div className="min-w-0">
+                        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">User Management</h1>
+                        <p className="mt-1 text-sm text-gray-600 hidden sm:block">
                             {activeTab === "users"
                                 ? "Manage system users, search by name or email, and filter by status and role."
                                 : "Manage permission groups and control user access levels."
@@ -181,10 +201,10 @@ function UsersPageContent() {
                     {activeTab === "users" ? (
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-blue rounded-lg hover:bg-brand-blue/90 transition-colors"
+                            className="flex-shrink-0 flex items-center gap-2 px-3 py-2 sm:px-4 text-sm font-medium text-white bg-brand-blue rounded-lg hover:bg-brand-blue/90 transition-colors"
                         >
                             <UserPlus className="w-4 h-4" />
-                            Add User
+                            <span className="hidden sm:inline">Add User</span>
                         </button>
                     ) : (
                         <button
@@ -192,14 +212,14 @@ function UsersPageContent() {
                                 setEditingGroup(null);
                                 setShowGroupModal(true);
                             }}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-blue rounded-lg hover:bg-brand-blue/90 transition-colors"
+                            className="flex-shrink-0 flex items-center gap-2 px-3 py-2 sm:px-4 text-sm font-medium text-white bg-brand-blue rounded-lg hover:bg-brand-blue/90 transition-colors"
                         >
                             <Shield className="w-4 h-4" />
-                            Create Group
+                            <span className="hidden sm:inline">Create Group</span>
                         </button>
                     )}
                 </div>
-                <div className="px-8">
+                <div className="px-4 sm:px-8">
                     <Tabs
                         tabs={[
                             { id: "users", label: "Users", count: usersData?.count },
@@ -211,7 +231,7 @@ function UsersPageContent() {
                 </div>
             </header>
 
-            <main className="p-8 bg-white">
+            <main className="p-4 sm:p-8 bg-white">
                 {activeTab === "users" ? (
                     <>
                         <UsersTableFilters
@@ -228,7 +248,7 @@ function UsersPageContent() {
                                 <TableSkeleton rows={10} columns={7} />
                             ) : usersData && usersData.results.length > 0 ? (
                                 <>
-                                    <UsersTable users={usersData.results} onViewUser={setEditingUser} />
+                                    <UsersTable users={usersData.results} onViewUser={setEditingUser} onDeleteUser={handleDeleteUser} />
                                     <Pagination
                                         currentPage={page}
                                         totalPages={calculateTotalPages(usersData.count)}
@@ -287,6 +307,37 @@ function UsersPageContent() {
                     }}
                     onSave={handleSaveGroup}
                 />
+
+                {deletingUser && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                                </div>
+                                <h2 className="text-lg font-semibold text-gray-900">Delete User</h2>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-6">
+                                Are you sure you want to delete <strong>{deletingUser.username}</strong>? This action cannot be undone.
+                            </p>
+                            <div className="flex items-center justify-end gap-3">
+                                <button
+                                    onClick={() => setDeletingUser(null)}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDeleteUser}
+                                    disabled={deleteUserMutation.isPending}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                                >
+                                    {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {deletingGroup && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

@@ -1,4 +1,5 @@
 import type { Lead, LeadConvertPayload, LeadConvertResponse, LeadQualifyResponse, LeadsQueryParams, LeadsResponse } from "@/types/leads";
+import { getCsrfToken } from "@/lib/api/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -31,23 +32,11 @@ const buildQueryString = (params: LeadsQueryParams): string => {
     return searchParams.toString();
 };
 
-const getCsrfToken = (): string | null => {
-    const name = "csrftoken";
-    const cookies = document.cookie.split(";");
-    for (const cookie of cookies) {
-        const trimmed = cookie.trim();
-        if (trimmed.startsWith(`${name}=`)) {
-            return decodeURIComponent(trimmed.substring(name.length + 1));
-        }
-    }
-    return null;
-};
-
-const buildWriteHeaders = (): HeadersInit => {
-    const csrfToken = getCsrfToken();
+const buildWriteHeaders = async (): Promise<HeadersInit> => {
+    const csrfToken = await getCsrfToken();
     return {
         "Content-Type": "application/json",
-        ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+        "X-CSRFToken": csrfToken,
     };
 };
 
@@ -85,7 +74,7 @@ export async function fetchLeads(params: LeadsQueryParams): Promise<LeadsRespons
 export async function deleteLead(leadId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/v1/leads/${leadId}/`, {
         method: "DELETE",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -118,7 +107,7 @@ export async function fetchLead(leadId: number): Promise<Lead> {
 export async function qualifyLead(leadId: number): Promise<LeadQualifyResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/leads/${leadId}/qualify/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
     });
 
@@ -136,7 +125,7 @@ export async function qualifyLead(leadId: number): Promise<LeadQualifyResponse> 
 export async function convertLead(leadId: number, payload: LeadConvertPayload): Promise<LeadConvertResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/leads/${leadId}/convert/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -155,7 +144,7 @@ export async function convertLead(leadId: number, payload: LeadConvertPayload): 
 export async function createLead(payload: Partial<Lead>): Promise<Lead> {
     const response = await fetch(`${API_BASE_URL}/api/v1/leads/`, {
         method: "POST",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });
@@ -174,7 +163,7 @@ export async function createLead(payload: Partial<Lead>): Promise<Lead> {
 export async function updateLead(leadId: number, payload: Partial<Lead>): Promise<Lead> {
     const response = await fetch(`${API_BASE_URL}/api/v1/leads/${leadId}/`, {
         method: "PATCH",
-        headers: buildWriteHeaders(),
+        headers: await buildWriteHeaders(),
         credentials: "include",
         body: JSON.stringify(payload),
     });

@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo, type ReactElement } from "react";
 import { toast } from "sonner";
+import { AlertTriangle } from "lucide-react";
 import AccountManagerLayout from "@/components/account-manager/account-manager-layout";
 import LeadsStatsCards from "@/features/leads/components/LeadsStatsCards";
 import LeadsFilters from "@/features/leads/components/LeadsFilters";
@@ -41,6 +42,7 @@ export default function LeadIntakePage(): ReactElement {
 
     const [pendingLeadId, setPendingLeadId] = useState<number | null>(null);
     const [pendingAction, setPendingAction] = useState<"qualify" | "delete" | "convert" | null>(null);
+    const [deletingLead, setDeletingLead] = useState<Lead | null>(null);
 
     const queryParams: LeadsQueryParams = useMemo(() => {
         const params: LeadsQueryParams = {
@@ -107,7 +109,19 @@ export default function LeadIntakePage(): ReactElement {
 
     const qualifyMutation = useMutation({
         mutationFn: qualifyLead,
-        onSuccess: () => {
+        onSuccess: (response) => {
+            queryClient.setQueriesData<{ count: number; results: Lead[] }>(
+                { queryKey: ["leads"] },
+                (old) => {
+                    if (!old) return old;
+                    return {
+                        ...old,
+                        results: old.results.map((l) =>
+                            l.id === response.lead.id ? response.lead : l
+                        ),
+                    };
+                }
+            );
             queryClient.invalidateQueries({ queryKey: ["leads"] });
             toast.success("Lead qualified successfully");
             setDetailDrawerState({ isOpen: false, lead: null });
@@ -115,11 +129,7 @@ export default function LeadIntakePage(): ReactElement {
             setPendingAction(null);
         },
         onError: (error: Error) => {
-            if (error.name === "BusinessValidationError") {
-                toast.error(error.message);
-            } else {
-                toast.error("Failed to qualify lead. Please try again.");
-            }
+            toast.error(error.message || "Failed to qualify lead. Please try again.");
             setPendingLeadId(null);
             setPendingAction(null);
         },
@@ -132,6 +142,7 @@ export default function LeadIntakePage(): ReactElement {
             toast.success("Lead deleted successfully");
             setPendingLeadId(null);
             setPendingAction(null);
+            setDeletingLead(null);
         },
         onError: () => {
             toast.error("Failed to delete lead. Please try again.");
@@ -177,13 +188,14 @@ export default function LeadIntakePage(): ReactElement {
     };
 
     const handleDelete = (lead: Lead): void => {
-        if (!confirm(`Are you sure you want to delete lead ${lead.name}?`)) {
-            return;
-        }
+        setDeletingLead(lead);
+    };
 
-        setPendingLeadId(lead.id);
+    const confirmDelete = (): void => {
+        if (!deletingLead) return;
+        setPendingLeadId(deletingLead.id);
         setPendingAction("delete");
-        deleteMutation.mutate(lead.id);
+        deleteMutation.mutate(deletingLead.id);
     };
 
     const handleConvert = (lead: Lead, payload: LeadConvertPayload): void => {
@@ -313,6 +325,38 @@ export default function LeadIntakePage(): ReactElement {
                 onQualify={handleQualify}
                 onConvert={handleConvert}
             />
+
+            {deletingLead && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
+                        <div className="flex items-center gap-3 mb-4">
+                            <AlertTriangle className="h-5 w-5 text-brand-red shrink-0" />
+                            <h2 className="text-base font-bold text-gray-900">Delete Lead</h2>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-6">
+                            Are you sure you want to delete <span className="font-semibold text-gray-900">{deletingLead.name}</span>? This action cannot be undone.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={(): void => setDeletingLead(null)}
+                                disabled={deleteMutation.isPending}
+                                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmDelete}
+                                disabled={deleteMutation.isPending}
+                                className="rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
+                            >
+                                {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AccountManagerLayout>
     );
 }

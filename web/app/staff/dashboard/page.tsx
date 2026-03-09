@@ -96,9 +96,9 @@ export default function DashboardPage(): ReactElement {
                     <DashboardKpiGrid overview={overviewQuery.data} analytics={analyticsQuery.data} />
                 ) : null}
 
-                <DashboardQuickActions />
-
                 <DashboardCharts revenueSeries={revenueSeries} />
+
+                <DashboardQuickActions />
 
                 <DashboardAlerts alerts={topAlerts} />
 

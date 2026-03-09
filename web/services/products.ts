@@ -235,7 +235,7 @@ export async function uploadProductPrimaryImage(productId: number, image: File, 
     formData.append("image", image);
     formData.append("alt_text", altText);
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/upload-primary-image/`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/upload_primary_image/`, {
         method: "POST",
         headers: buildMultipartHeaders(),
         credentials: "include",
@@ -255,7 +255,7 @@ export async function uploadProductGalleryImages(productId: number, images: File
     }
     formData.append("alt_text", altText);
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/upload-gallery-images/`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/upload_gallery_images/`, {
         method: "POST",
         headers: buildMultipartHeaders(),
         credentials: "include",

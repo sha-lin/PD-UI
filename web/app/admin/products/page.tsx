@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon } from "lucide-react";
+import { AlertCircleIcon, AlertTriangle } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/admin-layout";
@@ -42,6 +42,7 @@ export default function ProductsPage(): ReactElement {
     const [visibility, setVisibility] = useState<"all" | ProductVisibility>("all");
     const [page, setPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(20);
+    const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
     useEffect((): (() => void) => {
         const timer = setTimeout((): void => {
@@ -135,11 +136,14 @@ export default function ProductsPage(): ReactElement {
     };
 
     const handleDelete = (product: Product): void => {
-        const shouldDelete = window.confirm(`Delete ${product.name}? This cannot be undone.`);
-        if (!shouldDelete) {
-            return;
+        setDeletingProduct(product);
+    };
+
+    const confirmDelete = (): void => {
+        if (deletingProduct) {
+            deleteMutation.mutate(deletingProduct.id);
+            setDeletingProduct(null);
         }
-        deleteMutation.mutate(product.id);
     };
 
     const products = data?.results ?? [];
@@ -148,33 +152,26 @@ export default function ProductsPage(): ReactElement {
     return (
         <AdminLayout>
             <header className="fixed top-0 z-30 w-full border-b border-gray-200 bg-white">
-                <div className="px-8 py-4">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                        <a href="/staff" className="hover:text-brand-blue">
-                            Staff Portal
-                        </a>
+                <div className="px-4 py-3 sm:px-8 sm:py-4">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                        <a href="/staff" className="hover:text-brand-blue">Staff Portal</a>
                         <span>/</span>
                         <span className="text-gray-900">Products</span>
                     </div>
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-                            <p className="mt-2 text-sm text-gray-600">
-                                Manage product catalog, pricing, and inventory settings.
-                            </p>
-                        </div>
+                    <div className="flex items-center justify-between gap-4">
+                        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">Products</h1>
                         <button
                             type="button"
                             onClick={(): void => router.push(`${productsBasePath}/new`)}
-                            className="inline-flex items-center justify-center rounded-md bg-brand-blue px-4 py-2 text-sm font-semibold text-white"
+                            className="flex-shrink-0 inline-flex items-center justify-center rounded-md bg-brand-blue px-3 py-2 sm:px-4 text-sm font-semibold text-white"
                         >
                             New Product
                         </button>
                     </div>
                 </div>
             </header>
-            <main className="bg-gray-50 min-h-screen pt-24">
-                <div className="px-8 py-6 space-y-6">
+            <main className="bg-gray-50 min-h-screen pt-20 sm:pt-24">
+                <div className="px-4 py-4 sm:px-8 sm:py-6 space-y-6">
                     {isLoading && <ProductsSkeleton />}
 
                     {!isLoading && (error || !data) && (
@@ -256,6 +253,39 @@ export default function ProductsPage(): ReactElement {
                     )}
                 </div>
             </main>
+
+            {deletingProduct && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                <AlertTriangle className="w-5 h-5 text-red-600" />
+                            </div>
+                            <h2 className="text-lg font-semibold text-gray-900">Delete Product</h2>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-6">
+                            Are you sure you want to delete <strong>{deletingProduct.name}</strong>? This action cannot be undone.
+                        </p>
+                        <div className="flex items-center justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setDeletingProduct(null)}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmDelete}
+                                disabled={deleteMutation.isPending}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                            >
+                                {deleteMutation.isPending ? "Deleting..." : "Delete Product"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AdminLayout>
     );
 }

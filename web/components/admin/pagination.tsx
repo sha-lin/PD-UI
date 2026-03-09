@@ -18,7 +18,7 @@ export default function Pagination({
     onPrevious,
 }: PaginationProps) {
     return (
-        <div className="bg-gray-50/50 px-8 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div className="bg-gray-50/50 px-4 py-3 sm:px-8 sm:py-4 border-t border-gray-200 flex items-center justify-between">
             <div className="text-sm text-gray-600 font-medium">
                 Page {currentPage} of {totalPages}
             </div>

@@ -15,7 +15,7 @@ import {
     fetchVendorProofs,
     fetchVendorIssues,
 } from "@/services/vendors";
-import { FileText, Image as ImageIcon, AlertCircle, ArrowRight, Building2 } from "lucide-react";
+import { FileText, Image as ImageIcon, AlertCircle, Building2 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import Link from "next/link";
 import { checkSession } from "@/lib/api/auth";
@@ -188,23 +188,20 @@ export default function VendorDashboardPage(): ReactElement {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                             <h2 className="text-xl font-bold text-gray-900 mb-4">Performance Metrics</h2>
-                            <ResponsiveContainer width="100%" height={280}>
+                            <ResponsiveContainer width="100%" height={360}>
                                 <BarChart
                                     data={[
                                         { name: "On-Time Delivery", value: performance.on_time_rate, color: "#009444" },
                                         { name: "Quality Score", value: performance.quality_score, color: "#093756" },
-                                        { name: "Overall Score", value: performance.overall_score, color: "#662D91" },
                                     ]}
-                                    margin={{ top: 20, right: 30, left: 0, bottom: 60 }}
+                                    barCategoryGap="20%"
+                                    margin={{ top: 20, right: 20, left: 0, bottom: 10 }}
                                 >
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                                     <XAxis
                                         dataKey="name"
-                                        tick={{ fill: "#6b7280", fontSize: 12 }}
+                                        tick={{ fill: "#6b7280", fontSize: 13 }}
                                         axisLine={{ stroke: "#d1d5db" }}
-                                        angle={-45}
-                                        textAnchor="end"
-                                        height={80}
                                     />
                                     <YAxis
                                         tick={{ fill: "#6b7280", fontSize: 12 }}
@@ -222,24 +219,16 @@ export default function VendorDashboardPage(): ReactElement {
                                         }}
                                         cursor={{ fill: "#f3f4f6" }}
                                     />
-                                    <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                                    <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={180}>
                                         {[
                                             { name: "On-Time Delivery", value: performance.on_time_rate, color: "#009444" },
                                             { name: "Quality Score", value: performance.quality_score, color: "#093756" },
-                                            { name: "Overall Score", value: performance.overall_score, color: "#662D91" },
                                         ].map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
-                            <Link
-                                href="/vendors/performance"
-                                className="mt-4 inline-flex items-center gap-2 text-sm text-brand-blue hover:opacity-80"
-                            >
-                                View Full Report
-                                <ArrowRight className="w-4 h-4" />
-                            </Link>
                         </div>
 
                         <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">

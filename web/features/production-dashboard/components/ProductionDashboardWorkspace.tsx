@@ -4,20 +4,17 @@ import type { ReactElement } from "react";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircleIcon, Loader2Icon } from "lucide-react";
-import DashboardAlerts from "@/features/dashboard/components/DashboardAlerts";
 import DashboardCharts from "@/features/dashboard/components/DashboardCharts";
 import DashboardKpiGrid from "@/features/dashboard/components/DashboardKpiGrid";
 import DashboardRecentActivity from "@/features/dashboard/components/DashboardRecentActivity";
 import ProductionDashboardQuickActions from "@/features/production-dashboard/components/ProductionDashboardQuickActions";
 import {
     fetchDashboardActivity,
-    fetchDashboardAlerts,
     fetchDashboardAnalytics,
     fetchDashboardOverview,
 } from "@/services/dashboard";
 import type {
     DashboardActivityResponse,
-    DashboardAlertsResponse,
     DashboardAnalytics,
     DashboardOverview,
     RevenueChartPoint,
@@ -34,18 +31,13 @@ export default function ProductionDashboardWorkspace(): ReactElement {
         queryFn: (): Promise<DashboardAnalytics> => fetchDashboardAnalytics(),
     });
 
-    const alertsQuery = useQuery({
-        queryKey: ["production-dashboard", "alerts"],
-        queryFn: (): Promise<DashboardAlertsResponse> => fetchDashboardAlerts(),
-    });
-
     const activityQuery = useQuery({
         queryKey: ["production-dashboard", "activity"],
         queryFn: (): Promise<DashboardActivityResponse> => fetchDashboardActivity(),
     });
 
-    const isLoading = overviewQuery.isLoading || analyticsQuery.isLoading || alertsQuery.isLoading || activityQuery.isLoading;
-    const hasError = overviewQuery.isError || analyticsQuery.isError || alertsQuery.isError || activityQuery.isError;
+    const isLoading = overviewQuery.isLoading || analyticsQuery.isLoading || activityQuery.isLoading;
+    const hasError = overviewQuery.isError || analyticsQuery.isError || activityQuery.isError;
 
     const revenueSeries = useMemo((): RevenueChartPoint[] => {
         const trend = analyticsQuery.data?.sales_performance_trend ?? [];
@@ -56,7 +48,6 @@ export default function ProductionDashboardWorkspace(): ReactElement {
         }));
     }, [analyticsQuery.data?.sales_performance_trend]);
 
-    const topAlerts = alertsQuery.data?.results ?? [];
     const recentActivities = activityQuery.data?.results ?? [];
 
     return (
@@ -101,8 +92,6 @@ export default function ProductionDashboardWorkspace(): ReactElement {
                 <DashboardCharts revenueSeries={revenueSeries} />
 
                 <ProductionDashboardQuickActions />
-
-                <DashboardAlerts alerts={topAlerts} />
 
                 <DashboardRecentActivity activities={recentActivities} />
             </main>

@@ -60,43 +60,22 @@ function QuantityTierSelector({
     onChange: (optionId: number) => void;
 }): ReactElement {
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <select
+            value={value ?? ""}
+            onChange={(e) => onChange(Number(e.target.value))}
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all"
+        >
+            <option value="" disabled>Select quantity…</option>
             {group.options.map((opt: SpecOption) => (
-                <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => onChange(opt.id)}
-                    className={cn(
-                        "relative flex flex-col rounded-xl border-2 p-3 text-left transition-all duration-150",
-                        value === opt.id
-                            ? "border-brand-blue bg-brand-blue/5 shadow-sm"
-                            : "border-gray-200 bg-white hover:border-brand-blue/50",
-                    )}
-                >
-                    {opt.is_default && (
-                        <span className="absolute -top-2 left-3 rounded-full bg-brand-yellow px-1.5 py-0.5 text-[9px] font-bold text-brand-black">
-                            Popular
-                        </span>
-                    )}
-                    {value === opt.id && (
-                        <span className="absolute top-2 right-2 h-4 w-4 rounded-full bg-brand-blue flex items-center justify-center">
-                            <CheckIcon className="h-2.5 w-2.5 text-white" />
-                        </span>
-                    )}
-                    <span className="text-xs font-semibold text-gray-500 mb-1">
-                        {opt.quantity_value != null ? `${opt.quantity_value} pcs` : opt.name}
-                    </span>
-                    <span className="text-sm font-extrabold text-brand-blue">
-                        {opt.selling_price ? formatKES(opt.selling_price) : opt.name}
-                    </span>
-                    {opt.selling_price && opt.quantity_value != null && (
-                        <span className="text-[10px] text-gray-400 mt-0.5">
-                            {formatKES(parseFloat(opt.selling_price) / opt.quantity_value)}/pc
-                        </span>
-                    )}
-                </button>
+                <option key={opt.id} value={opt.id}>
+                    {opt.quantity_value != null ? `${opt.quantity_value} pcs` : opt.name}
+                    {opt.selling_price ? ` — ${formatKES(opt.selling_price)}` : ""}
+                    {opt.selling_price && opt.quantity_value != null
+                        ? ` (${formatKES(parseFloat(opt.selling_price) / opt.quantity_value)}/pc)`
+                        : ""}
+                </option>
             ))}
-        </div>
+        </select>
     );
 }
 
@@ -110,37 +89,24 @@ function SingleSelectModifier({
     onChange: (optionId: number) => void;
 }): ReactElement {
     return (
-        <div className="flex flex-wrap gap-2">
-            {group.options.map((opt: SpecOption) => (
-                <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => onChange(opt.id)}
-                    className={cn(
-                        "flex items-center gap-1.5 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-all duration-150",
-                        value === opt.id
-                            ? "border-brand-blue bg-brand-blue text-white shadow-sm"
-                            : "border-gray-200 bg-white text-gray-700 hover:border-brand-blue/50",
-                    )}
-                >
-                    {opt.preview_image && (
-                        <img
-                            src={opt.preview_image}
-                            alt={opt.name}
-                            className="h-5 w-5 rounded object-cover flex-shrink-0"
-                        />
-                    )}
-                    <span>{opt.name}</span>
-                    {opt.selling_price_modifier && parseFloat(opt.selling_price_modifier) !== 0 && (
-                        <span className={cn("text-xs font-bold", value === opt.id ? "text-brand-yellow" : "text-brand-blue")}>
-                            {parseFloat(opt.selling_price_modifier) > 0
-                                ? `+${formatKES(opt.selling_price_modifier)}`
-                                : formatKES(opt.selling_price_modifier)}
-                        </span>
-                    )}
-                </button>
-            ))}
-        </div>
+        <select
+            value={value ?? ""}
+            onChange={(e) => onChange(Number(e.target.value))}
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all"
+        >
+            <option value="" disabled>Select an option…</option>
+            {group.options.map((opt: SpecOption) => {
+                const modifier = opt.selling_price_modifier ? parseFloat(opt.selling_price_modifier) : 0;
+                const modifierLabel = modifier !== 0
+                    ? ` (${modifier > 0 ? "+" : ""}${formatKES(opt.selling_price_modifier!)})`
+                    : "";
+                return (
+                    <option key={opt.id} value={opt.id}>
+                        {opt.name}{modifierLabel}
+                    </option>
+                );
+            })}
+        </select>
     );
 }
 
@@ -162,41 +128,25 @@ function MultiSelectModifier({
     };
 
     return (
-        <div className="flex flex-wrap gap-2">
+        <div className="space-y-1.5">
             {group.options.map((opt: SpecOption) => {
                 const selected = value.includes(opt.id);
+                const modifier = opt.selling_price_modifier ? parseFloat(opt.selling_price_modifier) : 0;
                 return (
-                    <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => toggle(opt.id)}
-                        className={cn(
-                            "flex items-center gap-1.5 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-all duration-150",
-                            selected
-                                ? "border-brand-blue bg-brand-blue text-white"
-                                : "border-gray-200 bg-white text-gray-700 hover:border-brand-blue/50",
-                        )}
-                    >
-                        <span
-                            className={cn(
-                                "h-3.5 w-3.5 rounded border-2 flex-shrink-0 flex items-center justify-center",
-                                selected ? "border-white bg-white/20" : "border-gray-400",
-                            )}
-                        >
-                            {selected && <CheckIcon className="h-2.5 w-2.5 text-white" />}
-                        </span>
-                        {opt.preview_image && (
-                            <img src={opt.preview_image} alt={opt.name} className="h-5 w-5 rounded object-cover" />
-                        )}
-                        <span>{opt.name}</span>
-                        {opt.selling_price_modifier && parseFloat(opt.selling_price_modifier) !== 0 && (
-                            <span className={cn("text-xs font-bold", selected ? "text-brand-yellow" : "text-brand-blue")}>
-                                {parseFloat(opt.selling_price_modifier) > 0
-                                    ? `+${formatKES(opt.selling_price_modifier)}`
-                                    : formatKES(opt.selling_price_modifier)}
+                    <label key={opt.id} className="flex items-center gap-2.5 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => toggle(opt.id)}
+                            className="h-4 w-4 rounded border-gray-300 text-brand-blue accent-brand-blue"
+                        />
+                        <span className="text-sm text-gray-800">{opt.name}</span>
+                        {modifier !== 0 && (
+                            <span className="text-xs font-semibold text-brand-blue">
+                                {modifier > 0 ? "+" : ""}{formatKES(opt.selling_price_modifier!)}
                             </span>
                         )}
-                    </button>
+                    </label>
                 );
             })}
         </div>
@@ -335,24 +285,18 @@ function MultiplierSelector({
     onChange: (optionId: number) => void;
 }): ReactElement {
     return (
-        <div className="flex flex-wrap gap-2">
+        <select
+            value={value ?? ""}
+            onChange={(e) => onChange(Number(e.target.value))}
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all"
+        >
+            <option value="" disabled>Select multiplier…</option>
             {group.options.map((opt: SpecOption) => (
-                <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => onChange(opt.id)}
-                    className={cn(
-                        "flex flex-col items-center rounded-xl border-2 px-4 py-2.5 text-sm transition-all duration-150",
-                        value === opt.id
-                            ? "border-brand-purple bg-brand-purple text-white"
-                            : "border-gray-200 bg-white text-gray-700 hover:border-brand-purple/50",
-                    )}
-                >
-                    <span className="font-extrabold text-base">×{opt.multiplier_value ?? opt.name}</span>
-                    <span className={cn("text-xs", value === opt.id ? "text-white/80" : "text-gray-500")}>{opt.name}</span>
-                </button>
+                <option key={opt.id} value={opt.id}>
+                    ×{opt.multiplier_value ?? opt.name} — {opt.name}
+                </option>
             ))}
-        </div>
+        </select>
     );
 }
 
@@ -897,14 +841,11 @@ function SpecGroupSection({
     })();
 
     return (
-        <div className={cn(
-            "rounded-2xl border bg-white shadow-sm overflow-hidden transition-all duration-200",
-            hasSelection ? "border-brand-blue/30" : "border-gray-200",
-        )}>
+        <div className="space-y-1">
             <button
                 type="button"
                 onClick={() => setExpanded((p) => !p)}
-                className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-50/50 transition-colors"
+                className="w-full flex items-center gap-3 py-2 text-left"
             >
                 <span className={cn(
                     "h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-colors",
@@ -925,9 +866,6 @@ function SpecGroupSection({
                     {group.help_text && !expanded && (
                         <p className="text-xs text-gray-500 truncate mt-0.5">{group.help_text}</p>
                     )}
-                    {group.header_image && !expanded && (
-                        <img src={group.header_image} alt="" className="mt-1 h-6 rounded object-cover" />
-                    )}
                 </div>
                 {expanded ? (
                     <ChevronUpIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
@@ -937,7 +875,7 @@ function SpecGroupSection({
             </button>
 
             {expanded && (
-                <div className="px-5 pb-5 space-y-3">
+                <div className="pl-9 space-y-3">
                     {group.header_image && (
                         <img src={group.header_image} alt={group.name} className="w-full max-h-32 rounded-xl object-cover" />
                     )}
@@ -947,6 +885,8 @@ function SpecGroupSection({
                     <SpecGroupInput group={group} state={state} onUpdate={onUpdate} />
                 </div>
             )}
+
+            <div className="border-b border-gray-100 ml-9" />
         </div>
     );
 }

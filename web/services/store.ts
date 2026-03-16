@@ -91,8 +91,9 @@ export async function calculatePrice(
         },
     );
     if (!response.ok) {
-        const data = (await response.json().catch(() => ({}))) as { detail?: string };
-        throw new Error(data.detail ?? `Calculation failed: ${response.status}`);
+        const data = (await response.json().catch(() => ({}))) as { detail?: string; errors?: string[] };
+        const message = data.detail ?? (data.errors?.join(", ")) ?? `Calculation failed: ${response.status}`;
+        throw new Error(message);
     }
     return response.json() as Promise<PriceCalculationResult>;
 }

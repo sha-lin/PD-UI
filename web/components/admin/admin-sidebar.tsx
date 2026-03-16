@@ -20,6 +20,7 @@ import {
     UserCircle,
     ShieldCheck,
     AlertTriangle,
+    Layers,
 } from "lucide-react";
 import { logoutUserSession } from "@/lib/api/auth";
 
@@ -54,6 +55,7 @@ const menuSections: MenuSection[] = [
         title: "OPERATIONS",
         items: [
             { label: "Products", href: "/admin/products", icon: Package },
+            { label: "Catalog Setup", href: "/admin/products/catalog-setup", icon: Layers },
             { label: "LPOs", href: "/admin/lpos", icon: ClipboardList },
             { label: "Vendors", href: "/admin/vendors", icon: Building2 },
             { label: "Deliveries", href: "/admin/deliveries", icon: Truck },

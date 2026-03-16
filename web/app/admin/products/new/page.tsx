@@ -147,7 +147,7 @@ export default function NewProductPage(): ReactElement {
                 </div>
             </header>
             <main className="bg-gray-50 min-h-screen">
-                <div className="mx-auto max-w-4xl px-4 py-6">
+                <div className="px-4 py-6">
                     <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
                         <ProductForm
                             values={values}

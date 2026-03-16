@@ -58,8 +58,8 @@ function Field({
                 {label}
                 {required && <span className="ml-1 text-red-500">*</span>}
             </label>
+            {hint && <p className="text-xs text-gray-500 leading-snug">{hint}</p>}
             {children}
-            {hint && <p className="text-xs text-gray-400">{hint}</p>}
         </div>
     );
 }
@@ -148,11 +148,10 @@ export default function ProductForm({
                         key={tab.id}
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={`relative shrink-0 px-4 py-3 text-sm font-medium transition-colors ${
-                            activeTab === tab.id
+                        className={`relative shrink-0 px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.id
                                 ? "border-b-2 border-brand-blue text-brand-blue"
                                 : "text-gray-500 hover:text-gray-700"
-                        }`}
+                            }`}
                     >
                         <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-xs">
                             {index + 1}
@@ -166,7 +165,7 @@ export default function ProductForm({
             <div className="flex-1 overflow-y-auto p-6">
                 {activeTab === "basic" && (
                     <div className="max-w-2xl space-y-5">
-                        <Field label="Product Name" required>
+                        <Field label="Product Name" required hint="The public-facing name shown in listings, invoices, and on the storefront">
                             <input
                                 type="text"
                                 className={inputCls}
@@ -175,7 +174,7 @@ export default function ProductForm({
                                 onChange={(e) => set("name", e.target.value)}
                             />
                         </Field>
-                        <Field label="Short Description" required hint={`${values.short_description.length}/150 characters`}>
+                        <Field label="Short Description" required hint={`One-line summary shown in product listings and search results (${values.short_description.length}/150 chars)`}>
                             <input
                                 type="text"
                                 className={inputCls}
@@ -185,7 +184,7 @@ export default function ProductForm({
                                 onChange={(e) => set("short_description", e.target.value)}
                             />
                         </Field>
-                        <Field label="Full Description" required>
+                        <Field label="Full Description" required hint="Detailed content displayed on the product detail page. Supports plain text and line breaks.">
                             <textarea
                                 className={textareaCls}
                                 rows={5}
@@ -194,7 +193,7 @@ export default function ProductForm({
                                 onChange={(e) => set("long_description", e.target.value)}
                             />
                         </Field>
-                        <Field label="Maintenance & Care" hint="Care instructions visible to clients">
+                        <Field label="Maintenance & Care" hint="Storage and handling instructions displayed to clients on the product page">
                             <textarea
                                 className={textareaCls}
                                 rows={3}
@@ -203,7 +202,7 @@ export default function ProductForm({
                                 onChange={(e) => set("maintenance", e.target.value)}
                             />
                         </Field>
-                        <Field label="Technical Specifications" hint="Technical details for internal and client reference">
+                        <Field label="Technical Specifications" hint="Print specs, substrate, finish, and other technical details shown to clients and used internally">
                             <textarea
                                 className={textareaCls}
                                 rows={3}
@@ -218,7 +217,7 @@ export default function ProductForm({
                 {activeTab === "classification" && (
                     <div className="max-w-2xl space-y-5">
                         <div className="grid grid-cols-2 gap-4">
-                            <Field label="Print Category">
+                            <Field label="Print Category" hint="Production category used for internal job routing and press assignment">
                                 <select
                                     className={selectCls}
                                     value={values.print_category}
@@ -232,7 +231,7 @@ export default function ProductForm({
                                     ))}
                                 </select>
                             </Field>
-                            <Field label="Product Type">
+                            <Field label="Product Type" hint="Physical requires shipping; Digital is delivered electronically; Service has no physical goods">
                                 <select
                                     className={selectCls}
                                     value={values.product_type}
@@ -250,7 +249,7 @@ export default function ProductForm({
                             </Field>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <Field label="Category">
+                            <Field label="Category" hint="Primary storefront category that determines where this product appears in the catalog">
                                 <select
                                     className={selectCls}
                                     value={values.primary_category}
@@ -264,7 +263,7 @@ export default function ProductForm({
                                     ))}
                                 </select>
                             </Field>
-                            <Field label="Sub-Category" hint={!selectedCategoryId ? "Select a category first" : undefined}>
+                            <Field label="Sub-Category" hint={selectedCategoryId ? "Optional finer grouping within the selected category" : "Select a category first to enable sub-categories"}>
                                 <select
                                     className={selectCls}
                                     value={values.sub_category}
@@ -280,7 +279,7 @@ export default function ProductForm({
                                 </select>
                             </Field>
                         </div>
-                        <Field label="Product Family">
+                        <Field label="Product Family" hint="Groups related products together — e.g. all Business Card variants belong to the same family">
                             <select
                                 className={selectCls}
                                 value={values.product_family}
@@ -294,7 +293,7 @@ export default function ProductForm({
                                 ))}
                             </select>
                         </Field>
-                        <Field label="Tags" hint="Select all relevant tags">
+                        <Field label="Tags" hint="Keywords that help customers find and filter this product on the storefront">
                             <div className="flex flex-wrap gap-2 pt-1">
                                 {availableTags.map((tag) => {
                                     const selected = values.tag_ids.includes(tag.id);
@@ -303,11 +302,10 @@ export default function ProductForm({
                                             key={tag.id}
                                             type="button"
                                             onClick={() => toggleTag(tag.id)}
-                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                                                selected
+                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${selected
                                                     ? "bg-brand-blue text-white"
                                                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                            }`}
+                                                }`}
                                         >
                                             {selected ? (
                                                 <CheckIcon className="h-3 w-3" />
@@ -352,11 +350,10 @@ export default function ProductForm({
                                             key={option.value}
                                             type="button"
                                             onClick={() => set("pricing_mode", option.value)}
-                                            className={`rounded-xl border-2 p-4 text-left transition-colors ${
-                                                selected
+                                            className={`rounded-xl border-2 p-4 text-left transition-colors ${selected
                                                     ? "border-brand-blue bg-brand-blue/5"
                                                     : "border-gray-200 hover:border-gray-300"
-                                            }`}
+                                                }`}
                                         >
                                             <p className={`text-sm font-semibold ${selected ? "text-brand-blue" : "text-gray-800"}`}>
                                                 {option.title}
@@ -371,7 +368,7 @@ export default function ProductForm({
                         </Field>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <Field label="Status">
+                            <Field label="Status" hint="Draft: only visible to admins. Published: live on the store. Archived: hidden and inactive.">
                                 <select
                                     className={selectCls}
                                     value={values.status}
@@ -387,7 +384,7 @@ export default function ProductForm({
                                     <option value="archived">Archived</option>
                                 </select>
                             </Field>
-                            <Field label="Storefront Visibility">
+                            <Field label="Storefront Visibility" hint="Controls where customers can discover this product — catalog browsing, search, both, or nowhere">
                                 <select
                                     className={selectCls}
                                     value={values.visibility}
@@ -435,7 +432,7 @@ export default function ProductForm({
                         </div>
 
                         {values.new_arrival && (
-                            <Field label="New Arrival Expiry" hint="Badge is removed automatically on this date">
+                            <Field label="New Arrival Expiry" hint="The New Arrival badge is removed automatically on this date — leave blank to keep it indefinitely">
                                 <input
                                     type="date"
                                     className={inputCls}
@@ -450,7 +447,7 @@ export default function ProductForm({
                 {activeTab === "physical" && (
                     <div className="max-w-2xl space-y-5">
                         <div className="grid grid-cols-2 gap-4">
-                            <Field label="Unit of Measure">
+                            <Field label="Unit of Measure" hint="The base unit used when quoting and ordering this product">
                                 <select
                                     className={selectCls}
                                     value={values.unit_of_measure}
@@ -468,7 +465,7 @@ export default function ProductForm({
                                     <option value="cm">Centimeters</option>
                                 </select>
                             </Field>
-                            <Field label="Custom Unit" hint="Fill if unit not in the list above">
+                            <Field label="Custom Unit" hint="Enter a custom unit label if none of the standard options apply (e.g. Linear metre)">
                                 <input
                                     type="text"
                                     className={inputCls}
@@ -480,7 +477,7 @@ export default function ProductForm({
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
-                            <Field label="Weight">
+                            <Field label="Weight" hint="Packed weight of one unit, used for shipping cost calculations">
                                 <input
                                     type="number"
                                     className={inputCls}
@@ -491,7 +488,7 @@ export default function ProductForm({
                                     onChange={(e) => set("weight", e.target.value)}
                                 />
                             </Field>
-                            <Field label="Weight Unit">
+                            <Field label="Weight Unit" hint="Unit that applies to the weight value on the left">
                                 <select
                                     className={selectCls}
                                     value={values.weight_unit}
@@ -507,7 +504,7 @@ export default function ProductForm({
                                     <option value="gsm">GSM (g/m²)</option>
                                 </select>
                             </Field>
-                            <Field label="Dimension Unit">
+                            <Field label="Dimension Unit" hint="Unit applied to the length, width, and height fields below">
                                 <select
                                     className={selectCls}
                                     value={values.dimension_unit}
@@ -526,7 +523,7 @@ export default function ProductForm({
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
-                            <Field label="Length">
+                            <Field label="Length" hint="Longest external dimension of the packed product">
                                 <input
                                     type="number"
                                     className={inputCls}
@@ -537,7 +534,7 @@ export default function ProductForm({
                                     onChange={(e) => set("length", e.target.value)}
                                 />
                             </Field>
-                            <Field label="Width">
+                            <Field label="Width" hint="Second dimension of the packed product">
                                 <input
                                     type="number"
                                     className={inputCls}
@@ -548,7 +545,7 @@ export default function ProductForm({
                                     onChange={(e) => set("width", e.target.value)}
                                 />
                             </Field>
-                            <Field label="Height">
+                            <Field label="Height" hint="Third dimension / depth of the packed product">
                                 <input
                                     type="number"
                                     className={inputCls}
@@ -562,7 +559,7 @@ export default function ProductForm({
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <Field label="Warranty">
+                            <Field label="Warranty" hint="Warranty policy shown on quotations, invoices, and the product detail page">
                                 <select
                                     className={selectCls}
                                     value={values.warranty}
@@ -579,7 +576,7 @@ export default function ProductForm({
                                     <option value="90-days">90 Days</option>
                                 </select>
                             </Field>
-                            <Field label="Country of Origin">
+                            <Field label="Country of Origin" hint="Country where this product is manufactured or sourced">
                                 <select
                                     className={selectCls}
                                     value={values.country_of_origin}
@@ -602,7 +599,7 @@ export default function ProductForm({
 
                 {activeTab === "inventory" && (
                     <div className="max-w-2xl space-y-5">
-                        <Field label="Stock Status">
+                        <Field label="Stock Status" hint="Availability shown to customers on the storefront and used in order management">
                             <select
                                 className={selectCls}
                                 value={values.stock_status}
@@ -622,7 +619,7 @@ export default function ProductForm({
                         </Field>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <Field label="Stock Quantity">
+                            <Field label="Stock Quantity" hint="Current number of units available in stock">
                                 <input
                                     type="number"
                                     className={inputCls}
@@ -631,7 +628,7 @@ export default function ProductForm({
                                     onChange={(e) => set("stock_quantity", Number(e.target.value))}
                                 />
                             </Field>
-                            <Field label="Low Stock Threshold" hint="Alert when quantity falls below this">
+                            <Field label="Low Stock Threshold" hint="A low-stock alert is triggered when available quantity drops below this number">
                                 <input
                                     type="number"
                                     className={inputCls}
@@ -679,7 +676,7 @@ export default function ProductForm({
 
                 {activeTab === "notes" && (
                     <div className="max-w-2xl space-y-5">
-                        <Field label="Internal Notes" hint="Only visible to staff — never shown to clients">
+                        <Field label="Internal Notes" hint="Visible only to staff — never exposed to clients. Use for supplier details, pricing rationale, or production instructions.">
                             <textarea
                                 className={textareaCls}
                                 rows={4}
@@ -688,7 +685,7 @@ export default function ProductForm({
                                 onChange={(e) => set("internal_notes", e.target.value)}
                             />
                         </Field>
-                        <Field label="Client Notes" hint="Visible to clients on the product page">
+                        <Field label="Client Notes" hint="Additional notes shown to clients when viewing this product on the storefront or receiving a quotation">
                             <textarea
                                 className={textareaCls}
                                 rows={4}
@@ -697,7 +694,7 @@ export default function ProductForm({
                                 onChange={(e) => set("client_notes", e.target.value)}
                             />
                         </Field>
-                        <Field label="Product Image">
+                        <Field label="Product Image" hint="Upload a product photo (JPG or PNG, recommended 800×800px or larger, max 5 MB)">
                             <div className="space-y-2">
                                 {existingImageUrl && (
                                     <img
@@ -730,9 +727,8 @@ export default function ProductForm({
                                 key={tab.id}
                                 type="button"
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`h-2 w-2 rounded-full transition-colors ${
-                                    activeTab === tab.id ? "bg-brand-blue" : "bg-gray-300"
-                                }`}
+                                className={`h-2 w-2 rounded-full transition-colors ${activeTab === tab.id ? "bg-brand-blue" : "bg-gray-300"
+                                    }`}
                                 title={tab.label}
                                 aria-label={`Go to ${tab.label}`}
                             />

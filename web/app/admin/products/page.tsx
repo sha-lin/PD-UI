@@ -3,284 +3,206 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, AlertTriangle } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import AdminLayout from "@/components/admin/admin-layout";
-import { resolveProductsBasePath } from "@/lib/product-routes";
-import ProductsFilters from "@/features/products/components/ProductsFilters";
-import ProductsTable from "@/features/products/components/ProductsTable";
-import ProductsPagination from "@/features/products/components/ProductsPagination";
-import ProductsSkeleton from "@/features/products/components/ProductsSkeleton";
-import ProductsEmptyState from "@/features/products/components/ProductsEmptyState";
 import {
     archiveProduct,
     deleteProduct,
     fetchProducts,
     publishProduct,
 } from "@/services/products";
-import type {
-    Product,
-    ProductCustomizationLevel,
-    ProductStatus,
-    ProductVisibility,
-    ProductsQueryParams,
-    ProductsResponse,
-} from "@/types/products";
+import type { ProductPricingMode, ProductStatus, ProductsQueryParams } from "@/types/products";
+import ProductsFilters from "@/features/products/components/ProductsFilters";
+import ProductsTable from "@/features/products/components/ProductsTable";
+import ProductsPagination from "@/features/products/components/ProductsPagination";
+import ProductsSkeleton from "@/features/products/components/ProductsSkeleton";
+import ProductsEmptyState from "@/features/products/components/ProductsEmptyState";
+import { resolveProductsBasePath } from "@/lib/product-routes";
 
-export default function ProductsPage(): ReactElement {
+export default function AdminProductsPage(): ReactElement {
     const router = useRouter();
     const pathname = usePathname();
-    const productsBasePath = resolveProductsBasePath(pathname);
     const queryClient = useQueryClient();
+    const basePath = resolveProductsBasePath(pathname);
+
     const [search, setSearch] = useState<string>("");
     const [debouncedSearch, setDebouncedSearch] = useState<string>("");
-    const [status, setStatus] = useState<"all" | ProductStatus>("all");
-    const [customizationLevel, setCustomizationLevel] = useState<"all" | ProductCustomizationLevel>("all");
+    const [status, setStatus] = useState<ProductStatus | "all">("all");
+    const [pricingMode, setPricingMode] = useState<ProductPricingMode | "all">("all");
+    const [printCategory, setPrintCategory] = useState<string>("");
     const [category, setCategory] = useState<string>("");
-    const [subCategory, setSubCategory] = useState<string>("");
-    const [visibility, setVisibility] = useState<"all" | ProductVisibility>("all");
     const [page, setPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(20);
-    const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
     useEffect((): (() => void) => {
-        const timer = setTimeout((): void => {
-            setDebouncedSearch(search);
-        }, 400);
-
-        return (): void => clearTimeout(timer);
+        const timer = setTimeout(() => setDebouncedSearch(search), 400);
+        return () => clearTimeout(timer);
     }, [search]);
 
-    const productQueryParams = useMemo(
+    const queryParams = useMemo(
         (): ProductsQueryParams => ({
-            page,
-            pageSize,
             search: debouncedSearch,
             status,
-            customizationLevel,
+            pricingMode,
+            printCategory,
             category,
-            subCategory,
-            visibility,
+            page,
+            pageSize,
         }),
-        [page, pageSize, debouncedSearch, status, customizationLevel, category, subCategory, visibility]
+        [debouncedSearch, status, pricingMode, printCategory, category, page, pageSize],
     );
 
-    const { data, isLoading, error } = useQuery({
-        queryKey: ["products", productQueryParams],
-        queryFn: (): Promise<ProductsResponse> => fetchProducts(productQueryParams),
-    });
-
-    const publishMutation = useMutation({
-        mutationFn: (productId: number): Promise<Product> => publishProduct(productId),
-        onSuccess: (): void => {
-            toast.success("Product published.");
-            queryClient.invalidateQueries({ queryKey: ["products"] });
-        },
-        onError: (): void => {
-            toast.error("Unable to publish product.");
-        },
-    });
-
-    const archiveMutation = useMutation({
-        mutationFn: (productId: number): Promise<Product> => archiveProduct(productId),
-        onSuccess: (): void => {
-            toast.success("Product archived.");
-            queryClient.invalidateQueries({ queryKey: ["products"] });
-        },
-        onError: (): void => {
-            toast.error("Unable to archive product.");
-        },
+    const { data, isLoading, isError } = useQuery({
+        queryKey: ["products", queryParams],
+        queryFn: () => fetchProducts(queryParams),
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (productId: number): Promise<void> => deleteProduct(productId),
-        onSuccess: (): void => {
+        mutationFn: deleteProduct,
+        onSuccess: () => {
             toast.success("Product deleted.");
             queryClient.invalidateQueries({ queryKey: ["products"] });
+            setDeleteConfirmId(null);
         },
-        onError: (): void => {
-            toast.error("Unable to delete product.");
+        onError: () => toast.error("Unable to delete product. Please try again."),
+    });
+
+    const publishMutation = useMutation({
+        mutationFn: publishProduct,
+        onSuccess: () => {
+            toast.success("Product published.");
+            queryClient.invalidateQueries({ queryKey: ["products"] });
         },
+        onError: () => toast.error("Unable to publish product. Please try again."),
+    });
+
+    const archiveMutation = useMutation({
+        mutationFn: archiveProduct,
+        onSuccess: () => {
+            toast.success("Product archived.");
+            queryClient.invalidateQueries({ queryKey: ["products"] });
+        },
+        onError: () => toast.error("Unable to archive product. Please try again."),
     });
 
     const handleResetFilters = (): void => {
-        setSearch("");
         setStatus("all");
-        setCustomizationLevel("all");
+        setPricingMode("all");
+        setPrintCategory("");
         setCategory("");
-        setSubCategory("");
-        setVisibility("all");
+        setSearch("");
         setPage(1);
     };
 
-    const handlePageChange = (nextPage: number): void => {
-        setPage(nextPage);
-    };
-
-    const handlePageSizeChange = (size: number): void => {
-        setPageSize(size);
-        setPage(1);
-    };
-
-    const handleEdit = (product: Product): void => {
-        router.push(`${productsBasePath}/${product.id}/edit`);
-    };
-
-    const handlePublish = (product: Product): void => {
-        publishMutation.mutate(product.id);
-    };
-
-    const handleArchive = (product: Product): void => {
-        archiveMutation.mutate(product.id);
-    };
-
-    const handleDelete = (product: Product): void => {
-        setDeletingProduct(product);
-    };
-
-    const confirmDelete = (): void => {
-        if (deletingProduct) {
-            deleteMutation.mutate(deletingProduct.id);
-            setDeletingProduct(null);
-        }
-    };
+    const isFiltered =
+        Boolean(debouncedSearch) ||
+        status !== "all" ||
+        pricingMode !== "all" ||
+        Boolean(printCategory) ||
+        Boolean(category);
 
     const products = data?.results ?? [];
-    const totalCount = data?.count ?? 0;
+    const count = data?.count ?? 0;
 
     return (
         <AdminLayout>
-            <header className="fixed top-0 z-30 w-full border-b border-gray-200 bg-white">
-                <div className="px-4 py-3 sm:px-8 sm:py-4">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                        <a href="/staff" className="hover:text-brand-blue">Staff Portal</a>
-                        <span>/</span>
-                        <span className="text-gray-900">Products</span>
+            <header className="border-b border-gray-200 bg-white">
+                <div className="px-8 py-5 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Products</h1>
+                        {data && (
+                            <p className="mt-0.5 text-sm text-gray-500">
+                                {count} {count === 1 ? "product" : "products"}
+                            </p>
+                        )}
                     </div>
-                    <div className="flex items-center justify-between gap-4">
-                        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">Products</h1>
-                        <button
-                            type="button"
-                            onClick={(): void => router.push(`${productsBasePath}/new`)}
-                            className="flex-shrink-0 inline-flex items-center justify-center rounded-md bg-brand-blue px-3 py-2 sm:px-4 text-sm font-semibold text-white"
-                        >
-                            New Product
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={() => router.push(`${basePath}/new`)}
+                        className="inline-flex items-center gap-2 rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue/90"
+                    >
+                        <PlusIcon className="h-4 w-4" />
+                        New Product
+                    </button>
                 </div>
             </header>
-            <main className="bg-gray-50 min-h-screen pt-20 sm:pt-24">
-                <div className="px-4 py-4 sm:px-8 sm:py-6 space-y-6">
-                    {isLoading && <ProductsSkeleton />}
 
-                    {!isLoading && (error || !data) && (
-                        <div className="bg-brand-red/10 border border-brand-red/20 rounded-lg p-6">
-                            <div className="flex items-center gap-3">
-                                <AlertCircleIcon className="h-6 w-6 text-brand-red" />
-                                <div>
-                                    <h3 className="font-semibold text-brand-red">Failed to load products</h3>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        Unable to fetch product data. Please try again later.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+            <main className="bg-gray-50 min-h-screen px-8 py-6 space-y-4">
+                <ProductsFilters
+                    search={search}
+                    status={status}
+                    pricingMode={pricingMode}
+                    printCategory={printCategory}
+                    category={category}
+                    onSearchChange={(v) => { setSearch(v); setPage(1); }}
+                    onStatusChange={(v) => { setStatus(v); setPage(1); }}
+                    onPricingModeChange={(v) => { setPricingMode(v); setPage(1); }}
+                    onPrintCategoryChange={(v) => { setPrintCategory(v); setPage(1); }}
+                    onCategoryChange={(v) => { setCategory(v); setPage(1); }}
+                    onReset={handleResetFilters}
+                />
 
-                    {!isLoading && data && (
-                        <>
-                            <ProductsFilters
-                                search={search}
-                                status={status}
-                                customizationLevel={customizationLevel}
-                                category={category}
-                                subCategory={subCategory}
-                                visibility={visibility}
-                                onSearchChange={(value: string): void => {
-                                    setSearch(value);
-                                    setPage(1);
-                                }}
-                                onStatusChange={(value: "all" | ProductStatus): void => {
-                                    setStatus(value);
-                                    setPage(1);
-                                }}
-                                onCustomizationChange={(value: "all" | ProductCustomizationLevel): void => {
-                                    setCustomizationLevel(value);
-                                    setPage(1);
-                                }}
-                                onCategoryChange={(value: string): void => {
-                                    setCategory(value);
-                                    setPage(1);
-                                }}
-                                onSubCategoryChange={(value: string): void => {
-                                    setSubCategory(value);
-                                    setPage(1);
-                                }}
-                                onVisibilityChange={(value: "all" | ProductVisibility): void => {
-                                    setVisibility(value);
-                                    setPage(1);
-                                }}
-                                onReset={handleResetFilters}
-                            />
+                {isLoading && <ProductsSkeleton />}
 
-                            {products.length > 0 ? (
-                                <>
-                                    <ProductsTable
-                                        products={products}
-                                        onEdit={handleEdit}
-                                        onPublish={handlePublish}
-                                        onArchive={handleArchive}
-                                        onDelete={handleDelete}
-                                    />
-                                    <ProductsPagination
-                                        count={totalCount}
-                                        page={page}
-                                        pageSize={pageSize}
-                                        onPageChange={handlePageChange}
-                                        onPageSizeChange={handlePageSizeChange}
-                                    />
-                                </>
-                            ) : (
-                                <ProductsEmptyState
-                                    title="No products found"
-                                    description="Try adjusting your filters or add a new product."
-                                    actionLabel="Create product"
-                                    onAction={(): void => router.push(`${productsBasePath}/new`)}
-                                />
-                            )}
-                        </>
-                    )}
-                </div>
+                {isError && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        Unable to load products. Please refresh the page.
+                    </div>
+                )}
+
+                {!isLoading && !isError && products.length === 0 && (
+                    <ProductsEmptyState
+                        isFiltered={isFiltered}
+                        onNewProduct={() => router.push(`${basePath}/new`)}
+                    />
+                )}
+
+                {!isLoading && !isError && products.length > 0 && (
+                    <>
+                        <ProductsTable
+                            products={products}
+                            onEdit={(id) => router.push(`${basePath}/${id}/edit`)}
+                            onDelete={(id) => setDeleteConfirmId(id)}
+                            onPublish={(id) => publishMutation.mutate(id)}
+                            onArchive={(id) => archiveMutation.mutate(id)}
+                        />
+                        <ProductsPagination
+                            count={count}
+                            page={page}
+                            pageSize={pageSize}
+                            onPageChange={setPage}
+                            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+                        />
+                    </>
+                )}
             </main>
 
-            {deletingProduct && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                                <AlertTriangle className="w-5 h-5 text-red-600" />
-                            </div>
-                            <h2 className="text-lg font-semibold text-gray-900">Delete Product</h2>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-6">
-                            Are you sure you want to delete <strong>{deletingProduct.name}</strong>? This action cannot be undone.
+            {/* Delete confirmation modal */}
+            {deleteConfirmId !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+                        <h3 className="text-base font-semibold text-gray-900">Delete Product?</h3>
+                        <p className="mt-2 text-sm text-gray-500">
+                            This action is permanent and cannot be undone.
                         </p>
-                        <div className="flex items-center justify-end gap-3">
+                        <div className="mt-5 flex justify-end gap-3">
                             <button
                                 type="button"
-                                onClick={() => setDeletingProduct(null)}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                                onClick={() => setDeleteConfirmId(null)}
+                                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
-                                onClick={confirmDelete}
+                                onClick={() => deleteMutation.mutate(deleteConfirmId)}
                                 disabled={deleteMutation.isPending}
-                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
                             >
-                                {deleteMutation.isPending ? "Deleting..." : "Delete Product"}
+                                {deleteMutation.isPending ? "Deleting..." : "Delete"}
                             </button>
                         </div>
                     </div>

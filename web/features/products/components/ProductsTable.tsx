@@ -1,172 +1,233 @@
-import Image from "next/image";
+"use client";
+
 import type { ReactElement } from "react";
-import type { Product, ProductCustomizationLevel, ProductStatus, ProductStockStatus } from "@/types/products";
+import { MoreHorizontalIcon, PencilIcon, TrashIcon, CheckCircleIcon, ArchiveIcon } from "lucide-react";
+import { useState } from "react";
+import type { Product, ProductStatus } from "@/types/products";
 
 interface ProductsTableProps {
     products: Product[];
-    onEdit: (product: Product) => void;
-    onPublish: (product: Product) => void;
-    onArchive: (product: Product) => void;
-    onDelete: (product: Product) => void;
+    onEdit: (productId: number) => void;
+    onDelete: (productId: number) => void;
+    onPublish: (productId: number) => void;
+    onArchive: (productId: number) => void;
 }
 
 const statusStyles: Record<ProductStatus, string> = {
-    draft: "bg-brand-yellow/20 text-brand-black",
-    published: "bg-brand-green/10 text-brand-green",
-    archived: "bg-gray-100 text-gray-600",
+    draft: "bg-gray-100 text-gray-600",
+    published: "bg-green-100 text-green-700",
+    archived: "bg-orange-100 text-orange-700",
 };
 
-const stockStyles: Record<ProductStockStatus, string> = {
-    in_stock: "bg-brand-green/10 text-brand-green",
-    low_stock: "bg-brand-yellow/20 text-brand-black",
-    out_of_stock: "bg-brand-red/10 text-brand-red",
-    made_to_order: "bg-brand-blue/10 text-brand-blue",
-    discontinued: "bg-gray-100 text-gray-600",
+const pricingModeStyles: Record<string, string> = {
+    auto_calculate: "bg-blue-100 text-blue-700",
+    quote_only: "bg-purple-100 text-purple-700",
 };
 
-const customizationLabels: Record<ProductCustomizationLevel, string> = {
-    non_customizable: "Fixed Price",
-    semi_customizable: "Semi-Custom",
-    fully_customizable: "Fully Custom",
+const pricingModeLabels: Record<string, string> = {
+    auto_calculate: "Auto",
+    quote_only: "Quote Only",
 };
+
+const stockStatusStyles: Record<string, string> = {
+    in_stock: "bg-green-100 text-green-700",
+    low_stock: "bg-yellow-100 text-yellow-700",
+    out_of_stock: "bg-red-100 text-red-700",
+    made_to_order: "bg-blue-100 text-blue-700",
+    discontinued: "bg-gray-100 text-gray-500",
+};
+
+const stockStatusLabels: Record<string, string> = {
+    in_stock: "In Stock",
+    low_stock: "Low Stock",
+    out_of_stock: "Out of Stock",
+    made_to_order: "MTO",
+    discontinued: "Discontinued",
+};
+
+function ProductRowMenu({
+    product,
+    onEdit,
+    onDelete,
+    onPublish,
+    onArchive,
+}: {
+    product: Product;
+    onEdit: () => void;
+    onDelete: () => void;
+    onPublish: () => void;
+    onArchive: () => void;
+}): ReactElement {
+    const [open, setOpen] = useState<boolean>(false);
+
+    return (
+        <div className="relative">
+            <button
+                type="button"
+                onClick={() => setOpen((prev) => !prev)}
+                className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            >
+                <MoreHorizontalIcon className="h-4 w-4" />
+            </button>
+            {open && (
+                <>
+                    <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setOpen(false)}
+                    />
+                    <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                        <button
+                            type="button"
+                            onClick={() => { onEdit(); setOpen(false); }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                            <PencilIcon className="h-4 w-4" />
+                            Edit
+                        </button>
+                        {product.status !== "published" && (
+                            <button
+                                type="button"
+                                onClick={() => { onPublish(); setOpen(false); }}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-gray-50"
+                            >
+                                <CheckCircleIcon className="h-4 w-4" />
+                                Publish
+                            </button>
+                        )}
+                        {product.status !== "archived" && (
+                            <button
+                                type="button"
+                                onClick={() => { onArchive(); setOpen(false); }}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-orange-600 hover:bg-gray-50"
+                            >
+                                <ArchiveIcon className="h-4 w-4" />
+                                Archive
+                            </button>
+                        )}
+                        <div className="my-1 border-t border-gray-100" />
+                        <button
+                            type="button"
+                            onClick={() => { onDelete(); setOpen(false); }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-gray-50"
+                        >
+                            <TrashIcon className="h-4 w-4" />
+                            Delete
+                        </button>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
 
 export default function ProductsTable({
     products,
     onEdit,
+    onDelete,
     onPublish,
     onArchive,
-    onDelete,
 }: ProductsTableProps): ReactElement {
-    const formatDate = (value: string): string =>
-        new Date(value).toLocaleDateString("en-US", {
-            month: "short",
-            day: "2-digit",
-            year: "numeric",
-        });
-
-    const formatPrice = (product: Product): string => {
-        if (product.customization_level === "fully_customizable") {
-            return "Formula-based";
-        }
-        if (product.base_price === null) {
-            return "—";
-        }
-        const parsedPrice = typeof product.base_price === "number" ? product.base_price : Number(product.base_price);
-        if (!Number.isFinite(parsedPrice)) {
-            return "—";
-        }
-        return `KES ${parsedPrice.toFixed(2)}`;
-    };
-
-    const getInitials = (value: string): string =>
-        value
-            .split(" ")
-            .filter((chunk: string): boolean => chunk.length > 0)
-            .slice(0, 2)
-            .map((chunk: string): string => chunk[0]?.toUpperCase() ?? "")
-            .join("");
-
     return (
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
-                        <tr className="border-b border-gray-200">
-                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Product</th>
-                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Category</th>
-                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Customization</th>
-                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Stock</th>
-                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Base Price</th>
-                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Updated</th>
-                            <th className="text-right py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                        <tr>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Product
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Print Category
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Category
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Pricing
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Stock
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Status
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Updated
+                            </th>
+                            <th className="w-10 px-4 py-3" />
                         </tr>
                     </thead>
-                    <tbody>
-                        {products.map((product: Product): ReactElement => (
-                            <tr key={product.id} className="border-b border-gray-100 last:border-0">
-                                <td className="py-3 px-4 text-sm text-gray-700">
-                                    <div className="flex items-center gap-3">
-                                        {product.primary_image_url ? (
-                                            <Image
-                                                src={product.primary_image_url}
-                                                alt={product.name}
-                                                width={40}
-                                                height={40}
-                                                className="h-10 w-10 rounded-md object-cover border border-gray-200 flex-shrink-0"
-                                            />
-                                        ) : (
-                                            <div className="h-10 w-10 rounded-md border border-gray-200 bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-500 flex-shrink-0">
-                                                {getInitials(product.name)}
-                                            </div>
-                                        )}
-                                        <div className="min-w-0">
-                                            <div className="font-semibold text-gray-900 truncate max-w-[140px] sm:max-w-[200px]">{product.name}</div>
-                                            <div className="text-xs text-gray-500">{product.internal_code}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-700 hidden md:table-cell">
-                                    <div className="font-semibold text-gray-900">{product.primary_category || "—"}</div>
-                                    <div className="text-xs text-gray-500">{product.sub_category || "—"}</div>
-                                </td>
-                                <td className="py-3 px-4 text-sm hidden lg:table-cell">
-                                    <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold bg-brand-blue/10 text-brand-blue">
-                                        {customizationLabels[product.customization_level]}
-                                    </span>
-                                </td>
-                                <td className="py-3 px-4 text-sm hidden md:table-cell">
-                                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${stockStyles[product.stock_status]}`}>
-                                        {product.stock_status.replace(/_/g, " ")}
-                                        {product.stock_status !== "made_to_order" ? ` · ${product.stock_quantity}` : ""}
-                                    </span>
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-700 hidden sm:table-cell">
-                                    {formatPrice(product)}
-                                </td>
-                                <td className="py-3 px-4 text-sm">
-                                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${statusStyles[product.status]}`}>
-                                        {product.status}
-                                    </span>
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-500 hidden lg:table-cell">
-                                    {formatDate(product.updated_at)}
-                                </td>
-                                <td className="py-3 px-4 text-right">
-                                    <div className="flex items-center justify-end gap-2 sm:gap-3">
+                    <tbody className="divide-y divide-gray-100">
+                        {products.map((product) => (
+                            <tr key={product.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3">
+                                    <div>
                                         <button
                                             type="button"
-                                            onClick={(): void => onEdit(product)}
-                                            className="text-sm font-semibold text-gray-600 hover:text-gray-900"
+                                            onClick={() => onEdit(product.id)}
+                                            className="text-sm font-medium text-gray-900 hover:text-brand-blue text-left"
                                         >
-                                            Edit
+                                            {product.name}
                                         </button>
-                                        {product.status !== "published" && (
-                                            <button
-                                                type="button"
-                                                onClick={(): void => onPublish(product)}
-                                                className="text-sm font-semibold text-brand-green hover:text-brand-green/80 hidden sm:inline"
-                                            >
-                                                Publish
-                                            </button>
-                                        )}
-                                        {product.status !== "archived" && (
-                                            <button
-                                                type="button"
-                                                onClick={(): void => onArchive(product)}
-                                                className="text-sm font-semibold text-brand-blue hover:text-brand-blue/80 hidden sm:inline"
-                                            >
-                                                Archive
-                                            </button>
-                                        )}
-                                        <button
-                                            type="button"
-                                            onClick={(): void => onDelete(product)}
-                                            className="text-sm font-semibold text-brand-red hover:text-brand-red/80"
-                                        >
-                                            Delete
-                                        </button>
+                                        <p className="text-xs font-mono text-gray-400">
+                                            {product.internal_code}
+                                        </p>
                                     </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                    {product.print_category_name ? (
+                                        <span className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+                                            {product.print_category_name}
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs text-gray-400">—</span>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3">
+                                    <div>
+                                        <p className="text-sm text-gray-700">
+                                            {product.primary_category_name ?? "—"}
+                                        </p>
+                                        {product.sub_category_name && (
+                                            <p className="text-xs text-gray-400">
+                                                {product.sub_category_name}
+                                            </p>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span
+                                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${pricingModeStyles[product.pricing_mode]}`}
+                                    >
+                                        {pricingModeLabels[product.pricing_mode]}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span
+                                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${stockStatusStyles[product.stock_status]}`}
+                                    >
+                                        {stockStatusLabels[product.stock_status]}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span
+                                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusStyles[product.status]}`}
+                                    >
+                                        {product.status.charAt(0).toUpperCase() +
+                                            product.status.slice(1)}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
+                                    {new Date(product.updated_at).toLocaleDateString()}
+                                </td>
+                                <td className="px-4 py-3">
+                                    <ProductRowMenu
+                                        product={product}
+                                        onEdit={() => onEdit(product.id)}
+                                        onDelete={() => onDelete(product.id)}
+                                        onPublish={() => onPublish(product.id)}
+                                        onArchive={() => onArchive(product.id)}
+                                    />
                                 </td>
                             </tr>
                         ))}

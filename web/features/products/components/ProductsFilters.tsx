@@ -1,170 +1,151 @@
+"use client";
+
+import type { ReactElement } from "react";
 import { useState } from "react";
-import type { ChangeEvent, ReactElement } from "react";
-import type {
-    ProductCustomizationLevel,
-    ProductStatus,
-    ProductVisibility,
-} from "@/types/products";
+import { SearchIcon, SlidersHorizontalIcon, XIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import type { ProductPricingMode, ProductStatus } from "@/types/products";
+import { fetchPrintCategories, fetchProductCategories } from "@/services/product-catalog-setup";
 
 interface ProductsFiltersProps {
     search: string;
-    status: "all" | ProductStatus;
-    customizationLevel: "all" | ProductCustomizationLevel;
+    status: ProductStatus | "all";
+    pricingMode: ProductPricingMode | "all";
+    printCategory: string;
     category: string;
-    subCategory: string;
-    visibility: "all" | ProductVisibility;
     onSearchChange: (value: string) => void;
-    onStatusChange: (value: "all" | ProductStatus) => void;
-    onCustomizationChange: (value: "all" | ProductCustomizationLevel) => void;
+    onStatusChange: (value: ProductStatus | "all") => void;
+    onPricingModeChange: (value: ProductPricingMode | "all") => void;
+    onPrintCategoryChange: (value: string) => void;
     onCategoryChange: (value: string) => void;
-    onSubCategoryChange: (value: string) => void;
-    onVisibilityChange: (value: "all" | ProductVisibility) => void;
     onReset: () => void;
 }
 
 export default function ProductsFilters({
     search,
     status,
-    customizationLevel,
+    pricingMode,
+    printCategory,
     category,
-    subCategory,
-    visibility,
     onSearchChange,
     onStatusChange,
-    onCustomizationChange,
+    onPricingModeChange,
+    onPrintCategoryChange,
     onCategoryChange,
-    onSubCategoryChange,
-    onVisibilityChange,
     onReset,
 }: ProductsFiltersProps): ReactElement {
     const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
-    const handleSearchChange = (event: ChangeEvent<HTMLInputElement>): void => {
-        onSearchChange(event.target.value);
-    };
 
-    const handleStatusChange = (event: ChangeEvent<HTMLSelectElement>): void => {
-        onStatusChange(event.target.value as "all" | ProductStatus);
-    };
+    const { data: printCategories = [] } = useQuery({
+        queryKey: ["print-categories"],
+        queryFn: fetchPrintCategories,
+        staleTime: 5 * 60 * 1000,
+    });
 
-    const handleCustomizationChange = (event: ChangeEvent<HTMLSelectElement>): void => {
-        onCustomizationChange(event.target.value as "all" | ProductCustomizationLevel);
-    };
+    const { data: productCategories = [] } = useQuery({
+        queryKey: ["product-categories"],
+        queryFn: fetchProductCategories,
+        staleTime: 5 * 60 * 1000,
+    });
 
-    const handleCategoryChange = (event: ChangeEvent<HTMLInputElement>): void => {
-        onCategoryChange(event.target.value);
-    };
-
-    const handleSubCategoryChange = (event: ChangeEvent<HTMLInputElement>): void => {
-        onSubCategoryChange(event.target.value);
-    };
-
-    const handleVisibilityChange = (event: ChangeEvent<HTMLSelectElement>): void => {
-        onVisibilityChange(event.target.value as "all" | ProductVisibility);
-    };
+    const hasActiveFilters =
+        status !== "all" || pricingMode !== "all" || Boolean(printCategory) || Boolean(category);
 
     return (
-        <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="md:col-span-3">
-                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Search</label>
-                    <p className="text-xs text-gray-500 mt-1">Name or internal code.</p>
+        <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                <div className="relative sm:col-span-2">
+                    <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <input
-                        type="text"
+                        type="search"
+                        placeholder="Search products or code..."
                         value={search}
-                        onChange={handleSearchChange}
-                        placeholder="Search products"
-                        className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                        onChange={(e) => onSearchChange(e.target.value)}
+                        className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
                     />
                 </div>
-                <div className="md:col-span-1">
-                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</label>
-                    <p className="text-xs text-gray-500 mt-1">Draft, published, archived.</p>
-                    <select
-                        value={status}
-                        onChange={handleStatusChange}
-                        className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                    >
-                        <option value="all">All</option>
-                        <option value="draft">Draft</option>
-                        <option value="published">Published</option>
-                        <option value="archived">Archived</option>
-                    </select>
-                </div>
+                <select
+                    value={status}
+                    onChange={(e) => onStatusChange(e.target.value as ProductStatus | "all")}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                >
+                    <option value="all">All Statuses</option>
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="archived">Archived</option>
+                </select>
+                <select
+                    value={pricingMode}
+                    onChange={(e) =>
+                        onPricingModeChange(e.target.value as ProductPricingMode | "all")
+                    }
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                >
+                    <option value="all">All Pricing</option>
+                    <option value="auto_calculate">Auto Calculate</option>
+                    <option value="quote_only">Quote Only</option>
+                </select>
             </div>
-            <div className="flex justify-end mt-3">
+
+            <div className="flex items-center justify-between">
                 <button
                     type="button"
-                    onClick={(): void => setShowAdvanced((prev: boolean): boolean => !prev)}
-                    className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:text-gray-900"
+                    onClick={() => setShowAdvanced((prev) => !prev)}
+                    className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700"
                 >
-                    {showAdvanced ? "Hide advanced filters" : "Show advanced filters"}
+                    <SlidersHorizontalIcon className="h-3.5 w-3.5" />
+                    {showAdvanced ? "Hide filters" : "More filters"}
                 </button>
+                {hasActiveFilters && (
+                    <button
+                        type="button"
+                        onClick={onReset}
+                        className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
+                    >
+                        <XIcon className="h-3.5 w-3.5" />
+                        Clear filters
+                    </button>
+                )}
             </div>
 
             {showAdvanced && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 rounded-lg border border-gray-100 bg-gray-50 p-3">
                     <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Customization</label>
-                        <p className="text-xs text-gray-500 mt-1">Pricing complexity.</p>
+                        <label className="mb-1 block text-xs font-medium text-gray-600">
+                            Print Category
+                        </label>
                         <select
-                            value={customizationLevel}
-                            onChange={handleCustomizationChange}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
+                            value={printCategory}
+                            onChange={(e) => onPrintCategoryChange(e.target.value)}
+                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
                         >
-                            <option value="all">All</option>
-                            <option value="non_customizable">Non-Customizable</option>
-                            <option value="semi_customizable">Semi-Customizable</option>
-                            <option value="fully_customizable">Fully Customizable</option>
+                            <option value="">All Print Categories</option>
+                            {printCategories.map((pc) => (
+                                <option key={pc.id} value={pc.id.toString()}>
+                                    {pc.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Visibility</label>
-                        <p className="text-xs text-gray-500 mt-1">Catalog display rules.</p>
+                        <label className="mb-1 block text-xs font-medium text-gray-600">
+                            Category
+                        </label>
                         <select
-                            value={visibility}
-                            onChange={handleVisibilityChange}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                        >
-                            <option value="all">All</option>
-                            <option value="catalog-search">Catalog & Search</option>
-                            <option value="catalog-only">Catalog Only</option>
-                            <option value="search-only">Search Only</option>
-                            <option value="hidden">Hidden</option>
-                        </select>
-                    </div>
-                    <div className="md:col-span-2">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Category</label>
-                        <p className="text-xs text-gray-500 mt-1">Primary category.</p>
-                        <input
-                            type="text"
                             value={category}
-                            onChange={handleCategoryChange}
-                            placeholder="Print Products"
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                        />
-                    </div>
-                    <div className="md:col-span-2">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Sub-Category</label>
-                        <p className="text-xs text-gray-500 mt-1">Secondary category.</p>
-                        <input
-                            type="text"
-                            value={subCategory}
-                            onChange={handleSubCategoryChange}
-                            placeholder="Business Cards"
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"
-                        />
+                            onChange={(e) => onCategoryChange(e.target.value)}
+                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                        >
+                            <option value="">All Categories</option>
+                            {productCategories.map((cat) => (
+                                <option key={cat.id} value={cat.id.toString()}>
+                                    {cat.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 </div>
             )}
-            <div className="flex justify-end mt-4">
-                <button
-                    type="button"
-                    onClick={onReset}
-                    className="text-sm font-medium text-gray-600 hover:text-gray-900"
-                >
-                    Clear filters
-                </button>
-            </div>
         </div>
     );
 }

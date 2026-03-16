@@ -1,412 +1,780 @@
-import { useState, type ChangeEvent, type FormEvent, type ReactElement } from "react";
-import { ImageIcon, X, UploadCloud } from "lucide-react";
-import type { ProductFormValues, ProductCustomizationLevel } from "@/types/products";
+"use client";
+
+import type { ReactElement } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { CheckIcon, TagIcon } from "lucide-react";
+import type { ProductFormValues } from "@/types/products";
+import {
+    fetchPrintCategories,
+    fetchProductCategories,
+    fetchProductFamilies,
+    fetchProductSubCategories,
+    fetchProductTags,
+} from "@/services/product-catalog-setup";
+
+type TabId = "basic" | "classification" | "pricing" | "physical" | "inventory" | "notes";
+
+interface Tab {
+    id: TabId;
+    label: string;
+}
+
+const TABS: Tab[] = [
+    { id: "basic", label: "Basic Info" },
+    { id: "classification", label: "Classification" },
+    { id: "pricing", label: "Pricing & Visibility" },
+    { id: "physical", label: "Physical" },
+    { id: "inventory", label: "Inventory" },
+    { id: "notes", label: "Notes" },
+];
 
 interface ProductFormProps {
     values: ProductFormValues;
     onValuesChange: (values: ProductFormValues) => void;
-    onPrimaryImageChange: (file: File | null) => void;
-    onGalleryImagesChange: (files: File[]) => void;
-    selectedPrimaryImageName: string | null;
-    selectedGalleryImageCount: number;
-    existingImageCount?: number;
-    hasExistingPrimaryImage?: boolean;
+    onImageChange: (file: File | null) => void;
+    selectedImageName: string | null;
     onSubmit: () => void;
     onCancel: () => void;
     submitLabel: string;
     isSubmitting: boolean;
+    existingImageUrl?: string | null;
 }
+
+function Field({
+    label,
+    required,
+    children,
+    hint,
+}: {
+    label: string;
+    required?: boolean;
+    children: ReactElement;
+    hint?: string;
+}): ReactElement {
+    return (
+        <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">
+                {label}
+                {required && <span className="ml-1 text-red-500">*</span>}
+            </label>
+            {children}
+            {hint && <p className="text-xs text-gray-400">{hint}</p>}
+        </div>
+    );
+}
+
+const inputCls =
+    "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue";
+
+const selectCls =
+    "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue";
+
+const textareaCls =
+    "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue resize-y";
 
 export default function ProductForm({
     values,
     onValuesChange,
-    onPrimaryImageChange,
-    onGalleryImagesChange,
-    selectedPrimaryImageName,
-    selectedGalleryImageCount,
-    existingImageCount,
-    hasExistingPrimaryImage,
+    onImageChange,
+    selectedImageName,
     onSubmit,
     onCancel,
     submitLabel,
     isSubmitting,
+    existingImageUrl,
 }: ProductFormProps): ReactElement {
-    const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
-    const [primaryFileName, setPrimaryFileName] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<TabId>("basic");
 
-    const addGalleryFiles = (incoming: File[]): void => {
-        setGalleryFiles(prev => {
-            const existing = new Set(prev.map(f => f.name + f.size));
-            const deduped = incoming.filter(f => !existing.has(f.name + f.size));
-            const next = [...prev, ...deduped].slice(0, 10);
-            onGalleryImagesChange(next);
-            return next;
-        });
+    const set = <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]): void => {
+        onValuesChange({ ...values, [key]: value });
     };
 
-    const removeGalleryFile = (index: number): void => {
-        setGalleryFiles(prev => {
-            const next = prev.filter((_, i) => i !== index);
-            onGalleryImagesChange(next);
-            return next;
-        });
+    const activeTabIndex = TABS.findIndex((t) => t.id === activeTab);
+
+    const { data: printCategories = [] } = useQuery({
+        queryKey: ["print-categories"],
+        queryFn: fetchPrintCategories,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const { data: productCategories = [] } = useQuery({
+        queryKey: ["product-categories"],
+        queryFn: fetchProductCategories,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const selectedCategoryId = values.primary_category
+        ? Number(values.primary_category)
+        : undefined;
+
+    const { data: subCategories = [] } = useQuery({
+        queryKey: ["product-subcategories", selectedCategoryId],
+        queryFn: () => fetchProductSubCategories(selectedCategoryId),
+        enabled: Boolean(selectedCategoryId),
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const { data: productFamilies = [] } = useQuery({
+        queryKey: ["product-families"],
+        queryFn: fetchProductFamilies,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const { data: availableTags = [] } = useQuery({
+        queryKey: ["product-tags"],
+        queryFn: fetchProductTags,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const handleCategoryChange = (categoryId: string): void => {
+        onValuesChange({ ...values, primary_category: categoryId, sub_category: "" });
     };
 
-    const updateField = <K extends keyof ProductFormValues>(field: K, value: ProductFormValues[K]): void => {
-        onValuesChange({
-            ...values,
-            [field]: value,
-        });
-    };
-
-    const handleTextChange = (field: keyof ProductFormValues) => (event: ChangeEvent<HTMLInputElement>): void => {
-        updateField(field, event.target.value as ProductFormValues[keyof ProductFormValues]);
-    };
-
-    const handleTextareaChange = (field: keyof ProductFormValues) => (event: ChangeEvent<HTMLTextAreaElement>): void => {
-        updateField(field, event.target.value as ProductFormValues[keyof ProductFormValues]);
-    };
-
-    const handleSelectChange = <T extends ProductFormValues[keyof ProductFormValues]>(field: keyof ProductFormValues) =>
-        (event: ChangeEvent<HTMLSelectElement>): void => {
-            updateField(field, event.target.value as T);
-        };
-
-    const handleNumberChange = (field: keyof ProductFormValues) => (event: ChangeEvent<HTMLInputElement>): void => {
-        updateField(field, Number(event.target.value) as ProductFormValues[keyof ProductFormValues]);
-    };
-
-    const handleCheckboxChange = (field: keyof ProductFormValues) => (event: ChangeEvent<HTMLInputElement>): void => {
-        updateField(field, event.target.checked as ProductFormValues[keyof ProductFormValues]);
-    };
-
-    const handleCustomizationChange = (event: ChangeEvent<HTMLSelectElement>): void => {
-        const nextValue = event.target.value as ProductCustomizationLevel;
-        updateField("customization_level", nextValue);
-        if (nextValue === "fully_customizable") {
-            updateField("base_price", "");
-        }
+    const toggleTag = (tagId: number): void => {
+        const current = values.tag_ids;
+        const next = current.includes(tagId)
+            ? current.filter((id) => id !== tagId)
+            : [...current, tagId];
+        set("tag_ids", next);
     };
 
     return (
-        <form
-            className="space-y-6"
-            onSubmit={(event: FormEvent<HTMLFormElement>): void => {
-                event.preventDefault();
-                onSubmit();
-            }}
-        >
-            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900">Basic Information</h2>
-                <p className="text-xs text-gray-500 mt-2">What customers see in the catalog.</p>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Product Name *</label>
-                        <p className="text-xs text-gray-500 mt-1">Simple customer-facing name.</p>
-                        <input
-                            type="text"
-                            value={values.name}
-                            onChange={handleTextChange("name")}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Primary Category</label>
-                        <p className="text-xs text-gray-500 mt-1">Main group for this product.</p>
-                        <input
-                            type="text"
-                            value={values.primary_category}
-                            onChange={handleTextChange("primary_category")}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                            placeholder="Print Products"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Sub-Category</label>
-                        <p className="text-xs text-gray-500 mt-1">Smaller group under the main category.</p>
-                        <input
-                            type="text"
-                            value={values.sub_category}
-                            onChange={handleTextChange("sub_category")}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                            placeholder="Business Cards"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Product Family</label>
-                        <p className="text-xs text-gray-500 mt-1">Optional grouping for related items.</p>
-                        <input
-                            type="text"
-                            value={values.product_family}
-                            onChange={handleTextChange("product_family")}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                            placeholder="Business Cards Family"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Product Type</label>
-                        <p className="text-xs text-gray-500 mt-1">Pick physical, digital, or service.</p>
-                        <select
-                            value={values.product_type}
-                            onChange={handleSelectChange("product_type")}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                        >
-                            <option value="physical">Physical</option>
-                            <option value="digital">Digital</option>
-                            <option value="service">Service</option>
-                        </select>
-                    </div>
-                    <div className="md:col-span-2">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Short Description *</label>
-                        <p className="text-xs text-gray-500 mt-1">One sentence summary for lists.</p>
-                        <textarea
-                            value={values.short_description}
-                            onChange={handleTextareaChange("short_description")}
-                            rows={2}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                            required
-                        />
-                    </div>
-                    <div className="md:col-span-2">
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Long Description *</label>
-                        <p className="text-xs text-gray-500 mt-1">Full details customers should know.</p>
-                        <textarea
-                            value={values.long_description}
-                            onChange={handleTextareaChange("long_description")}
-                            rows={4}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                            required
-                        />
-                    </div>
-                </div>
+        <div className="flex flex-col min-h-0">
+            {/* Tab bar */}
+            <div className="flex gap-1 border-b border-gray-200 bg-white px-4 overflow-x-auto">
+                {TABS.map((tab, index) => (
+                    <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`relative shrink-0 px-4 py-3 text-sm font-medium transition-colors ${
+                            activeTab === tab.id
+                                ? "border-b-2 border-brand-blue text-brand-blue"
+                                : "text-gray-500 hover:text-gray-700"
+                        }`}
+                    >
+                        <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-xs">
+                            {index + 1}
+                        </span>
+                        {tab.label}
+                    </button>
+                ))}
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900">Pricing & Visibility</h2>
-                <p className="text-xs text-gray-500 mt-2">Define pricing rules and catalog visibility.</p>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Customization Level</label>
-                        <p className="text-xs text-gray-500 mt-1">How flexible the product options are.</p>
-                        <select
-                            value={values.customization_level}
-                            onChange={handleCustomizationChange}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                        >
-                            <option value="non_customizable">Non-Customizable</option>
-                            <option value="semi_customizable">Semi-Customizable</option>
-                            <option value="fully_customizable">Fully Customizable</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Base Price</label>
-                        <p className="text-xs text-gray-500 mt-1">Starting price for fixed items.</p>
-                        <input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={values.base_price}
-                            onChange={handleTextChange("base_price")}
-                            disabled={values.customization_level === "fully_customizable"}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-100"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</label>
-                        <p className="text-xs text-gray-500 mt-1">Draft keeps it hidden from customers.</p>
-                        <select
-                            value={values.status}
-                            onChange={handleSelectChange("status")}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                        >
-                            <option value="draft">Draft</option>
-                            <option value="published">Published</option>
-                            <option value="archived">Archived</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Visibility</label>
-                        <p className="text-xs text-gray-500 mt-1">Where customers can find it.</p>
-                        <select
-                            value={values.visibility}
-                            onChange={handleSelectChange("visibility")}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                        >
-                            <option value="catalog-search">Catalog & Search</option>
-                            <option value="catalog-only">Catalog Only</option>
-                            <option value="search-only">Search Only</option>
-                            <option value="hidden">Hidden</option>
-                        </select>
-                    </div>
-                    <div className="flex items-center gap-3 mt-2">
-                        <input
-                            type="checkbox"
-                            checked={values.is_visible}
-                            onChange={handleCheckboxChange("is_visible")}
-                            className="h-4 w-4"
-                        />
-                        <div>
-                            <div className="text-sm font-semibold text-gray-900">Visible to customers</div>
-                            <p className="text-xs text-gray-500">Turn off to hide in the storefront.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900">Inventory</h2>
-                <p className="text-xs text-gray-500 mt-2">Track stock and availability.</p>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Stock Status</label>
-                        <p className="text-xs text-gray-500 mt-1">Current availability for this item.</p>
-                        <select
-                            value={values.stock_status}
-                            onChange={handleSelectChange("stock_status")}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                        >
-                            <option value="made_to_order">Made to Order</option>
-                            <option value="in_stock">In Stock</option>
-                            <option value="low_stock">Low Stock</option>
-                            <option value="out_of_stock">Out of Stock</option>
-                            <option value="discontinued">Discontinued</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Stock Quantity</label>
-                        <p className="text-xs text-gray-500 mt-1">How many are on hand.</p>
-                        <input
-                            type="number"
-                            min={0}
-                            value={values.stock_quantity}
-                            onChange={handleNumberChange("stock_quantity")}
-                            className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                        />
-                    </div>
-                    <div className="flex items-center gap-3 mt-2">
-                        <input
-                            type="checkbox"
-                            checked={values.track_inventory}
-                            onChange={handleCheckboxChange("track_inventory")}
-                            className="h-4 w-4"
-                        />
-                        <div>
-                            <div className="text-sm font-semibold text-gray-900">Track inventory</div>
-                            <p className="text-xs text-gray-500">Count stock automatically.</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 mt-2">
-                        <input
-                            type="checkbox"
-                            checked={values.allow_backorders}
-                            onChange={handleCheckboxChange("allow_backorders")}
-                            className="h-4 w-4"
-                        />
-                        <div>
-                            <div className="text-sm font-semibold text-gray-900">Allow backorders</div>
-                            <p className="text-xs text-gray-500">Let customers order even if empty.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900">Product Images</h2>
-                <p className="text-xs text-gray-500 mt-2">Add one primary image and up to 10 additional gallery images.</p>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Primary Image</label>
-                        <label className="mt-2 flex flex-col items-center justify-center gap-2 w-full rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 cursor-pointer hover:border-brand-blue hover:bg-brand-blue/5 transition-colors">
-                            <UploadCloud className="w-6 h-6 text-gray-400" />
-                            <span className="text-sm text-gray-600">
-                                {primaryFileName ?? (hasExistingPrimaryImage ? "Replace existing image" : "Click to select image")}
-                            </span>
-                            <span className="text-xs text-gray-400">PNG, JPG, WEBP</span>
+            {/* Tab content */}
+            <div className="flex-1 overflow-y-auto p-6">
+                {activeTab === "basic" && (
+                    <div className="max-w-2xl space-y-5">
+                        <Field label="Product Name" required>
                             <input
-                                type="file"
-                                accept="image/*"
-                                className="sr-only"
-                                onChange={(event): void => {
-                                    const file = event.target.files?.[0] ?? null;
-                                    onPrimaryImageChange(file);
-                                    setPrimaryFileName(file?.name ?? null);
-                                }}
+                                type="text"
+                                className={inputCls}
+                                placeholder="e.g. Business Cards – Premium"
+                                value={values.name}
+                                onChange={(e) => set("name", e.target.value)}
                             />
-                        </label>
-                        {hasExistingPrimaryImage && !primaryFileName && (
-                            <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                                <ImageIcon className="w-3 h-3" /> Primary image already uploaded
-                            </p>
+                        </Field>
+                        <Field label="Short Description" required hint={`${values.short_description.length}/150 characters`}>
+                            <input
+                                type="text"
+                                className={inputCls}
+                                placeholder="One-line summary shown in listings"
+                                maxLength={150}
+                                value={values.short_description}
+                                onChange={(e) => set("short_description", e.target.value)}
+                            />
+                        </Field>
+                        <Field label="Full Description" required>
+                            <textarea
+                                className={textareaCls}
+                                rows={5}
+                                placeholder="Detailed product description shown on the product page"
+                                value={values.long_description}
+                                onChange={(e) => set("long_description", e.target.value)}
+                            />
+                        </Field>
+                        <Field label="Maintenance & Care" hint="Care instructions visible to clients">
+                            <textarea
+                                className={textareaCls}
+                                rows={3}
+                                placeholder="e.g. Store in a cool, dry place away from direct sunlight"
+                                value={values.maintenance}
+                                onChange={(e) => set("maintenance", e.target.value)}
+                            />
+                        </Field>
+                        <Field label="Technical Specifications" hint="Technical details for internal and client reference">
+                            <textarea
+                                className={textareaCls}
+                                rows={3}
+                                placeholder="e.g. 350gsm coated art board, CMYK print, matte/gloss laminate"
+                                value={values.technical_specs}
+                                onChange={(e) => set("technical_specs", e.target.value)}
+                            />
+                        </Field>
+                    </div>
+                )}
+
+                {activeTab === "classification" && (
+                    <div className="max-w-2xl space-y-5">
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Print Category">
+                                <select
+                                    className={selectCls}
+                                    value={values.print_category}
+                                    onChange={(e) => set("print_category", e.target.value)}
+                                >
+                                    <option value="">Select print category</option>
+                                    {printCategories.map((pc) => (
+                                        <option key={pc.id} value={pc.id.toString()}>
+                                            {pc.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Field>
+                            <Field label="Product Type">
+                                <select
+                                    className={selectCls}
+                                    value={values.product_type}
+                                    onChange={(e) =>
+                                        set(
+                                            "product_type",
+                                            e.target.value as ProductFormValues["product_type"],
+                                        )
+                                    }
+                                >
+                                    <option value="physical">Physical Product</option>
+                                    <option value="digital">Digital Product</option>
+                                    <option value="service">Service</option>
+                                </select>
+                            </Field>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Category">
+                                <select
+                                    className={selectCls}
+                                    value={values.primary_category}
+                                    onChange={(e) => handleCategoryChange(e.target.value)}
+                                >
+                                    <option value="">Select category</option>
+                                    {productCategories.map((cat) => (
+                                        <option key={cat.id} value={cat.id.toString()}>
+                                            {cat.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Field>
+                            <Field label="Sub-Category" hint={!selectedCategoryId ? "Select a category first" : undefined}>
+                                <select
+                                    className={selectCls}
+                                    value={values.sub_category}
+                                    onChange={(e) => set("sub_category", e.target.value)}
+                                    disabled={!selectedCategoryId}
+                                >
+                                    <option value="">Select sub-category</option>
+                                    {subCategories.map((sc) => (
+                                        <option key={sc.id} value={sc.id.toString()}>
+                                            {sc.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Field>
+                        </div>
+                        <Field label="Product Family">
+                            <select
+                                className={selectCls}
+                                value={values.product_family}
+                                onChange={(e) => set("product_family", e.target.value)}
+                            >
+                                <option value="">Select product family</option>
+                                {productFamilies.map((fam) => (
+                                    <option key={fam.id} value={fam.id.toString()}>
+                                        {fam.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </Field>
+                        <Field label="Tags" hint="Select all relevant tags">
+                            <div className="flex flex-wrap gap-2 pt-1">
+                                {availableTags.map((tag) => {
+                                    const selected = values.tag_ids.includes(tag.id);
+                                    return (
+                                        <button
+                                            key={tag.id}
+                                            type="button"
+                                            onClick={() => toggleTag(tag.id)}
+                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                                                selected
+                                                    ? "bg-brand-blue text-white"
+                                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                            }`}
+                                        >
+                                            {selected ? (
+                                                <CheckIcon className="h-3 w-3" />
+                                            ) : (
+                                                <TagIcon className="h-3 w-3" />
+                                            )}
+                                            {tag.name}
+                                        </button>
+                                    );
+                                })}
+                                {availableTags.length === 0 && (
+                                    <p className="text-xs text-gray-400">No tags available</p>
+                                )}
+                            </div>
+                        </Field>
+                    </div>
+                )}
+
+                {activeTab === "pricing" && (
+                    <div className="max-w-2xl space-y-6">
+                        <Field label="Pricing Mode" required hint="Auto Calculate: storefront computes price live from configured spec groups. Quote Only: Production Team prices each order manually.">
+                            <div className="grid grid-cols-2 gap-3 pt-1">
+                                {(
+                                    [
+                                        {
+                                            value: "auto_calculate",
+                                            title: "Auto Calculate",
+                                            description:
+                                                "Price is computed live from product spec groups when customer configures their order.",
+                                        },
+                                        {
+                                            value: "quote_only",
+                                            title: "Quote Only",
+                                            description:
+                                                "Production Team prices each order manually before it is sent to the client.",
+                                        },
+                                    ] as const
+                                ).map((option) => {
+                                    const selected = values.pricing_mode === option.value;
+                                    return (
+                                        <button
+                                            key={option.value}
+                                            type="button"
+                                            onClick={() => set("pricing_mode", option.value)}
+                                            className={`rounded-xl border-2 p-4 text-left transition-colors ${
+                                                selected
+                                                    ? "border-brand-blue bg-brand-blue/5"
+                                                    : "border-gray-200 hover:border-gray-300"
+                                            }`}
+                                        >
+                                            <p className={`text-sm font-semibold ${selected ? "text-brand-blue" : "text-gray-800"}`}>
+                                                {option.title}
+                                            </p>
+                                            <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                                                {option.description}
+                                            </p>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </Field>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Status">
+                                <select
+                                    className={selectCls}
+                                    value={values.status}
+                                    onChange={(e) =>
+                                        set(
+                                            "status",
+                                            e.target.value as ProductFormValues["status"],
+                                        )
+                                    }
+                                >
+                                    <option value="draft">Draft</option>
+                                    <option value="published">Published</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+                            </Field>
+                            <Field label="Storefront Visibility">
+                                <select
+                                    className={selectCls}
+                                    value={values.visibility}
+                                    onChange={(e) =>
+                                        set(
+                                            "visibility",
+                                            e.target.value as ProductFormValues["visibility"],
+                                        )
+                                    }
+                                >
+                                    <option value="catalog-search">Catalog and Search</option>
+                                    <option value="catalog-only">Catalog Only</option>
+                                    <option value="search-only">Search Only</option>
+                                    <option value="hidden">Hidden</option>
+                                </select>
+                            </Field>
+                        </div>
+
+                        <div>
+                            <p className="text-sm font-medium text-gray-700 mb-3">Badges & Flags</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                {(
+                                    [
+                                        { key: "is_visible", label: "Visible to customers" },
+                                        { key: "feature_product", label: "Featured product" },
+                                        { key: "bestseller_badge", label: "Bestseller badge" },
+                                        { key: "new_arrival", label: "New arrival badge" },
+                                        { key: "on_sale_badge", label: "On sale badge" },
+                                    ] as Array<{ key: keyof ProductFormValues; label: string }>
+                                ).map(({ key, label }) => (
+                                    <label
+                                        key={key}
+                                        className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-gray-200 px-3 py-2.5 hover:bg-gray-50"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={values[key] as boolean}
+                                            onChange={(e) => set(key, e.target.checked)}
+                                            className="h-4 w-4 rounded text-brand-blue"
+                                        />
+                                        <span className="text-sm text-gray-700">{label}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        {values.new_arrival && (
+                            <Field label="New Arrival Expiry" hint="Badge is removed automatically on this date">
+                                <input
+                                    type="date"
+                                    className={inputCls}
+                                    value={values.new_arrival_expires}
+                                    onChange={(e) => set("new_arrival_expires", e.target.value)}
+                                />
+                            </Field>
                         )}
                     </div>
+                )}
 
-                    <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                            Additional Images
-                            <span className="ml-2 text-gray-400 font-normal normal-case">up to 10</span>
-                        </label>
-                        <label className="mt-2 flex flex-col items-center justify-center gap-2 w-full rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 cursor-pointer hover:border-brand-blue hover:bg-brand-blue/5 transition-colors">
-                            <UploadCloud className="w-6 h-6 text-gray-400" />
-                            <span className="text-sm text-gray-600">Click to add more images</span>
-                            <span className="text-xs text-gray-400">Each pick adds to the list · Max 10 total</span>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                className="sr-only"
-                                onChange={(event): void => {
-                                    const files = Array.from(event.target.files ?? []);
-                                    addGalleryFiles(files);
-                                    event.target.value = "";
-                                }}
-                            />
-                        </label>
+                {activeTab === "physical" && (
+                    <div className="max-w-2xl space-y-5">
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Unit of Measure">
+                                <select
+                                    className={selectCls}
+                                    value={values.unit_of_measure}
+                                    onChange={(e) =>
+                                        set(
+                                            "unit_of_measure",
+                                            e.target.value as ProductFormValues["unit_of_measure"],
+                                        )
+                                    }
+                                >
+                                    <option value="pieces">Pieces</option>
+                                    <option value="packs">Packs</option>
+                                    <option value="sets">Sets</option>
+                                    <option value="sqm">m²</option>
+                                    <option value="cm">Centimeters</option>
+                                </select>
+                            </Field>
+                            <Field label="Custom Unit" hint="Fill if unit not in the list above">
+                                <input
+                                    type="text"
+                                    className={inputCls}
+                                    placeholder="e.g. Linear metre"
+                                    value={values.unit_of_measure_custom}
+                                    onChange={(e) => set("unit_of_measure_custom", e.target.value)}
+                                />
+                            </Field>
+                        </div>
 
-                        {galleryFiles.length > 0 ? (
-                            <div className="mt-3 space-y-1">
-                                <p className="text-xs font-medium text-gray-600">{galleryFiles.length}/10 image{galleryFiles.length > 1 ? "s" : ""} queued</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {galleryFiles.map((file, i) => (
-                                        <span key={i} className="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue text-xs font-medium max-w-[200px]">
-                                            <ImageIcon className="w-3 h-3 flex-shrink-0" />
-                                            <span className="truncate">{file.name}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeGalleryFile(i)}
-                                                className="flex-shrink-0 ml-0.5 rounded-full hover:bg-brand-blue/20 p-0.5"
-                                            >
-                                                <X className="w-3 h-3" />
-                                            </button>
-                                        </span>
-                                    ))}
+                        <div className="grid grid-cols-3 gap-4">
+                            <Field label="Weight">
+                                <input
+                                    type="number"
+                                    className={inputCls}
+                                    placeholder="0.00"
+                                    min={0}
+                                    step="0.01"
+                                    value={values.weight}
+                                    onChange={(e) => set("weight", e.target.value)}
+                                />
+                            </Field>
+                            <Field label="Weight Unit">
+                                <select
+                                    className={selectCls}
+                                    value={values.weight_unit}
+                                    onChange={(e) =>
+                                        set(
+                                            "weight_unit",
+                                            e.target.value as ProductFormValues["weight_unit"],
+                                        )
+                                    }
+                                >
+                                    <option value="kg">Kilograms</option>
+                                    <option value="g">Grams</option>
+                                    <option value="gsm">GSM (g/m²)</option>
+                                </select>
+                            </Field>
+                            <Field label="Dimension Unit">
+                                <select
+                                    className={selectCls}
+                                    value={values.dimension_unit}
+                                    onChange={(e) =>
+                                        set(
+                                            "dimension_unit",
+                                            e.target.value as ProductFormValues["dimension_unit"],
+                                        )
+                                    }
+                                >
+                                    <option value="cm">Centimeters</option>
+                                    <option value="mm">Millimeters</option>
+                                    <option value="in">Inches</option>
+                                </select>
+                            </Field>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4">
+                            <Field label="Length">
+                                <input
+                                    type="number"
+                                    className={inputCls}
+                                    placeholder="0.00"
+                                    min={0}
+                                    step="0.01"
+                                    value={values.length}
+                                    onChange={(e) => set("length", e.target.value)}
+                                />
+                            </Field>
+                            <Field label="Width">
+                                <input
+                                    type="number"
+                                    className={inputCls}
+                                    placeholder="0.00"
+                                    min={0}
+                                    step="0.01"
+                                    value={values.width}
+                                    onChange={(e) => set("width", e.target.value)}
+                                />
+                            </Field>
+                            <Field label="Height">
+                                <input
+                                    type="number"
+                                    className={inputCls}
+                                    placeholder="0.00"
+                                    min={0}
+                                    step="0.01"
+                                    value={values.height}
+                                    onChange={(e) => set("height", e.target.value)}
+                                />
+                            </Field>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Warranty">
+                                <select
+                                    className={selectCls}
+                                    value={values.warranty}
+                                    onChange={(e) =>
+                                        set(
+                                            "warranty",
+                                            e.target.value as ProductFormValues["warranty"],
+                                        )
+                                    }
+                                >
+                                    <option value="satisfaction-guarantee">Satisfaction Guarantee</option>
+                                    <option value="no-warranty">No Warranty</option>
+                                    <option value="30-days">30 Days</option>
+                                    <option value="90-days">90 Days</option>
+                                </select>
+                            </Field>
+                            <Field label="Country of Origin">
+                                <select
+                                    className={selectCls}
+                                    value={values.country_of_origin}
+                                    onChange={(e) =>
+                                        set(
+                                            "country_of_origin",
+                                            e.target.value as ProductFormValues["country_of_origin"],
+                                        )
+                                    }
+                                >
+                                    <option value="kenya">Kenya</option>
+                                    <option value="china">China</option>
+                                    <option value="india">India</option>
+                                    <option value="uae">UAE</option>
+                                </select>
+                            </Field>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "inventory" && (
+                    <div className="max-w-2xl space-y-5">
+                        <Field label="Stock Status">
+                            <select
+                                className={selectCls}
+                                value={values.stock_status}
+                                onChange={(e) =>
+                                    set(
+                                        "stock_status",
+                                        e.target.value as ProductFormValues["stock_status"],
+                                    )
+                                }
+                            >
+                                <option value="made_to_order">Made to Order</option>
+                                <option value="in_stock">In Stock</option>
+                                <option value="low_stock">Low Stock</option>
+                                <option value="out_of_stock">Out of Stock</option>
+                                <option value="discontinued">Discontinued</option>
+                            </select>
+                        </Field>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field label="Stock Quantity">
+                                <input
+                                    type="number"
+                                    className={inputCls}
+                                    min={0}
+                                    value={values.stock_quantity}
+                                    onChange={(e) => set("stock_quantity", Number(e.target.value))}
+                                />
+                            </Field>
+                            <Field label="Low Stock Threshold" hint="Alert when quantity falls below this">
+                                <input
+                                    type="number"
+                                    className={inputCls}
+                                    min={0}
+                                    value={values.low_stock_threshold}
+                                    onChange={(e) =>
+                                        set("low_stock_threshold", Number(e.target.value))
+                                    }
+                                />
+                            </Field>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:bg-gray-50">
+                                <input
+                                    type="checkbox"
+                                    checked={values.track_inventory}
+                                    onChange={(e) => set("track_inventory", e.target.checked)}
+                                    className="h-4 w-4 rounded text-brand-blue"
+                                />
+                                <div>
+                                    <p className="text-sm font-medium text-gray-800">Track Inventory</p>
+                                    <p className="text-xs text-gray-400">
+                                        Automatically update stock levels when orders are placed
+                                    </p>
                                 </div>
+                            </label>
+                            <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:bg-gray-50">
+                                <input
+                                    type="checkbox"
+                                    checked={values.allow_backorders}
+                                    onChange={(e) => set("allow_backorders", e.target.checked)}
+                                    className="h-4 w-4 rounded text-brand-blue"
+                                />
+                                <div>
+                                    <p className="text-sm font-medium text-gray-800">Allow Backorders</p>
+                                    <p className="text-xs text-gray-400">
+                                        Accept orders even when stock is unavailable
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "notes" && (
+                    <div className="max-w-2xl space-y-5">
+                        <Field label="Internal Notes" hint="Only visible to staff — never shown to clients">
+                            <textarea
+                                className={textareaCls}
+                                rows={4}
+                                placeholder="Notes for the production team, pricing rationale, supplier details..."
+                                value={values.internal_notes}
+                                onChange={(e) => set("internal_notes", e.target.value)}
+                            />
+                        </Field>
+                        <Field label="Client Notes" hint="Visible to clients on the product page">
+                            <textarea
+                                className={textareaCls}
+                                rows={4}
+                                placeholder="Additional notes you want clients to see when viewing this product..."
+                                value={values.client_notes}
+                                onChange={(e) => set("client_notes", e.target.value)}
+                            />
+                        </Field>
+                        <Field label="Product Image">
+                            <div className="space-y-2">
+                                {existingImageUrl && (
+                                    <img
+                                        src={existingImageUrl}
+                                        alt="Current product"
+                                        className="h-24 w-24 rounded-lg object-cover border border-gray-200"
+                                    />
+                                )}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => onImageChange(e.target.files?.[0] ?? null)}
+                                    className="block text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-blue/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brand-blue hover:file:bg-brand-blue/20"
+                                />
+                                {selectedImageName && (
+                                    <p className="text-xs text-gray-500">{selectedImageName}</p>
+                                )}
                             </div>
-                        ) : typeof existingImageCount === "number" && existingImageCount > 0 ? (
-                            <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                                <ImageIcon className="w-3 h-3" /> {existingImageCount} existing image{existingImageCount > 1 ? "s" : ""} uploaded
-                            </p>
+                        </Field>
+                    </div>
+                )}
+            </div>
+
+            {/* Sticky action bar */}
+            <div className="border-t border-gray-200 bg-white px-6 py-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex gap-1">
+                        {TABS.map((tab, index) => (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`h-2 w-2 rounded-full transition-colors ${
+                                    activeTab === tab.id ? "bg-brand-blue" : "bg-gray-300"
+                                }`}
+                                title={tab.label}
+                                aria-label={`Go to ${tab.label}`}
+                            />
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {activeTabIndex > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab(TABS[activeTabIndex - 1].id)}
+                                className="text-sm text-gray-500 hover:text-gray-700"
+                            >
+                                ← Back
+                            </button>
+                        )}
+                        {activeTabIndex < TABS.length - 1 ? (
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab(TABS[activeTabIndex + 1].id)}
+                                className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                            >
+                                Next →
+                            </button>
                         ) : null}
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onSubmit}
+                            disabled={isSubmitting}
+                            className="rounded-lg bg-brand-blue px-5 py-2 text-sm font-semibold text-white hover:bg-brand-blue/90 disabled:opacity-60"
+                        >
+                            {isSubmitting ? "Saving..." : submitLabel}
+                        </button>
                     </div>
                 </div>
             </div>
-
-            <div className="flex items-center justify-end gap-3">
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600"
-                >
-                    Cancel
-                </button>
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="rounded-md bg-brand-blue px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                >
-                    {submitLabel}
-                </button>
-            </div>
-        </form>
+        </div>
     );
 }

@@ -1,11 +1,16 @@
-import {
+import { getCsrfToken } from "@/lib/api/auth";
+import type {
     CreateProductPayload,
+    CreateSpecGroupPayload,
+    CreateSpecOptionPayload,
+    CreateSpecOptionRangePayload,
     Product,
+    ProductSpecGroup,
     ProductsQueryParams,
     ProductsResponse,
-    UpdateProductPayload,
+    SpecOption,
+    SpecOptionRange,
 } from "@/types/products";
-import { getCsrfToken } from "@/lib/api/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -13,246 +18,312 @@ const buildQueryString = (params: ProductsQueryParams): string => {
     const searchParams = new URLSearchParams();
     searchParams.set("page", params.page.toString());
     searchParams.set("page_size", params.pageSize.toString());
-
-    if (params.search.trim()) {
-        searchParams.set("search", params.search.trim());
-    }
-
-    if (params.status !== "all") {
-        searchParams.set("status", params.status);
-    }
-
-    if (params.customizationLevel !== "all") {
-        searchParams.set("customization_level", params.customizationLevel);
-    }
-
-    if (params.category.trim()) {
-        searchParams.set("primary_category", params.category.trim());
-    }
-
-    if (params.subCategory.trim()) {
-        searchParams.set("sub_category", params.subCategory.trim());
-    }
-
-    if (params.visibility !== "all") {
-        searchParams.set("visibility", params.visibility);
-    }
-
+    if (params.search.trim()) searchParams.set("search", params.search.trim());
+    if (params.status !== "all") searchParams.set("status", params.status);
+    if (params.pricingMode !== "all") searchParams.set("pricing_mode", params.pricingMode);
+    if (params.printCategory) searchParams.set("print_category", params.printCategory);
+    if (params.category) searchParams.set("category", params.category);
     return searchParams.toString();
 };
 
-const buildWriteHeaders = async (): Promise<HeadersInit> => {
-    const csrfToken = await getCsrfToken();
-    return {
-        "Content-Type": "application/json",
-        ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
-    };
-};
-
-const buildMultipartHeaders = async (): Promise<HeadersInit> => {
-    const csrfToken = await getCsrfToken();
-    return {
-        ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
-    };
-};
-
-type ApiProduct = Omit<Product, "base_price"> & {
-    base_price: number | string | null;
-};
-
-interface ApiProductsResponse extends Omit<ProductsResponse, "results"> {
-    results: ApiProduct[];
-}
-
-const parseBasePrice = (value: number | string | null): number | null => {
-    if (value === null) {
-        return null;
-    }
-
-    if (typeof value === "number") {
-        return Number.isFinite(value) ? value : null;
-    }
-
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-};
-
-const normalizeProduct = (product: ApiProduct): Product => {
-    return {
-        ...product,
-        base_price: parseBasePrice(product.base_price),
-    };
-};
-
 export async function fetchProducts(params: ProductsQueryParams): Promise<ProductsResponse> {
-    const queryString = buildQueryString(params);
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/?${queryString}`, {
-        headers: {
-            "Content-Type": "application/json",
-        },
+    const qs = buildQueryString(params);
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-admin/?${qs}`, {
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         cache: "no-store",
     });
-
-    if (!response.ok) {
-        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to fetch products: ${response.status} ${errorText}`);
-    }
-
-    const payload = (await response.json()) as ApiProductsResponse;
-    return {
-        ...payload,
-        results: payload.results.map(normalizeProduct),
-    };
+    if (!response.ok) throw new Error(`Failed to fetch products: ${response.status}`);
+    return response.json() as Promise<ProductsResponse>;
 }
 
 export async function fetchProduct(productId: number): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/`, {
-        headers: {
-            "Content-Type": "application/json",
-        },
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-admin/${productId}/`, {
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         cache: "no-store",
     });
-
-    if (!response.ok) {
-        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to fetch product: ${response.status} ${errorText}`);
-    }
-
-    const payload = (await response.json()) as ApiProduct;
-    return normalizeProduct(payload);
+    if (!response.ok) throw new Error(`Failed to fetch product: ${response.status}`);
+    return response.json() as Promise<Product>;
 }
 
 export async function createProduct(payload: CreateProductPayload): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/`, {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-admin/`, {
         method: "POST",
-        headers: await buildWriteHeaders(),
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
         credentials: "include",
         body: JSON.stringify(payload),
     });
-
     if (!response.ok) {
-        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to create product: ${response.status} ${errorText}`);
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to create product: ${response.status} ${err}`);
     }
-
-    const created = (await response.json()) as ApiProduct;
-    return normalizeProduct(created);
+    return response.json() as Promise<Product>;
 }
 
-export async function updateProduct(productId: number, payload: UpdateProductPayload): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/`, {
+export async function updateProduct(
+    productId: number,
+    payload: Partial<CreateProductPayload>,
+): Promise<Product> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-admin/${productId}/`, {
         method: "PATCH",
-        headers: await buildWriteHeaders(),
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
         credentials: "include",
         body: JSON.stringify(payload),
     });
-
     if (!response.ok) {
-        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to update product: ${response.status} ${errorText}`);
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to update product: ${response.status} ${err}`);
     }
-
-    const updated = (await response.json()) as ApiProduct;
-    return normalizeProduct(updated);
+    return response.json() as Promise<Product>;
 }
 
 export async function deleteProduct(productId: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/`, {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-admin/${productId}/`, {
         method: "DELETE",
-        headers: await buildWriteHeaders(),
+        headers: { "X-CSRFToken": csrfToken },
         credentials: "include",
     });
-
-    if (!response.ok) {
-        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to delete product: ${response.status} ${errorText}`);
-    }
+    if (!response.ok) throw new Error(`Failed to delete product: ${response.status}`);
 }
 
-export async function publishProduct(productId: number): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/publish/`, {
+export async function publishProduct(productId: number): Promise<void> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-admin/${productId}/publish/`, {
         method: "POST",
-        headers: await buildWriteHeaders(),
+        headers: { "X-CSRFToken": csrfToken },
         credentials: "include",
     });
-
     if (!response.ok) {
-        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to publish product: ${response.status} ${errorText}`);
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to publish product: ${response.status} ${err}`);
     }
-
-    const published = (await response.json()) as ApiProduct;
-    return normalizeProduct(published);
 }
 
-export async function archiveProduct(productId: number): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/archive/`, {
+export async function archiveProduct(productId: number): Promise<void> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-admin/${productId}/archive/`, {
         method: "POST",
-        headers: await buildWriteHeaders(),
+        headers: { "X-CSRFToken": csrfToken },
         credentials: "include",
     });
-
-    if (!response.ok) {
-        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to archive product: ${response.status} ${errorText}`);
-    }
-
-    const archived = (await response.json()) as ApiProduct;
-    return normalizeProduct(archived);
+    if (!response.ok) throw new Error(`Failed to archive product: ${response.status}`);
 }
 
-export async function saveDraft(productId: number): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/save-draft/`, {
-        method: "POST",
-        headers: await buildWriteHeaders(),
-        credentials: "include",
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to save draft: ${response.status} ${errorText}`);
-    }
-
-    const draft = (await response.json()) as ApiProduct;
-    return normalizeProduct(draft);
-}
-
-export async function uploadProductPrimaryImage(productId: number, image: File, altText: string): Promise<void> {
+export async function uploadProductImage(
+    productId: number,
+    file: File,
+    altText: string,
+): Promise<void> {
+    const csrfToken = await getCsrfToken();
     const formData = new FormData();
-    formData.append("image", image);
+    formData.append("product", String(productId));
+    formData.append("image", file);
     formData.append("alt_text", altText);
-
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/upload_primary_image/`, {
+    formData.append("is_primary", "true");
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-images/`, {
         method: "POST",
-        headers: await buildMultipartHeaders(),
+        headers: { "X-CSRFToken": csrfToken },
         credentials: "include",
         body: formData,
     });
-
     if (!response.ok) {
-        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to upload primary image: ${response.status} ${errorText}`);
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to upload image: ${response.status} ${err}`);
     }
 }
 
-export async function uploadProductGalleryImages(productId: number, images: File[], altText: string): Promise<void> {
-    const formData = new FormData();
-    for (const image of images) {
-        formData.append("images", image);
-    }
-    formData.append("alt_text", altText);
+export async function fetchSpecGroups(productId: number): Promise<ProductSpecGroup[]> {
+    const response = await fetch(
+        `${API_BASE_URL}/api/v1/product-spec-groups/?product=${productId}&page_size=200`,
+        { credentials: "include", cache: "no-store" },
+    );
+    if (!response.ok) throw new Error(`Failed to fetch spec groups: ${response.status}`);
+    const data = (await response.json()) as { results: ProductSpecGroup[] } | ProductSpecGroup[];
+    return Array.isArray(data) ? data : data.results;
+}
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/products/${productId}/upload_gallery_images/`, {
+export async function createSpecGroup(payload: CreateSpecGroupPayload): Promise<ProductSpecGroup> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-spec-groups/`, {
         method: "POST",
-        headers: await buildMultipartHeaders(),
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to create spec group: ${response.status} ${err}`);
+    }
+    return response.json() as Promise<ProductSpecGroup>;
+}
+
+export async function updateSpecGroup(
+    specGroupId: number,
+    payload: Partial<CreateSpecGroupPayload>,
+): Promise<ProductSpecGroup> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-spec-groups/${specGroupId}/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to update spec group: ${response.status} ${err}`);
+    }
+    return response.json() as Promise<ProductSpecGroup>;
+}
+
+export async function deleteSpecGroup(specGroupId: number): Promise<void> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-spec-groups/${specGroupId}/`, {
+        method: "DELETE",
+        headers: { "X-CSRFToken": csrfToken },
+        credentials: "include",
+    });
+    if (!response.ok) throw new Error(`Failed to delete spec group: ${response.status}`);
+}
+
+export async function createSpecOption(payload: CreateSpecOptionPayload): Promise<SpecOption> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/spec-options/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to create spec option: ${response.status} ${err}`);
+    }
+    return response.json() as Promise<SpecOption>;
+}
+
+export async function updateSpecOption(
+    specOptionId: number,
+    payload: Partial<CreateSpecOptionPayload>,
+): Promise<SpecOption> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/spec-options/${specOptionId}/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to update spec option: ${response.status} ${err}`);
+    }
+    return response.json() as Promise<SpecOption>;
+}
+
+export async function deleteSpecOption(specOptionId: number): Promise<void> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/spec-options/${specOptionId}/`, {
+        method: "DELETE",
+        headers: { "X-CSRFToken": csrfToken },
+        credentials: "include",
+    });
+    if (!response.ok) throw new Error(`Failed to delete spec option: ${response.status}`);
+}
+
+export async function uploadSpecOptionImage(
+    specOptionId: number,
+    file: File,
+): Promise<void> {
+    const csrfToken = await getCsrfToken();
+    const formData = new FormData();
+    formData.append("preview_image", file);
+    const response = await fetch(`${API_BASE_URL}/api/v1/spec-options/${specOptionId}/`, {
+        method: "PATCH",
+        headers: { "X-CSRFToken": csrfToken },
         credentials: "include",
         body: formData,
     });
-
     if (!response.ok) {
-        const errorText = await response.text().catch((_error: unknown): string => "Unknown error");
-        throw new Error(`Failed to upload gallery images: ${response.status} ${errorText}`);
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to upload spec option image: ${response.status} ${err}`);
     }
+}
+
+export async function uploadSpecGroupHeaderImage(
+    specGroupId: number,
+    file: File,
+): Promise<void> {
+    const csrfToken = await getCsrfToken();
+    const formData = new FormData();
+    formData.append("header_image", file);
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-spec-groups/${specGroupId}/`, {
+        method: "PATCH",
+        headers: { "X-CSRFToken": csrfToken },
+        credentials: "include",
+        body: formData,
+    });
+    if (!response.ok) {
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to upload spec group header image: ${response.status} ${err}`);
+    }
+}
+
+export async function createSpecOptionRange(
+    payload: CreateSpecOptionRangePayload,
+): Promise<SpecOptionRange> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/spec-option-ranges/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to create spec range: ${response.status} ${err}`);
+    }
+    return response.json() as Promise<SpecOptionRange>;
+}
+
+export async function updateSpecOptionRange(
+    rangeId: number,
+    payload: Partial<CreateSpecOptionRangePayload>,
+): Promise<SpecOptionRange> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/spec-option-ranges/${rangeId}/`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        const err = await response.text().catch((_e: unknown): string => "Unknown error");
+        throw new Error(`Failed to update spec range: ${response.status} ${err}`);
+    }
+    return response.json() as Promise<SpecOptionRange>;
+}
+
+export async function deleteSpecOptionRange(rangeId: number): Promise<void> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/spec-option-ranges/${rangeId}/`, {
+        method: "DELETE",
+        headers: { "X-CSRFToken": csrfToken },
+        credentials: "include",
+    });
+    if (!response.ok) throw new Error(`Failed to delete spec range: ${response.status}`);
+}
+
+export async function reorderSpecGroups(
+    items: Array<{ id: number; display_order: number }>,
+): Promise<void> {
+    const csrfToken = await getCsrfToken();
+    const response = await fetch(`${API_BASE_URL}/api/v1/product-spec-groups/reorder/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+        credentials: "include",
+        body: JSON.stringify(items),
+    });
+    if (!response.ok) throw new Error(`Failed to reorder spec groups: ${response.status}`);
 }

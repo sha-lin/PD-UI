@@ -69,10 +69,9 @@ export default function CreateQuoteModal({
                 pageSize: 100,
                 search: "",
                 status: "all",
-                customizationLevel: "all",
-                category: "all",
-                subCategory: "all",
-                visibility: "all",
+                pricingMode: "all",
+                printCategory: "",
+                category: "",
             }),
         enabled: isOpen,
     });
@@ -109,7 +108,7 @@ export default function CreateQuoteModal({
                             ...item,
                             product_id: Number(value),
                             product_name: product?.name || "",
-                            unit_price: product?.base_price || 0,
+                            unit_price: 0,
                         };
                     }
                     return { ...item, [field]: value };

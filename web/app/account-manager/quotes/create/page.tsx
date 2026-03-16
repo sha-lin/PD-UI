@@ -31,7 +31,7 @@ interface LineItem {
     product_id: number;
     product_name: string;
     product_sku: string;
-    customization_level: string;
+    pricing_mode: string;
     quantity: number;
     unit_price: number;
     discount_amount: number;
@@ -125,10 +125,9 @@ function CreateQuotePageContent() {
                 pageSize: 200,
                 search: "",
                 status: "published",
-                customizationLevel: "all",
-                category: "all",
-                subCategory: "all",
-                visibility: "all",
+                pricingMode: "all",
+                printCategory: "",
+                category: "",
             }),
     });
 
@@ -181,7 +180,7 @@ function CreateQuotePageContent() {
                 product_id: item.product || 0,
                 product_name: item.product_name,
                 product_sku: "",
-                customization_level: item.customization_level_snapshot || "",
+                pricing_mode: item.customization_level_snapshot || "",
                 quantity: item.quantity,
                 unit_price: typeof item.unit_price === "string" ? parseFloat(item.unit_price) : (item.unit_price || 0),
                 discount_amount: item.discount_amount || 0,
@@ -262,9 +261,9 @@ function CreateQuotePageContent() {
             product_id: product.id,
             product_name: product.name,
             product_sku: product.internal_code || "",
-            customization_level: product.customization_level,
+            pricing_mode: product.pricing_mode,
             quantity: 1,
-            unit_price: product.base_price || 0,
+            unit_price: 0,
             discount_amount: 0,
             discount_type: "percent",
             variable_amount: 0,
@@ -831,7 +830,7 @@ function CreateQuotePageContent() {
                                                                 {product.name}
                                                             </p>
                                                             <p className="text-xs text-gray-500">
-                                                                {product.internal_code} • {formatCurrency(product.base_price || 0)}
+                                                                {product.internal_code} • {product.pricing_mode === "quote_only" ? "Quote Only" : "Auto Price"}
                                                             </p>
                                                         </button>
                                                     ))}

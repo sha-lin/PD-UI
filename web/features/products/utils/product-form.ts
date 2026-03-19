@@ -1,0 +1,137 @@
+import type { CreateProductPayload, Product, ProductFormValues } from "@/types/products";
+
+export const INITIAL_PRODUCT_VALUES: ProductFormValues = {
+    name: "",
+    short_description: "",
+    long_description: "",
+    maintenance: "",
+    technical_specs: "",
+    print_category: "",
+    primary_category: "",
+    sub_category: "",
+    product_family: "",
+    tag_ids: [],
+    product_type: "physical",
+    pricing_mode: "auto_calculate",
+    status: "draft",
+    is_visible: true,
+    visibility: "catalog-search",
+    feature_product: false,
+    bestseller_badge: false,
+    new_arrival: false,
+    new_arrival_expires: "",
+    on_sale_badge: false,
+    unit_of_measure: "pieces",
+    unit_of_measure_custom: "",
+    weight: "",
+    weight_unit: "kg",
+    length: "",
+    width: "",
+    height: "",
+    dimension_unit: "cm",
+    warranty: "satisfaction-guarantee",
+    country_of_origin: "kenya",
+    stock_status: "made_to_order",
+    stock_quantity: 0,
+    low_stock_threshold: 10,
+    track_inventory: false,
+    allow_backorders: true,
+    internal_notes: "",
+    client_notes: "",
+};
+
+export function buildFormValues(product: Product): ProductFormValues {
+    return {
+        name: product.name,
+        short_description: product.short_description,
+        long_description: product.long_description,
+        maintenance: product.maintenance,
+        technical_specs: product.technical_specs,
+        print_category: product.print_category !== null ? String(product.print_category) : "",
+        primary_category: product.primary_category !== null ? String(product.primary_category) : "",
+        sub_category: product.sub_category !== null ? String(product.sub_category) : "",
+        product_family: product.product_family !== null ? String(product.product_family) : "",
+        tag_ids: product.tags.map((t) => t.id),
+        product_type: product.product_type,
+        pricing_mode: product.pricing_mode,
+        status: product.status,
+        is_visible: product.is_visible,
+        visibility: product.visibility,
+        feature_product: product.feature_product,
+        bestseller_badge: product.bestseller_badge,
+        new_arrival: product.new_arrival,
+        new_arrival_expires: product.new_arrival_expires ?? "",
+        on_sale_badge: product.on_sale_badge,
+        unit_of_measure: product.unit_of_measure,
+        unit_of_measure_custom: product.unit_of_measure_custom,
+        weight: product.weight ?? "",
+        weight_unit: product.weight_unit,
+        length: product.length ?? "",
+        width: product.width ?? "",
+        height: product.height ?? "",
+        dimension_unit: product.dimension_unit,
+        warranty: product.warranty,
+        country_of_origin: product.country_of_origin,
+        stock_status: product.stock_status,
+        stock_quantity: product.stock_quantity,
+        low_stock_threshold: product.low_stock_threshold,
+        track_inventory: product.track_inventory,
+        allow_backorders: product.allow_backorders,
+        internal_notes: product.internal_notes,
+        client_notes: product.client_notes,
+    };
+}
+
+export function buildPayload(values: ProductFormValues): CreateProductPayload {
+    return {
+        name: values.name.trim(),
+        short_description: values.short_description.trim(),
+        long_description: values.long_description.trim(),
+        maintenance: values.maintenance.trim(),
+        technical_specs: values.technical_specs.trim(),
+        print_category: values.print_category ? Number(values.print_category) : null,
+        primary_category: values.primary_category ? Number(values.primary_category) : null,
+        sub_category: values.sub_category ? Number(values.sub_category) : null,
+        product_family: values.product_family ? Number(values.product_family) : null,
+        tag_ids: values.tag_ids,
+        product_type: values.product_type,
+        pricing_mode: values.pricing_mode,
+        status: values.status,
+        is_visible: values.is_visible,
+        visibility: values.visibility,
+        feature_product: values.feature_product,
+        bestseller_badge: values.bestseller_badge,
+        new_arrival: values.new_arrival,
+        new_arrival_expires: values.new_arrival_expires.trim() || null,
+        on_sale_badge: values.on_sale_badge,
+        unit_of_measure: values.unit_of_measure,
+        unit_of_measure_custom: values.unit_of_measure_custom.trim(),
+        weight: values.weight.trim() || null,
+        weight_unit: values.weight_unit,
+        length: values.length.trim() || null,
+        width: values.width.trim() || null,
+        height: values.height.trim() || null,
+        dimension_unit: values.dimension_unit,
+        warranty: values.warranty,
+        country_of_origin: values.country_of_origin,
+        stock_status: values.stock_status,
+        stock_quantity: values.stock_quantity,
+        low_stock_threshold: values.low_stock_threshold,
+        track_inventory: values.track_inventory,
+        allow_backorders: values.allow_backorders,
+        internal_notes: values.internal_notes.trim(),
+        client_notes: values.client_notes.trim(),
+    };
+}
+
+export function buildNewProductPayload(values: ProductFormValues): CreateProductPayload {
+    return { ...buildPayload(values), status: "draft" };
+}
+
+export function getMissingRequiredFields(values: ProductFormValues): string[] {
+    const missing: string[] = [];
+    if (!values.name.trim()) missing.push("Product Name");
+    if (!values.short_description.trim()) missing.push("Short Description");
+    if (!values.long_description.trim()) missing.push("Full Description");
+    return missing;
+}

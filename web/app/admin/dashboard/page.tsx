@@ -3,7 +3,7 @@
 import type { ReactElement } from "react";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircleIcon, Loader2Icon } from "lucide-react";
+import { AlertCircleIcon } from "lucide-react";
 import AdminLayout from "@/components/admin/admin-layout";
 import DashboardAlerts from "@/features/dashboard/components/DashboardAlerts";
 import DashboardCharts from "@/features/dashboard/components/DashboardCharts";

@@ -528,7 +528,7 @@ function SpecGroupCard({
     onDeleted: () => void;
     onRefresh: () => void;
 }): ReactElement {
-    const [expanded, setExpanded] = useState<boolean>(true);
+    const [expanded, setExpanded] = useState<boolean>(false);
     const [editingName, setEditingName] = useState<boolean>(false);
     const [nameValue, setNameValue] = useState<string>(group.name);
     const [confirmDelete, setConfirmDelete] = useState<boolean>(false);

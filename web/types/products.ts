@@ -181,6 +181,7 @@ export interface Product {
     allow_backorders: boolean;
     internal_notes: string;
     client_notes: string;
+    primary_image_url: string | null;
     spec_groups: ProductSpecGroup[];
     created_by: number | null;
     created_by_name: string | null;

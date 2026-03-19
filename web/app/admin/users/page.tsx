@@ -1,22 +1,16 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import AdminLayout from "@/components/admin/admin-layout";
 import Tabs from "@/components/admin/tabs";
-import UsersTable from "@/components/admin/users-table";
-import UsersTableFilters from "@/components/admin/users-table-filters";
-import GroupsTable, { GroupWithCount } from "@/components/admin/groups-table";
-import Pagination from "@/components/admin/pagination";
-import TableSkeleton from "@/components/admin/table-skeleton";
-import EmptyState from "@/components/admin/empty-state";
 import UserModal from "@/components/admin/user-modal";
 import AddUserModal from "@/components/admin/add-user-modal";
 import GroupModal from "@/components/admin/group-modal";
-import { fetchUsers, updateUser, fetchGroups, createGroup, updateGroup, deleteGroup, deleteUser } from "@/lib/api/users";
-import { UserPlus, Shield, AlertTriangle } from "lucide-react";
-import { User, UpdateUserPayload } from "@/types/user";
+import { useUsersPage } from "@/features/users/hooks/useUsersPage";
+import UsersTab from "@/features/users/components/UsersTab";
+import GroupsTab from "@/features/users/components/GroupsTab";
+import DeleteDialog from "@/features/users/components/DeleteDialog";
+import { UserPlus, Shield } from "lucide-react";
 
 export default function UsersPage() {
     return (
@@ -27,180 +21,26 @@ export default function UsersPage() {
 }
 
 function UsersPageContent() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<"users" | "groups">("users");
-    const [page, setPage] = useState(1);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [activeFilter, setActiveFilter] = useState<boolean | undefined>(undefined);
-    const [superuserFilter, setSuperuserFilter] = useState<boolean | undefined>(undefined);
-    const [editingUser, setEditingUser] = useState<User | null>(null);
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [editingGroup, setEditingGroup] = useState<GroupWithCount | null>(null);
-    const [showGroupModal, setShowGroupModal] = useState(false);
-    const [deletingGroup, setDeletingGroup] = useState<GroupWithCount | null>(null);
-    const [deletingUser, setDeletingUser] = useState<User | null>(null);
-
-    useEffect(() => {
-        const tab = searchParams.get("tab");
-        if (tab === "groups") {
-            setActiveTab("groups");
-        }
-    }, [searchParams]);
-
-    const {
-        data: usersData,
-        isLoading,
-        error,
-    } = useQuery({
-        queryKey: ["users", page, searchTerm, activeFilter, superuserFilter],
-        queryFn: () =>
-            fetchUsers({
-                page,
-                search: searchTerm || undefined,
-                is_active: activeFilter,
-                is_superuser: superuserFilter,
-            }),
-        retry: 1,
-        enabled: activeTab === "users",
-    });
-
-    const {
-        data: groups = [],
-        isLoading: loadingGroups,
-        error: groupsError,
-    } = useQuery({
-        queryKey: ["groups"],
-        queryFn: fetchGroups,
-        enabled: activeTab === "groups",
-    });
-
-    const updateUserMutation = useMutation({
-        mutationFn: ({ userId, updates }: { userId: number; updates: UpdateUserPayload }) =>
-            updateUser(userId, updates),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["users"] });
-        },
-    });
-
-    const createGroupMutation = useMutation({
-        mutationFn: (name: string) => createGroup(name),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["groups"] });
-        },
-    });
-
-    const updateGroupMutation = useMutation({
-        mutationFn: ({ groupId, name }: { groupId: number; name: string }) =>
-            updateGroup(groupId, name),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["groups"] });
-        },
-    });
-
-    const deleteUserMutation = useMutation({
-        mutationFn: (userId: number) => deleteUser(userId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["users"] });
-        },
-    });
-
-    const deleteGroupMutation = useMutation({
-        mutationFn: (groupId: number) => deleteGroup(groupId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["groups"] });
-            queryClient.invalidateQueries({ queryKey: ["users"] });
-        },
-    });
-
-    const handleSaveUser = async (userId: number, updates: UpdateUserPayload) => {
-        await updateUserMutation.mutateAsync({ userId, updates });
-    };
-
-    const handleDeleteUser = (user: User) => {
-        setDeletingUser(user);
-    };
-
-    const confirmDeleteUser = async () => {
-        if (deletingUser) {
-            await deleteUserMutation.mutateAsync(deletingUser.id);
-            setDeletingUser(null);
-            setEditingUser(null);
-        }
-    };
-
-    const handleSaveGroup = async (groupId: number | null, name: string) => {
-        if (groupId) {
-            await updateGroupMutation.mutateAsync({ groupId, name });
-        } else {
-            await createGroupMutation.mutateAsync(name);
-        }
-    };
-
-    const handleEditGroup = (group: GroupWithCount) => {
-        setEditingGroup(group);
-        setShowGroupModal(true);
-    };
-
-    const handleDeleteGroup = (group: GroupWithCount) => {
-        setDeletingGroup(group);
-    };
-
-    const confirmDeleteGroup = async () => {
-        if (deletingGroup) {
-            await deleteGroupMutation.mutateAsync(deletingGroup.id);
-            setDeletingGroup(null);
-        }
-    };
-
-    const handleSearchChange = (value: string) => {
-        setSearchTerm(value);
-        setPage(1);
-    };
-
-    const handleActiveFilterChange = (value: boolean | undefined) => {
-        setActiveFilter(value);
-        setPage(1);
-    };
-
-    const handleSuperuserFilterChange = (value: boolean | undefined) => {
-        setSuperuserFilter(value);
-        setPage(1);
-    };
-
-    const handleNextPage = () => {
-        if (usersData?.next) {
-            setPage((prev) => prev + 1);
-        }
-    };
-
-    const handlePreviousPage = () => {
-        if (usersData?.previous && page > 1) {
-            setPage((prev) => prev - 1);
-        }
-    };
-
-    const calculateTotalPages = (totalCount: number, pageSize: number = 25): number => {
-        return Math.ceil(totalCount / pageSize);
-    };
+    const { activeTab, setActiveTab, filters, data, modals, handlers, calculateTotalPages } =
+        useUsersPage();
 
     return (
         <AdminLayout>
             <header className="border-b border-gray-200 bg-white">
                 <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-8 sm:py-6">
                     <div className="min-w-0">
-                        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">User Management</h1>
+                        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+                            User Management
+                        </h1>
                         <p className="mt-1 text-sm text-gray-600 hidden sm:block">
                             {activeTab === "users"
                                 ? "Manage system users, search by name or email, and filter by status and role."
-                                : "Manage permission groups and control user access levels."
-                            }
+                                : "Manage permission groups and control user access levels."}
                         </p>
                     </div>
                     {activeTab === "users" ? (
                         <button
-                            onClick={() => setShowAddModal(true)}
+                            onClick={() => modals.setShowAddModal(true)}
                             className="flex-shrink-0 flex items-center gap-2 px-3 py-2 sm:px-4 text-sm font-medium text-white bg-brand-blue rounded-lg hover:bg-brand-blue/90 transition-colors"
                         >
                             <UserPlus className="w-4 h-4" />
@@ -208,10 +48,7 @@ function UsersPageContent() {
                         </button>
                     ) : (
                         <button
-                            onClick={() => {
-                                setEditingGroup(null);
-                                setShowGroupModal(true);
-                            }}
+                            onClick={handlers.openCreateGroupModal}
                             className="flex-shrink-0 flex items-center gap-2 px-3 py-2 sm:px-4 text-sm font-medium text-white bg-brand-blue rounded-lg hover:bg-brand-blue/90 transition-colors"
                         >
                             <Shield className="w-4 h-4" />
@@ -222,8 +59,8 @@ function UsersPageContent() {
                 <div className="px-4 sm:px-8">
                     <Tabs
                         tabs={[
-                            { id: "users", label: "Users", count: usersData?.count },
-                            { id: "groups", label: "Groups", count: groups.length },
+                            { id: "users", label: "Users", count: data.usersData?.count },
+                            { id: "groups", label: "Groups", count: data.groups.length },
                         ]}
                         activeTab={activeTab}
                         onTabChange={(tabId) => setActiveTab(tabId as "users" | "groups")}
@@ -231,150 +68,97 @@ function UsersPageContent() {
                 </div>
             </header>
 
-            <main className="p-4 sm:p-8 bg-white">
+            <main className="p-4 sm:p-8 bg-gray-50">
                 {activeTab === "users" ? (
-                    <>
-                        <UsersTableFilters
-                            searchTerm={searchTerm}
-                            activeFilter={activeFilter}
-                            superuserFilter={superuserFilter}
-                            onSearchChange={handleSearchChange}
-                            onActiveFilterChange={handleActiveFilterChange}
-                            onSuperuserFilterChange={handleSuperuserFilterChange}
-                        />
-
-                        <div className="bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden mt-6">
-                            {isLoading ? (
-                                <TableSkeleton rows={10} columns={7} />
-                            ) : usersData && usersData.results.length > 0 ? (
-                                <>
-                                    <UsersTable users={usersData.results} onViewUser={setEditingUser} onDeleteUser={handleDeleteUser} />
-                                    <Pagination
-                                        currentPage={page}
-                                        totalPages={calculateTotalPages(usersData.count)}
-                                        hasNext={!!usersData.next}
-                                        hasPrevious={!!usersData.previous}
-                                        onNext={handleNextPage}
-                                        onPrevious={handlePreviousPage}
-                                    />
-                                </>
-                            ) : (
-                                <div className="px-8">
-                                    <EmptyState message="Try adjusting your search or filter criteria" />
-                                </div>
-                            )}
-                        </div>
-                    </>
+                    <UsersTab
+                        usersData={data.usersData}
+                        isLoading={data.isLoading}
+                        page={filters.page}
+                        searchTerm={filters.searchTerm}
+                        activeFilter={filters.activeFilter}
+                        superuserFilter={filters.superuserFilter}
+                        onSearchChange={handlers.handleSearchChange}
+                        onActiveFilterChange={handlers.handleActiveFilterChange}
+                        onSuperuserFilterChange={handlers.handleSuperuserFilterChange}
+                        onNextPage={handlers.handleNextPage}
+                        onPreviousPage={handlers.handlePreviousPage}
+                        onViewUser={modals.setEditingUser}
+                        onDeleteUser={handlers.handleDeleteUser}
+                        calculateTotalPages={calculateTotalPages}
+                    />
                 ) : (
-                    <div className="bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
-                        {loadingGroups ? (
-                            <TableSkeleton rows={5} columns={3} />
-                        ) : groups.length > 0 ? (
-                            <GroupsTable
-                                groups={groups as GroupWithCount[]}
-                                onEditGroup={handleEditGroup}
-                                onDeleteGroup={handleDeleteGroup}
-                            />
-                        ) : (
-                            <div className="px-8">
-                                <EmptyState message="No groups created yet. Click 'Create Group' to add one." />
-                            </div>
-                        )}
-                    </div>
+                    <GroupsTab
+                        groups={data.groups}
+                        isLoading={data.loadingGroups}
+                        onEditGroup={handlers.handleEditGroup}
+                        onDeleteGroup={handlers.handleDeleteGroup}
+                    />
                 )}
 
-                {editingUser && (
+                {modals.editingUser && (
                     <UserModal
-                        user={editingUser}
-                        isOpen={!!editingUser}
-                        onClose={() => setEditingUser(null)}
-                        onSave={handleSaveUser}
+                        user={modals.editingUser}
+                        isOpen={!!modals.editingUser}
+                        onClose={() => modals.setEditingUser(null)}
+                        onSave={handlers.handleSaveUser}
                     />
                 )}
 
                 <AddUserModal
-                    isOpen={showAddModal}
-                    onClose={() => setShowAddModal(false)}
-                    onSuccess={() => queryClient.invalidateQueries({ queryKey: ["users"] })}
+                    isOpen={modals.showAddModal}
+                    onClose={() => modals.setShowAddModal(false)}
+                    onSuccess={handlers.handleAddUserSuccess}
                 />
 
                 <GroupModal
-                    group={editingGroup}
-                    isOpen={showGroupModal}
-                    onClose={() => {
-                        setShowGroupModal(false);
-                        setEditingGroup(null);
-                    }}
-                    onSave={handleSaveGroup}
+                    group={modals.editingGroup}
+                    isOpen={modals.showGroupModal}
+                    onClose={handlers.closeGroupModal}
+                    onSave={handlers.handleSaveGroup}
                 />
 
-                {deletingUser && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                                </div>
-                                <h2 className="text-lg font-semibold text-gray-900">Delete User</h2>
-                            </div>
-                            <p className="text-sm text-gray-600 mb-6">
-                                Are you sure you want to delete <strong>{deletingUser.username}</strong>? This action cannot be undone.
-                            </p>
-                            <div className="flex items-center justify-end gap-3">
-                                <button
-                                    onClick={() => setDeletingUser(null)}
-                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmDeleteUser}
-                                    disabled={deleteUserMutation.isPending}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
-                                >
-                                    {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                {modals.deletingUser && (
+                    <DeleteDialog
+                        title="Delete User"
+                        description={
+                            <>
+                                Are you sure you want to delete{" "}
+                                <strong>{modals.deletingUser.username}</strong>? This action cannot
+                                be undone.
+                            </>
+                        }
+                        isPending={data.deleteUserPending}
+                        confirmLabel="Delete User"
+                        onConfirm={handlers.confirmDeleteUser}
+                        onCancel={() => modals.setDeletingUser(null)}
+                    />
                 )}
 
-                {deletingGroup && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                                </div>
-                                <h2 className="text-lg font-semibold text-gray-900">Delete Group</h2>
-                            </div>
-                            <p className="text-sm text-gray-600 mb-6">
-                                Are you sure you want to delete <strong>{deletingGroup.name}</strong>?
-                                {deletingGroup.user_count && deletingGroup.user_count > 0 && (
-                                    <span className="block mt-2 text-red-600">
-                                        This group has {deletingGroup.user_count} {deletingGroup.user_count === 1 ? 'member' : 'members'}. They will lose access granted by this group.
-                                    </span>
-                                )}
-                            </p>
-                            <div className="flex items-center justify-end gap-3">
-                                <button
-                                    onClick={() => setDeletingGroup(null)}
-                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmDeleteGroup}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-                                >
-                                    Delete Group
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                {modals.deletingGroup && (
+                    <DeleteDialog
+                        title="Delete Group"
+                        description={
+                            <>
+                                Are you sure you want to delete{" "}
+                                <strong>{modals.deletingGroup.name}</strong>?
+                                {modals.deletingGroup.user_count &&
+                                    modals.deletingGroup.user_count > 0 && (
+                                        <span className="block mt-2 text-red-600">
+                                            This group has {modals.deletingGroup.user_count}{" "}
+                                            {modals.deletingGroup.user_count === 1
+                                                ? "member"
+                                                : "members"}
+                                            . They will lose access granted by this group.
+                                        </span>
+                                    )}
+                            </>
+                        }
+                        confirmLabel="Delete Group"
+                        onConfirm={handlers.confirmDeleteGroup}
+                        onCancel={() => modals.setDeletingGroup(null)}
+                    />
                 )}
             </main>
         </AdminLayout>
     );
-
 }

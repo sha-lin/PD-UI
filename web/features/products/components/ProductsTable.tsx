@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react";
 import { MoreHorizontalIcon, PencilIcon, TrashIcon, CheckCircleIcon, ArchiveIcon } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Product, ProductStatus } from "@/types/products";
 
 interface ProductsTableProps {
@@ -59,12 +59,26 @@ function ProductRowMenu({
     onArchive: () => void;
 }): ReactElement {
     const [open, setOpen] = useState<boolean>(false);
+    const [menuPos, setMenuPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
+    const btnRef = useRef<HTMLButtonElement>(null);
+
+    const handleOpen = (): void => {
+        if (btnRef.current) {
+            const rect = btnRef.current.getBoundingClientRect();
+            setMenuPos({
+                top: rect.bottom + window.scrollY + 4,
+                right: window.innerWidth - rect.right,
+            });
+        }
+        setOpen((prev) => !prev);
+    };
 
     return (
-        <div className="relative">
+        <>
             <button
+                ref={btnRef}
                 type="button"
-                onClick={() => setOpen((prev) => !prev)}
+                onClick={handleOpen}
                 className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             >
                 <MoreHorizontalIcon className="h-4 w-4" />
@@ -72,10 +86,13 @@ function ProductRowMenu({
             {open && (
                 <>
                     <div
-                        className="fixed inset-0 z-10"
+                        className="fixed inset-0 z-40"
                         onClick={() => setOpen(false)}
                     />
-                    <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                    <div
+                        style={{ top: menuPos.top, right: menuPos.right }}
+                        className="fixed z-50 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                    >
                         <button
                             type="button"
                             onClick={() => { onEdit(); setOpen(false); }}
@@ -116,7 +133,7 @@ function ProductRowMenu({
                     </div>
                 </>
             )}
-        </div>
+        </>
     );
 }
 
@@ -161,17 +178,32 @@ export default function ProductsTable({
                         {products.map((product) => (
                             <tr key={product.id} className="hover:bg-gray-50">
                                 <td className="px-4 py-3">
-                                    <div>
-                                        <button
-                                            type="button"
-                                            onClick={() => onEdit(product.id)}
-                                            className="text-sm font-medium text-gray-900 hover:text-brand-blue text-left"
-                                        >
-                                            {product.name}
-                                        </button>
-                                        <p className="text-xs font-mono text-gray-400">
-                                            {product.internal_code}
-                                        </p>
+                                    <div className="flex items-center gap-3">
+                                        {product.primary_image_url ? (
+                                            <img
+                                                src={product.primary_image_url}
+                                                alt={product.name}
+                                                className="h-10 w-10 shrink-0 rounded-lg object-cover border border-gray-100"
+                                            />
+                                        ) : (
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-100 bg-gray-50 text-gray-300">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v13.5A1.5 1.5 0 003.75 21z" />
+                                                </svg>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <button
+                                                type="button"
+                                                onClick={() => onEdit(product.id)}
+                                                className="text-sm font-medium text-gray-900 hover:text-brand-blue text-left"
+                                            >
+                                                {product.name}
+                                            </button>
+                                            <p className="text-xs font-mono text-gray-400">
+                                                {product.internal_code}
+                                            </p>
+                                        </div>
                                     </div>
                                 </td>
                                 <td className="px-4 py-3">

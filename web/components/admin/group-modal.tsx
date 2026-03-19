@@ -20,6 +20,7 @@ export default function GroupModal({ group, isOpen, onClose, onSave }: GroupModa
         if (isOpen) {
             setName(group?.name || "");
             setError(null);
+            setIsSaving(false);
         }
     }, [isOpen, group]);
 

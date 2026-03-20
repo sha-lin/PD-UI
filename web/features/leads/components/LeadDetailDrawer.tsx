@@ -227,7 +227,7 @@ export default function LeadDetailDrawer({
 
                             <section className="rounded-lg border border-gray-200 p-4">
                                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Workflow</h3>
-                                <div className="flex flex-wrap items-center gap-2 mt-3">
+                                <div className="mt-3 flex flex-col sm:flex-row gap-2">
                                     <button
                                         type="button"
                                         onClick={(): void => onEdit(lead)}
@@ -235,71 +235,64 @@ export default function LeadDetailDrawer({
                                     >
                                         Edit Lead
                                     </button>
-                                    {lead.status === "New" && (
-                                        <button
-                                            type="button"
-                                            onClick={(): void => onMarkContacted(lead)}
-                                            disabled={isMarkingContacted}
-                                            className="rounded-md border border-brand-blue bg-brand-blue/5 px-4 py-2 text-sm font-semibold text-brand-blue hover:bg-brand-blue/10 disabled:opacity-50"
-                                        >
-                                            {isMarkingContacted ? "Saving..." : "Mark Contacted"}
-                                        </button>
-                                    )}
-                                    {(lead.status === "New" || lead.status === "Contacted") && (
-                                        <button
-                                            type="button"
-                                            onClick={(): void => onQualify(lead)}
-                                            disabled={isQualifying}
-                                            className="rounded-md bg-brand-yellow px-4 py-2 text-sm font-semibold text-brand-black disabled:opacity-50"
-                                        >
-                                            {isQualifying ? "Qualifying..." : "Qualify Lead"}
-                                        </button>
-                                    )}
-                                    {lead.status !== "Converted" && lead.status !== "Lost" && (
-                                        <button
-                                            type="button"
-                                            onClick={(): void => onMarkLost(lead)}
-                                            disabled={isMarkingLost}
-                                            className="rounded-md border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-100 disabled:opacity-50"
-                                        >
-                                            {isMarkingLost ? "Marking..." : "Mark as Lost"}
-                                        </button>
-                                    )}
-                                    {!shouldShowConvert && lead.status !== "Lost" && (
-                                        <p className="text-sm text-gray-600">Lead is already converted.</p>
+                                    <select
+                                        defaultValue=""
+                                        disabled={isQualifying || isMarkingContacted || isMarkingLost || isDeleting}
+                                        onChange={(e): void => {
+                                            const action = e.target.value;
+                                            e.target.value = "";
+                                            if (action === "contacted") onMarkContacted(lead);
+                                            else if (action === "qualify") onQualify(lead);
+                                            else if (action === "lost") onMarkLost(lead);
+                                            else if (action === "delete") setConfirmingDelete(true);
+                                        }}
+                                        className="w-full sm:flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand-blue disabled:opacity-50 cursor-pointer"
+                                    >
+                                        <option value="" disabled>Select action…</option>
+                                        {lead.status === "New" && (
+                                            <option value="contacted">Mark Contacted</option>
+                                        )}
+                                        {(lead.status === "New" || lead.status === "Contacted") && (
+                                            <option value="qualify">Qualify Lead</option>
+                                        )}
+                                        {lead.status !== "Converted" && lead.status !== "Lost" && (
+                                            <option value="lost">Mark as Lost</option>
+                                        )}
+                                        <option value="delete">Delete Lead</option>
+                                    </select>
+
+                                    {(isQualifying || isMarkingContacted || isMarkingLost || isDeleting) && (
+                                        <p className="text-xs text-gray-500 self-center">Saving…</p>
                                     )}
                                 </div>
-                                <div className="mt-4 pt-4 border-t border-gray-100">
-                                    {confirmingDelete ? (
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <p className="text-sm text-gray-700 w-full">Delete this lead permanently?</p>
+
+                                {confirmingDelete && (
+                                    <div className="mt-3 rounded-md border border-brand-red/30 bg-brand-red/5 p-3">
+                                        <p className="text-sm font-medium text-brand-red mb-2">Delete this lead permanently? This cannot be undone.</p>
+                                        <div className="flex gap-2">
                                             <button
                                                 type="button"
                                                 onClick={(): void => { onDelete(lead); setConfirmingDelete(false); }}
                                                 disabled={isDeleting}
-                                                className="rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
+                                                className="rounded-md bg-brand-red px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
                                             >
-                                                {isDeleting ? "Deleting..." : "Yes, Delete"}
+                                                {isDeleting ? "Deleting…" : "Yes, Delete"}
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={(): void => setConfirmingDelete(false)}
                                                 disabled={isDeleting}
-                                                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                                className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                                             >
                                                 Cancel
                                             </button>
                                         </div>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={(): void => setConfirmingDelete(true)}
-                                            className="rounded-md border border-brand-red/40 px-4 py-2 text-sm font-semibold text-brand-red hover:bg-brand-red/5"
-                                        >
-                                            Delete Lead
-                                        </button>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
+
+                                {!shouldShowConvert && lead.status === "Converted" && (
+                                    <p className="mt-2 text-xs text-gray-500">This lead has been converted to a client.</p>
+                                )}
                             </section>
 
                             {shouldShowConvert && (

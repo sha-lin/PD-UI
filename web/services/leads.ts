@@ -104,6 +104,24 @@ export async function fetchLead(leadId: number): Promise<Lead> {
     return response.json();
 }
 
+export async function markLeadContacted(leadId: number): Promise<LeadQualifyResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/leads/${leadId}/mark-contacted/`, {
+        method: "POST",
+        headers: await buildWriteHeaders(),
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        const errorText = await extractErrorDetail(response);
+        if (response.status >= 400 && response.status < 500) {
+            throw new BusinessValidationError(errorText);
+        }
+        throw new Error("Unable to mark lead as contacted. Please try again.");
+    }
+
+    return response.json();
+}
+
 export async function qualifyLead(leadId: number): Promise<LeadQualifyResponse> {
     const response = await fetch(`${API_BASE_URL}/api/v1/leads/${leadId}/qualify/`, {
         method: "POST",
@@ -136,6 +154,24 @@ export async function convertLead(leadId: number, payload: LeadConvertPayload): 
             throw new BusinessValidationError(errorText);
         }
         throw new Error("Unable to convert lead. Please try again.");
+    }
+
+    return response.json();
+}
+
+export async function markLeadLost(leadId: number): Promise<LeadQualifyResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/v1/leads/${leadId}/mark-lost/`, {
+        method: "POST",
+        headers: await buildWriteHeaders(),
+        credentials: "include",
+    });
+
+    if (!response.ok) {
+        const errorText = await extractErrorDetail(response);
+        if (response.status >= 400 && response.status < 500) {
+            throw new BusinessValidationError(errorText);
+        }
+        throw new Error("Unable to mark lead as lost. Please try again.");
     }
 
     return response.json();

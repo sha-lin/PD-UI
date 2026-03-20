@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import AccountManagerLayout from "@/components/account-manager/account-manager-layout";
 import ClientsStatsCards from "@/features/clients/components/ClientsStatsCards";
 import ClientsTable from "@/features/clients/components/ClientsTable";
 import ClientFormDrawer from "@/features/clients/components/ClientFormDrawer";
+import ClientDetailDrawer from "@/features/clients/components/ClientDetailDrawer";
 import type { Client, ClientStatus, ClientType, ClientFormPayload } from "@/types/clients";
-import { fetchClients, fetchClientStats, deleteClient, createClient, updateClient } from "@/services/clients";
+import { fetchClients, fetchClientStats, deleteClient, createClient, updateClient, fetchClientContacts, fetchClientBrandAssets, fetchClientComplianceDocuments } from "@/services/clients";
 
 export default function ClientListPage() {
     const [statusFilter, setStatusFilter] = useState<ClientStatus | "all">("all");
@@ -21,6 +22,8 @@ export default function ClientListPage() {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+    const [viewingClient, setViewingClient] = useState<Client | null>(null);
+    const [deletingClient, setDeletingClient] = useState<Client | null>(null);
     const queryClient = useQueryClient();
 
     const { data: stats, isLoading: statsLoading } = useQuery({
@@ -38,6 +41,24 @@ export default function ClientListPage() {
                 status: statusFilter,
                 clientType: typeFilter,
             }),
+    });
+
+    const { data: clientContacts, isLoading: contactsLoading } = useQuery({
+        queryKey: ["client-contacts", viewingClient?.id],
+        queryFn: () => fetchClientContacts(viewingClient!.id),
+        enabled: viewingClient !== null,
+    });
+
+    const { data: clientBrandAssets, isLoading: brandAssetsLoading } = useQuery({
+        queryKey: ["client-brand-assets", viewingClient?.id],
+        queryFn: () => fetchClientBrandAssets(viewingClient!.id),
+        enabled: viewingClient !== null,
+    });
+
+    const { data: clientComplianceDocs, isLoading: complianceDocsLoading } = useQuery({
+        queryKey: ["client-compliance-docs", viewingClient?.id],
+        queryFn: () => fetchClientComplianceDocuments(viewingClient!.id),
+        enabled: viewingClient !== null,
     });
 
     const deleteMutation = useMutation({
@@ -101,7 +122,7 @@ export default function ClientListPage() {
     const totalCount = clientsData?.count || 0;
 
     const handleView = (client: Client) => {
-        console.log("View client:", client.id);
+        setViewingClient(client);
     };
 
     const handleEdit = (client: Client) => {
@@ -110,13 +131,17 @@ export default function ClientListPage() {
         setIsDrawerOpen(true);
     };
 
-    const handleDelete = async (client: Client) => {
-        if (confirm(`Are you sure you want to delete ${client.name}?`)) {
-            try {
-                await deleteMutation.mutateAsync(client.id);
-            } catch (error) {
-                console.error("Failed to delete client:", error);
-            }
+    const handleDelete = (client: Client) => {
+        setDeletingClient(client);
+    };
+
+    const confirmDelete = async () => {
+        if (!deletingClient) return;
+        try {
+            await deleteMutation.mutateAsync(deletingClient.id);
+            setDeletingClient(null);
+        } catch {
+            // error handled in mutation onError
         }
     };
 
@@ -295,6 +320,55 @@ export default function ClientListPage() {
                 onClose={handleDrawerClose}
                 onSubmit={handleDrawerSubmit}
             />
+
+            <ClientDetailDrawer
+                isOpen={viewingClient !== null}
+                client={viewingClient}
+                contacts={clientContacts ?? []}
+                brandAssets={clientBrandAssets ?? []}
+                complianceDocuments={clientComplianceDocs ?? []}
+                isLoading={false}
+                isLoadingRelations={contactsLoading || brandAssetsLoading || complianceDocsLoading}
+                onClose={() => setViewingClient(null)}
+                onEdit={(client) => {
+                    setViewingClient(null);
+                    handleEdit(client);
+                }}
+            />
+
+            {deletingClient && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
+                        <div className="flex items-center gap-3 mb-4">
+                            <AlertTriangle className="h-5 w-5 text-brand-red shrink-0" />
+                            <h2 className="text-base font-bold text-gray-900">Delete Client</h2>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-6">
+                            Are you sure you want to delete{" "}
+                            <span className="font-semibold text-gray-900">{deletingClient.name}</span>? This
+                            action cannot be undone.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setDeletingClient(null)}
+                                disabled={deleteMutation.isPending}
+                                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmDelete}
+                                disabled={deleteMutation.isPending}
+                                className="rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
+                            >
+                                {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AccountManagerLayout>
     );
 }

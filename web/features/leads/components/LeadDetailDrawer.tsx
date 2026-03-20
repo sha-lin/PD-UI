@@ -8,9 +8,15 @@ interface LeadDetailDrawerProps {
     isLoading: boolean;
     isQualifying: boolean;
     isConverting: boolean;
+    isMarkingLost: boolean;
+    isMarkingContacted: boolean;
+    isDeleting: boolean;
     onClose: () => void;
     onEdit: (lead: Lead) => void;
+    onMarkContacted: (lead: Lead) => void;
     onQualify: (lead: Lead) => void;
+    onMarkLost: (lead: Lead) => void;
+    onDelete: (lead: Lead) => void;
     onConvert: (lead: Lead, payload: LeadConvertPayload) => void;
 }
 
@@ -20,12 +26,19 @@ export default function LeadDetailDrawer({
     isLoading,
     isQualifying,
     isConverting,
+    isMarkingLost,
+    isMarkingContacted,
+    isDeleting,
     onClose,
     onEdit,
+    onMarkContacted,
     onQualify,
+    onMarkLost,
+    onDelete,
     onConvert,
 }: LeadDetailDrawerProps): ReactElement | null {
     const [clientType, setClientType] = useState<"B2B" | "B2C">("B2C");
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [company, setCompany] = useState<string>("");
     const [vatTaxId, setVatTaxId] = useState<string>("");
     const [kraPin, setKraPin] = useState<string>("");
@@ -214,7 +227,7 @@ export default function LeadDetailDrawer({
 
                             <section className="rounded-lg border border-gray-200 p-4">
                                 <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Workflow</h3>
-                                <div className="flex items-center gap-3 mt-3">
+                                <div className="flex flex-wrap items-center gap-2 mt-3">
                                     <button
                                         type="button"
                                         onClick={(): void => onEdit(lead)}
@@ -225,6 +238,16 @@ export default function LeadDetailDrawer({
                                     {lead.status === "New" && (
                                         <button
                                             type="button"
+                                            onClick={(): void => onMarkContacted(lead)}
+                                            disabled={isMarkingContacted}
+                                            className="rounded-md border border-brand-blue bg-brand-blue/5 px-4 py-2 text-sm font-semibold text-brand-blue hover:bg-brand-blue/10 disabled:opacity-50"
+                                        >
+                                            {isMarkingContacted ? "Saving..." : "Mark Contacted"}
+                                        </button>
+                                    )}
+                                    {(lead.status === "New" || lead.status === "Contacted") && (
+                                        <button
+                                            type="button"
                                             onClick={(): void => onQualify(lead)}
                                             disabled={isQualifying}
                                             className="rounded-md bg-brand-yellow px-4 py-2 text-sm font-semibold text-brand-black disabled:opacity-50"
@@ -232,8 +255,49 @@ export default function LeadDetailDrawer({
                                             {isQualifying ? "Qualifying..." : "Qualify Lead"}
                                         </button>
                                     )}
-                                    {!shouldShowConvert && (
+                                    {lead.status !== "Converted" && lead.status !== "Lost" && (
+                                        <button
+                                            type="button"
+                                            onClick={(): void => onMarkLost(lead)}
+                                            disabled={isMarkingLost}
+                                            className="rounded-md border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+                                        >
+                                            {isMarkingLost ? "Marking..." : "Mark as Lost"}
+                                        </button>
+                                    )}
+                                    {!shouldShowConvert && lead.status !== "Lost" && (
                                         <p className="text-sm text-gray-600">Lead is already converted.</p>
+                                    )}
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-gray-100">
+                                    {confirmingDelete ? (
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <p className="text-sm text-gray-700 w-full">Delete this lead permanently?</p>
+                                            <button
+                                                type="button"
+                                                onClick={(): void => { onDelete(lead); setConfirmingDelete(false); }}
+                                                disabled={isDeleting}
+                                                className="rounded-md bg-brand-red px-4 py-2 text-sm font-semibold text-white hover:bg-brand-red/90 disabled:opacity-50"
+                                            >
+                                                {isDeleting ? "Deleting..." : "Yes, Delete"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={(): void => setConfirmingDelete(false)}
+                                                disabled={isDeleting}
+                                                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={(): void => setConfirmingDelete(true)}
+                                            className="rounded-md border border-brand-red/40 px-4 py-2 text-sm font-semibold text-brand-red hover:bg-brand-red/5"
+                                        >
+                                            Delete Lead
+                                        </button>
                                     )}
                                 </div>
                             </section>

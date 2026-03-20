@@ -131,16 +131,23 @@ export default function QuoteLineItemsTable({
                                         />
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <input
-                                            type="number"
-                                            value={item.unit_price}
-                                            onChange={(e): void =>
-                                                onUpdateItem(item.tempId, "unit_price", Number(e.target.value))
-                                            }
-                                            min="0"
-                                            step="0.01"
-                                            className={`${inputClass} w-28`}
-                                        />
+                                        <div className="flex flex-col items-end gap-0.5">
+                                            <input
+                                                type="number"
+                                                value={item.unit_price}
+                                                onChange={(e): void =>
+                                                    onUpdateItem(item.tempId, "unit_price", Number(e.target.value))
+                                                }
+                                                min="0"
+                                                step="0.01"
+                                                className={`${inputClass} w-28 ${item.unit_price === 0 ? "border-amber-300 bg-amber-50 focus:ring-amber-400" : ""}`}
+                                            />
+                                            {item.unit_price === 0 && (
+                                                <span className="text-[10px] font-medium text-amber-600 leading-none">
+                                                    Set price
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-1 justify-end">

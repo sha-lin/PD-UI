@@ -19,6 +19,7 @@ import QuoteHeaderSection from "@/features/quotes/components/QuoteHeaderSection"
 import QuoteLineItemsTable from "@/features/quotes/components/QuoteLineItemsTable";
 import QuoteNotesSection from "@/features/quotes/components/QuoteNotesSection";
 import QuoteTotalsSidebar from "@/features/quotes/components/QuoteTotalsSidebar";
+import QuotePTCostBanner from "@/features/quotes/components/QuotePTCostBanner";
 import SelectProductionMemberModal from "@/features/quotes/components/SelectProductionMemberModal";
 import ConfirmModal from "@/features/quotes/components/ConfirmModal";
 import { toast } from "sonner";
@@ -328,6 +329,11 @@ function CreateQuotePageContent() {
             return;
         }
 
+        if (action === "send_customer" && calculateGrandTotal() === 0) {
+            toast.error("Cannot send a quote with KES 0 total to the client. Set the Rate (KES) on each line item first.");
+            return;
+        }
+
         setPendingAction(action);
 
         const quoteData: CreateQuoteInput = {
@@ -450,6 +456,14 @@ function CreateQuotePageContent() {
                 <div className="max-w-[1400px] mx-auto px-6 py-6">
                     <div className="flex gap-6 items-start">
                         <div className="flex-1 min-w-0 space-y-4">
+                            {isEditMode && existingQuote?.status === "Costed" && (
+                                <QuotePTCostBanner
+                                    productionCost={typeof existingQuote.production_cost === "string" ? parseFloat(existingQuote.production_cost) : (existingQuote.production_cost ?? 0)}
+                                    currentSellingTotal={calculateGrandTotal()}
+                                    costedByName={existingQuote.costed_by ? String(existingQuote.costed_by) : undefined}
+                                />
+                            )}
+
                             <QuoteHeaderSection
                                 clients={clients}
                                 leads={leads}

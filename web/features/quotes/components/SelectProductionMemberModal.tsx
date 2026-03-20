@@ -81,8 +81,20 @@ export default function SelectProductionMemberModal({
                 <form onSubmit={handleSubmit}>
                     <div className="p-4 max-h-96 overflow-y-auto">
                         {isLoading && (
-                            <div className="flex items-center justify-center py-8">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-blue"></div>
+                            <div className="space-y-2">
+                                {Array.from({ length: 4 }).map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg animate-pulse"
+                                    >
+                                        <div className="h-4 w-4 rounded-full bg-gray-200 shrink-0" />
+                                        <div className="h-9 w-9 rounded-full bg-gray-200 shrink-0" />
+                                        <div className="flex-1 space-y-1.5">
+                                            <div className="h-3.5 w-32 rounded bg-gray-200" />
+                                            <div className="h-3 w-44 rounded bg-gray-100" />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
 
@@ -104,8 +116,8 @@ export default function SelectProductionMemberModal({
                                     <label
                                         key={member.id}
                                         className={`flex items-start gap-3 p-3 border rounded cursor-pointer hover:bg-gray-50 transition-colors ${selectedMemberId === member.id
-                                                ? "border-brand-blue bg-brand-blue/5"
-                                                : "border-gray-200"
+                                            ? "border-brand-blue bg-brand-blue/5"
+                                            : "border-gray-200"
                                             }`}
                                     >
                                         <input

@@ -24,7 +24,8 @@ export default function QuoteTopBar({
     onSendToPT,
     onEmailClient,
 }: QuoteTopBarProps): ReactElement {
-    const canEdit = !isEditMode || quoteStatus === "Draft";
+    const isCosted = quoteStatus === "Costed";
+    const canEdit = !isEditMode || quoteStatus === "Draft" || isCosted;
 
     return (
         <div className="bg-white border-b border-gray-200 px-6 py-3 sticky top-0 z-10">
@@ -46,6 +47,9 @@ export default function QuoteTopBar({
                         {isEditMode && quoteStatus === "Draft" && (
                             <p className="text-xs text-gray-400 mt-0.5">Draft — editing enabled</p>
                         )}
+                        {isEditMode && isCosted && (
+                            <p className="text-xs text-amber-600 mt-0.5 font-medium">Costed by PT — set selling prices, then email client</p>
+                        )}
                     </div>
                 </div>
 
@@ -59,21 +63,26 @@ export default function QuoteTopBar({
                         >
                             {isEditMode ? "Save Changes" : "Save Draft"}
                         </button>
-                        <button
-                            type="button"
-                            onClick={onSendToPT}
-                            disabled={isSaving}
-                            className="px-4 py-2 text-sm font-medium text-white bg-brand-blue rounded-md hover:bg-brand-blue/90 disabled:opacity-50 transition-colors"
-                        >
-                            {isEditMode ? "Save & Send to PT" : "Send to PT"}
-                        </button>
+                        {!isCosted && (
+                            <button
+                                type="button"
+                                onClick={onSendToPT}
+                                disabled={isSaving}
+                                className="px-4 py-2 text-sm font-medium text-white bg-brand-blue rounded-md hover:bg-brand-blue/90 disabled:opacity-50 transition-colors"
+                            >
+                                {isEditMode ? "Save & Send to PT" : "Send to PT for Costing"}
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={onEmailClient}
                             disabled={isSaving}
-                            className="px-4 py-2 text-sm font-medium text-white bg-brand-green rounded-md hover:bg-brand-green/90 disabled:opacity-50 transition-colors"
+                            className={`px-4 py-2 text-sm font-medium text-white rounded-md disabled:opacity-50 transition-colors ${isCosted
+                                    ? "bg-brand-green hover:bg-brand-green/90 ring-2 ring-brand-green/30"
+                                    : "bg-brand-green hover:bg-brand-green/90"
+                                }`}
                         >
-                            {isEditMode ? "Save & Email Client" : "Email Client"}
+                            {isCosted ? "Set Prices & Email Client" : isEditMode ? "Save & Email Client" : "Email Client"}
                         </button>
                     </div>
                 ) : (
